@@ -1,0 +1,72 @@
+application:
+  zookeeper:
+    zkServer: 192.168.0.10:2181
+    connectTimeout: 15000
+    chatRoot: /chatRoot
+    routeRoot: /routeRoot
+    # 负载均衡算法
+    IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
+  socketIo:
+    port: 9527
+    # 设置最大每帧处理数据的长度，防止他人利用大数据来攻击服务器
+    maxFramePayloadLength: 1048576
+    # 设置http交互最大内容长度
+    maxHttpContentLength: 1048576
+    # socket连接数大小（如只监听一个端口boss线程组为1即可）
+    bossCount: 1
+    workCount: 100
+    allowCustomRequests: true
+    # 协议升级超时时间（毫秒），默认10秒。HTTP握手升级为ws协议超时时间
+    upgradeTimeout: 1000000
+    # Ping消息超时时间（毫秒），默认60秒，这个时间间隔内没有接收到心跳消息就会发送超时事件
+    pingTimeout: 6000000
+    # Ping消息间隔（毫秒），默认25秒。客户端向服务器发送一条心跳消息间隔
+    pingInterval: 25000
+  path:
+    saveRoute: /route/saveRoute
+    sendMsgToUser: /route/sendMsgToUser
+    sendMsgToGroup: /route/sendMsgToGroup
+    delRoute: /route/delRoute
+    findRouteByUser: /route/findRouteByUser
+server:
+  port: 8081
+  servlet:
+    context-path: /chat-server
+spring:
+  datasource:
+    name: db
+    url: jdbc:mysql://192.168.0.10:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+
+    # 使用druid数据源
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    druid:
+      filters: stat
+      max-active: 20
+      initial-size: 1
+      max-wait: 60000
+      min-idle: 1
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 30000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-open-prepared-statements: 20
+      async-init: true
+      validation-query: select 1
+  # redis
+  redis:
+    database: 0
+    host: 192.168.0.10
+    port: 6379
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
+  type-aliases-package: group.xuxiake.common.entity  # 注意：对应实体类的路径
+  configuration:
+    call-setters-on-nulls: true
+logging:
+  level:
+    root: INFO

@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="group.xuxiake.common.mapper.RecycleMapper">
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.Recycle">
+    <id column="recycle_id" jdbcType="INTEGER" property="recycleId" />
+    <result column="file_id" jdbcType="INTEGER" property="fileId" />
+    <result column="delete_user_id" jdbcType="INTEGER" property="deleteUserId" />
+    <result column="delete_time" jdbcType="TIMESTAMP" property="deleteTime" />
+    <result column="over_time" jdbcType="TIMESTAMP" property="overTime" />
+    <result column="recycle_status" jdbcType="CHAR" property="recycleStatus" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    recycle_id, file_id, delete_user_id, delete_time, over_time, recycle_status
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from recycle
+    where recycle_id = #{recycleId,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from recycle
+    where recycle_id = #{recycleId,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.Recycle" useGeneratedKeys="true" keyProperty="recycleId">
+    insert into recycle (recycle_id, file_id, delete_user_id, 
+      delete_time, over_time, recycle_status
+      )
+    values (#{recycleId,jdbcType=INTEGER}, #{fileId,jdbcType=INTEGER}, #{deleteUserId,jdbcType=INTEGER}, 
+      #{deleteTime,jdbcType=TIMESTAMP}, #{overTime,jdbcType=TIMESTAMP}, #{recycleStatus,jdbcType=CHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.Recycle" useGeneratedKeys="true" keyProperty="recycleId">
+    insert into recycle
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="recycleId != null">
+        recycle_id,
+      </if>
+      <if test="fileId != null">
+        file_id,
+      </if>
+      <if test="deleteUserId != null">
+        delete_user_id,
+      </if>
+      <if test="deleteTime != null">
+        delete_time,
+      </if>
+      <if test="overTime != null">
+        over_time,
+      </if>
+      <if test="recycleStatus != null">
+        recycle_status,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="recycleId != null">
+        #{recycleId,jdbcType=INTEGER},
+      </if>
+      <if test="fileId != null">
+        #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="deleteUserId != null">
+        #{deleteUserId,jdbcType=INTEGER},
+      </if>
+      <if test="deleteTime != null">
+        #{deleteTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="overTime != null">
+        #{overTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="recycleStatus != null">
+        #{recycleStatus,jdbcType=CHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.Recycle">
+    update recycle
+    <set>
+      <if test="fileId != null">
+        file_id = #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="deleteUserId != null">
+        delete_user_id = #{deleteUserId,jdbcType=INTEGER},
+      </if>
+      <if test="deleteTime != null">
+        delete_time = #{deleteTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="overTime != null">
+        over_time = #{overTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="recycleStatus != null">
+        recycle_status = #{recycleStatus,jdbcType=CHAR},
+      </if>
+    </set>
+    where recycle_id = #{recycleId,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.Recycle">
+    update recycle
+    set file_id = #{fileId,jdbcType=INTEGER},
+      delete_user_id = #{deleteUserId,jdbcType=INTEGER},
+      delete_time = #{deleteTime,jdbcType=TIMESTAMP},
+      over_time = #{overTime,jdbcType=TIMESTAMP},
+      recycle_status = #{recycleStatus,jdbcType=CHAR}
+    where recycle_id = #{recycleId,jdbcType=INTEGER}
+  </update>
+  
+  <resultMap id="FileResultMap" type="group.xuxiake.common.entity.FileUpload">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="upload_time" jdbcType="TIMESTAMP" property="uploadTime" />
+    <result column="file_path" jdbcType="VARCHAR" property="filePath" />
+    <result column="File_Save_Name" jdbcType="VARCHAR" property="fileSaveName" />
+    <result column="File_Real_Name" jdbcType="VARCHAR" property="fileRealName" />
+    <result column="file_Ext_Name" jdbcType="VARCHAR" property="fileExtName" />
+    <result column="file_Size" jdbcType="VARCHAR" property="fileSize" />
+    <result column="file_Type" jdbcType="INTEGER" property="fileType" />
+    <result column="is_Dir" jdbcType="INTEGER" property="isDir" />
+    <result column="upload_User" jdbcType="VARCHAR" property="uploadUser" />
+    <result column="upload_User_Id" jdbcType="VARCHAR" property="uploadUserId" />
+    <result column="parent_Path" jdbcType="VARCHAR" property="parentPath" />
+    <result column="media_Cache_Path" jdbcType="VARCHAR" property="mediaCachePath" />
+    <result column="md5_Hex" jdbcType="VARCHAR" property="md5Hex" />
+    <result column="file_Status" jdbcType="VARCHAR" property="fileStatus" />
+  </resultMap>
+  
+  <resultMap type="group.xuxiake.common.entity.show.RecycleShowList" id="RecycleShowListResultMap">
+    <id column="recycle_id" property="recycleId" />
+    <result column="delete_time" property="deleteTime" />
+    <result column="over_time" property="overTime" />
+    <result column="File_Save_Name" property="fileSaveName" />
+    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_Size" property="fileSize" />
+    <result column="file_Type" property="fileType" />
+    <result column="is_Dir" property="isDir" />
+  </resultMap>
+
+  <!--查出用户回收站所有文件-->
+  <select id="findByUserId" resultMap="RecycleShowListResultMap">
+  	select
+  	  r.recycle_id,
+  	  r.delete_time,
+  	  r.over_time,
+  	  f.file_save_name,
+  	  f.file_real_name,
+  	  f.file_size,
+  	  f.file_type,
+  	  f.is_Dir
+  	from recycle r, fileupload f
+  	where
+  	r.file_Id = f.id
+  	AND delete_user_id=#{deleteUserId}
+  	AND recycle_status = ${@group.xuxiake.common.util.NetdiskConstant@RECYCLE_STATUS_FILE_DEL}
+  	<if test="fileName != null and fileName != ''">
+      AND f.file_real_name LIKE CONCAT('%', #{fileName}, '%')
+    </if>
+  	order by delete_time desc
+  </select>
+
+  <!--查出回收站所有文件-->
+  <select id="findAll" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from recycle
+    where recycle_status = ${@group.xuxiake.common.util.NetdiskConstant@RECYCLE_STATUS_FILE_DEL}
+  </select>
+</mapper>

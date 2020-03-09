@@ -1,0 +1,97 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /netdisk
+application:
+  # 验证码
+  captcha:
+    # 存redis前缀
+    prefix: 'CAPTCHA:'
+    # 超时时间5分钟
+    timeout: 300000
+  zookeeper:
+    zkServer: 192.168.0.10:2181
+    connectTimeout: 15000
+    routeRoot: /routeRoot
+    # 负载均衡算法
+    IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
+  route:
+    getChatServerPath: /route/getChatServer
+    findRouteByUserPath: /route/findRouteByUser
+spring:
+  datasource:
+    name: db
+    url: jdbc:mysql://192.168.0.10:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+
+    # 使用druid数据源
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    druid:
+      filters: stat
+      max-active: 20
+      initial-size: 1
+      max-wait: 60000
+      min-idle: 1
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 30000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-open-prepared-statements: 20
+      async-init: true
+      validation-query: select 1
+  # redis
+  redis:
+    database: 0
+    host: 192.168.0.10
+    port: 6379
+  # 文件上传大小
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 1024MB
+  # mqtt
+  mqtt:
+    url: tcp://192.168.0.10:1883
+    client:
+      # 订阅客户端ID
+      inboundClientId: netdisk-mqttInbound
+      # 发布客户端ID
+      outboundClientId: netdisk-mqttOutbound
+    topic:
+      # 订阅默认主题
+      inboundTopic: outTopic
+      # 发布默认主题
+      outboundTopic: inTopic
+    completionTimeout: 3000
+  shiro:
+    sessionManager:
+      # 设置session超时时间半天，默认半小时
+      globalSessionTimeout: 43200000
+  # 配置jackson 时间返回格式
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true
+    time-zone: GMT+8
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
+  type-aliases-package: group.xuxiake.common.entity  # 注意：对应实体类的路径
+  configuration:
+    call-setters-on-nulls: true
+fdfs:
+  so-timeout: 1501
+  connect-timeout: 601
+  # 缩略图生成参数
+  thumb-image:
+    width: 150
+    height: 150
+  #TrackerList参数,支持多个
+  tracker-list:
+    192.168.0.10:22122
+  fdfs-nginx-server: http://192.168.0.10:8181
+logging:
+  level:
+    root: INFO

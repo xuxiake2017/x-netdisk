@@ -1,0 +1,30 @@
+app:
+  config:
+    # 用户容量
+    totalMemory: 104857600
+    fileSizeMax: 52428800
+    vipFileSizeMax: 524288000
+    # 部署前端代码的公网地址（包含邮件链接中的logo以及默认头像）
+    server_host: http://127.0.0.1:8181
+    # 回收站超时时间(测试1小时)
+    recycleDelayTime: 3600000
+    email:
+      # 邮件验证超时时间(一天)
+      verifyEmailExpire: 86400
+      #发送邮件
+      emailAccount: xxx
+      emailPassword: xxx
+      emailSMTPHost: smtp.aliyun.com
+      smtpPort: 465
+    # 发送短信
+    sms:
+      # 短信验证超时时间(5分钟)
+      verifySmsExpire: 300
+      accessKeyId: xxx
+      accessKeySecret: xxx
+      signName: xxx
+      templateCode: xxx
+    # 图灵机器人
+    tuling:
+      tuling_apiKey: xxx
+      tuling_apiUrl: http://openapi.tuling123.com/openapi/api/v2

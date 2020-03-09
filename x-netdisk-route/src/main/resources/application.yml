@@ -1,0 +1,24 @@
+application:
+  zookeeper:
+    zkServer: 192.168.0.10:2181
+    connectTimeout: 15000
+    chatRoot: /chatRoot
+    routeRoot: /routeRoot
+    # 负载均衡算法
+    IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
+  route:
+    chatRoutePrefix: 'CHAT_ROUTE:'
+    sendMsgPath: /chat-server/sendMsg
+
+spring:
+  redis:
+    database: 0
+    host: 192.168.0.10
+    port: 6379
+server:
+  port: 9000
+  servlet:
+    context-path: /route
+logging:
+  level:
+    root: INFO

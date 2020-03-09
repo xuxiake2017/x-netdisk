@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.UserFriendApplyForMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.UserFriendApplyFor" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="applicant" property="applicant" jdbcType="INTEGER" />
+    <result column="respondent" property="respondent" jdbcType="INTEGER" />
+    <result column="verify" property="verify" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="postscript" property="postscript" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, applicant, respondent, verify, status, postscript, create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from user_friend_apply_for
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from user_friend_apply_for
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.UserFriendApplyFor" >
+    insert into user_friend_apply_for (id, applicant, respondent, 
+      verify, status, postscript, 
+      create_time, update_time)
+    values (#{id,jdbcType=INTEGER}, #{applicant,jdbcType=INTEGER}, #{respondent,jdbcType=INTEGER}, 
+      #{verify,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, #{postscript,jdbcType=VARCHAR}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.UserFriendApplyFor" >
+    insert into user_friend_apply_for
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="applicant != null" >
+        applicant,
+      </if>
+      <if test="respondent != null" >
+        respondent,
+      </if>
+      <if test="verify != null" >
+        verify,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="postscript != null" >
+        postscript,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="applicant != null" >
+        #{applicant,jdbcType=INTEGER},
+      </if>
+      <if test="respondent != null" >
+        #{respondent,jdbcType=INTEGER},
+      </if>
+      <if test="verify != null" >
+        #{verify,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="postscript != null" >
+        #{postscript,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.UserFriendApplyFor" >
+    update user_friend_apply_for
+    <set >
+      <if test="applicant != null" >
+        applicant = #{applicant,jdbcType=INTEGER},
+      </if>
+      <if test="respondent != null" >
+        respondent = #{respondent,jdbcType=INTEGER},
+      </if>
+      <if test="verify != null" >
+        verify = #{verify,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="postscript != null" >
+        postscript = #{postscript,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.UserFriendApplyFor" >
+    update user_friend_apply_for
+    set applicant = #{applicant,jdbcType=INTEGER},
+      respondent = #{respondent,jdbcType=INTEGER},
+      verify = #{verify,jdbcType=INTEGER},
+      status = #{status,jdbcType=INTEGER},
+      postscript = #{postscript,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <resultMap id="ResultMapFindAll" type="group.xuxiake.common.entity.show.UserFriendApplyForShowList" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="applicant" property="applicant" jdbcType="INTEGER" />
+    <result column="respondent" property="respondent" jdbcType="INTEGER" />
+    <result column="verify" property="verify" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="postscript" property="postscript" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="applicant_username" property="applicantUsername" />
+    <result column="applicant_avatar" property="applicantAvatar" />
+    <result column="respondent_username" property="respondentUsername" />
+    <result column="respondent_avatar" property="respondentAvatar" />
+  </resultMap>
+
+  <!--查找所有好友请求-->
+  <select id="findAll" resultMap="ResultMapFindAll">
+    select
+      friend_apply_for.*,
+      applicant_user.username applicant_username,
+      applicant_user.avatar applicant_avatar,
+      respondent_user.username respondent_username,
+      respondent_user.avatar respondent_avatar
+    from
+      user_friend_apply_for friend_apply_for
+      left join usernetdisk applicant_user
+        ON applicant_user.user_Status != ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NOT_EXIST} AND applicant_user.id = friend_apply_for.applicant
+      left join usernetdisk respondent_user
+        ON respondent_user.user_Status != ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NOT_EXIST} AND respondent_user.id = friend_apply_for.respondent
+    where
+      applicant = #{userId} OR respondent = #{userId} AND status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
+  </select>
+
+  <!--好友申请操作-->
+  <update id="friendApplyForOption">
+    update user_friend_apply_for
+    SET verify = #{option}
+    WHERE applicant = #{applicant} AND respondent = #{respondent} AND status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
+  </update>
+</mapper>

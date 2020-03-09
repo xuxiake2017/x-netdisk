@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="group.xuxiake.common.mapper.ShareFileMapper">
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.ShareFile">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="share_Id" jdbcType="VARCHAR" property="shareId" />
+    <result column="share_User_Id" jdbcType="INTEGER" property="shareUserId" />
+    <result column="share_User" jdbcType="VARCHAR" property="shareUser" />
+    <result column="share_Pwd" jdbcType="VARCHAR" property="sharePwd" />
+    <result column="share_Time" jdbcType="TIMESTAMP" property="shareTime" />
+    <result column="share_Status" jdbcType="INTEGER" property="shareStatus" />
+    <result column="file_id" jdbcType="INTEGER" property="fileId" />
+    <result column="access_times" jdbcType="INTEGER" property="accessTimes" />
+    <result column="download_times" jdbcType="INTEGER" property="downloadTimes" />
+    <result column="save_times" jdbcType="INTEGER" property="saveTimes" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, share_Id, share_User_Id, share_User, share_Pwd, share_Time, share_Status, file_id,
+    access_times, download_times, save_times
+  </sql>
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sharefile
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from sharefile
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.ShareFile">
+    insert into sharefile (id, share_Id, share_User_Id,
+      share_User, share_Pwd, share_Time,
+      share_Status, file_id, access_times,
+      download_times, save_times)
+    values (#{id,jdbcType=INTEGER}, #{shareId,jdbcType=VARCHAR}, #{shareUserId,jdbcType=INTEGER},
+      #{shareUser,jdbcType=VARCHAR}, #{sharePwd,jdbcType=VARCHAR}, #{shareTime,jdbcType=TIMESTAMP},
+      #{shareStatus,jdbcType=INTEGER}, #{fileId,jdbcType=INTEGER}, #{accessTimes,jdbcType=INTEGER},
+      #{downloadTimes,jdbcType=INTEGER}, #{saveTimes,jdbcType=INTEGER})
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.ShareFile">
+    insert into sharefile
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        id,
+      </if>
+      <if test="shareId != null">
+        share_Id,
+      </if>
+      <if test="shareUserId != null">
+        share_User_Id,
+      </if>
+      <if test="shareUser != null">
+        share_User,
+      </if>
+      <if test="sharePwd != null">
+        share_Pwd,
+      </if>
+      <if test="shareTime != null">
+        share_Time,
+      </if>
+      <if test="shareStatus != null">
+        share_Status,
+      </if>
+      <if test="fileId != null">
+        file_id,
+      </if>
+      <if test="accessTimes != null">
+        access_times,
+      </if>
+      <if test="downloadTimes != null">
+        download_times,
+      </if>
+      <if test="saveTimes != null">
+        save_times,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="id != null">
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="shareId != null">
+        #{shareId,jdbcType=VARCHAR},
+      </if>
+      <if test="shareUserId != null">
+        #{shareUserId,jdbcType=INTEGER},
+      </if>
+      <if test="shareUser != null">
+        #{shareUser,jdbcType=VARCHAR},
+      </if>
+      <if test="sharePwd != null">
+        #{sharePwd,jdbcType=VARCHAR},
+      </if>
+      <if test="shareTime != null">
+        #{shareTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="shareStatus != null">
+        #{shareStatus,jdbcType=INTEGER},
+      </if>
+      <if test="fileId != null">
+        #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="accessTimes != null">
+        #{accessTimes,jdbcType=INTEGER},
+      </if>
+      <if test="downloadTimes != null">
+        #{downloadTimes,jdbcType=INTEGER},
+      </if>
+      <if test="saveTimes != null">
+        #{saveTimes,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.ShareFile">
+    update sharefile
+    <set>
+      <if test="shareId != null">
+        share_Id = #{shareId,jdbcType=VARCHAR},
+      </if>
+      <if test="shareUserId != null">
+        share_User_Id = #{shareUserId,jdbcType=INTEGER},
+      </if>
+      <if test="shareUser != null">
+        share_User = #{shareUser,jdbcType=VARCHAR},
+      </if>
+      <if test="sharePwd != null">
+        share_Pwd = #{sharePwd,jdbcType=VARCHAR},
+      </if>
+      <if test="shareTime != null">
+        share_Time = #{shareTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="shareStatus != null">
+        share_Status = #{shareStatus,jdbcType=INTEGER},
+      </if>
+      <if test="fileId != null">
+        file_id = #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="accessTimes != null">
+        access_times = #{accessTimes,jdbcType=INTEGER},
+      </if>
+      <if test="downloadTimes != null">
+        download_times = #{downloadTimes,jdbcType=INTEGER},
+      </if>
+      <if test="saveTimes != null">
+        save_times = #{saveTimes,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.ShareFile">
+    update sharefile
+    set share_Id = #{shareId,jdbcType=VARCHAR},
+      share_User_Id = #{shareUserId,jdbcType=INTEGER},
+      share_User = #{shareUser,jdbcType=VARCHAR},
+      share_Pwd = #{sharePwd,jdbcType=VARCHAR},
+      share_Time = #{shareTime,jdbcType=TIMESTAMP},
+      share_Status = #{shareStatus,jdbcType=INTEGER},
+      file_id = #{fileId,jdbcType=INTEGER},
+      access_times = #{accessTimes,jdbcType=INTEGER},
+      download_times = #{downloadTimes,jdbcType=INTEGER},
+      save_times = #{saveTimes,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+
+  <resultMap type="group.xuxiake.common.entity.show.ShareFileShowInfo" id="shareInfoResultMap">
+    <result column="share_Id" property="shareId"/>
+    <result column="share_Time" property="shareTime"/>
+    <result column="username" property="shareUser"/>
+    <result column="avatar" property="avatar"/>
+    <result column="file_id" property="fileId" />
+    <result column="File_Save_Name" property="fileSaveName" />
+    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_Size" property="fileSize" />
+    <result column="file_Type" property="fileType" />
+    <result column="is_Dir" property="isDir" />
+  </resultMap>
+
+  <select id="getShareFileInfo" resultMap="shareInfoResultMap">
+  	select
+  	  s.share_Id,
+  	  s.share_Time,
+  	  u.username,
+  	  u.avatar,
+  	  f.id file_id,
+  	  f.file_save_name,
+  	  f.file_real_name,
+  	  f.file_size,
+  	  f.file_type,
+  	  f.is_Dir
+  	from shareFile s,fileupload f,usernetdisk u
+  	where 
+  	s.share_Id = #{shareId}
+  	and s.file_id = f.id
+  	and share_Status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+  	and f.file_status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+  	and s.share_User_id = u.id
+  </select>
+
+  <select id="findByShareId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sharefile
+    where share_Id = #{shareId}
+    and share_Status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+  </select>
+
+  <resultMap type="group.xuxiake.common.entity.show.ShareFileShowList" id="ResultMapShowList">
+
+    <result column="id" property="id"></result>
+    <result column="share_Id" property="shareId" />
+    <result column="share_Pwd" property="sharePwd" />
+    <result column="share_Time" property="shareTime" />
+    <result column="access_times" property="accessTimes" />
+    <result column="download_times" property="downloadTimes" />
+    <result column="save_times" property="saveTimes" />
+    <result column="file_id" property="fileId" />
+    <result column="File_Save_Name" property="fileSaveName" />
+    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_Size" property="fileSize" />
+    <result column="file_Type" property="fileType" />
+    <result column="is_Dir" property="isDir" />
+  </resultMap>
+
+  <select id="findAllByUserId" resultMap="ResultMapShowList">
+  	select
+  	  s.id,
+  	  s.share_Id,
+  	  s.share_Pwd,
+  	  s.share_Time,
+  	  s.access_times,
+  	  s.download_times,
+  	  s.save_times,
+  	  f.file_save_name,
+  	  f.file_real_name,
+  	  f.file_size,
+  	  f.file_type,
+  	  f.is_Dir
+  	from sharefile s,fileupload f
+  	where 
+  	s.share_user_id = #{userId}
+  	and s.share_status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+  	and s.file_id = f.id
+  	and f.file_status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    <if test="fileName != null and fileName != ''">
+      AND f.file_real_name LIKE CONCAT('%', #{fileName}, '%')
+    </if>
+  	order by s.share_time desc
+  </select>
+</mapper>
