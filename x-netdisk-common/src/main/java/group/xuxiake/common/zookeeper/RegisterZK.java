@@ -21,21 +21,26 @@ public class RegisterZK {
 
     /**
      * zk注册
-     * @param socketPort
-     * @param httpPort
+     * @param args socketIp socketPort httpPort
      */
-    public void register(String socketPort, String httpPort) {
+    public void register(String ...args) {
 
         try {
             StringBuffer stringBuffer = new StringBuffer();
             //获得本机IP
             String addr = InetAddress.getLocalHost().getHostAddress();
             stringBuffer.append(zkRoot + "/ip-" + addr);
-            if (!StringUtils.isAnyEmpty(socketPort)) {
-                stringBuffer.append(":" + socketPort);
-            }
-            if (!StringUtils.isAnyEmpty(httpPort)) {
-                stringBuffer.append(":" + httpPort);
+            for (int i = 0; i < args.length; i++) {
+                if (i == 0) {
+                    if ("LOCAL".equalsIgnoreCase(args[0])) {
+                        stringBuffer.append(":" + addr);
+                    } else {
+                        stringBuffer.append(":" + args[i]);
+                    }
+                }
+                if (i > 0) {
+                    stringBuffer.append(":" + args[i]);
+                }
             }
             String path = stringBuffer.toString();
             new Thread(() -> {

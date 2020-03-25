@@ -112,12 +112,12 @@ public class RouteServiceImpl implements RouteService {
             result.setCode(NetdiskErrMsgConstant.UN_AVAILABLE_ROUTE_SERVER);
             return result;
         }
-        // 192.168.0.104:9527:8081 IP:端口:HTTP端口
+        // 192.168.0.104:192.168.0.104:9527:8081 httpIP:socketIp:socket端口:HTTP端口
         String server = balancer.select(serverList, sessionId);
         String[] meta = server.split(":");
         Map<String, String> data = new HashMap<>();
-        data.put("ip", meta[0]);
-        data.put("port", meta[1]);
+        data.put("ip", meta[1]);
+        data.put("port", meta[2]);
         Result result = new Result();
         result.setData(data);
         return result;

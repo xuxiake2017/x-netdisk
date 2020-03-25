@@ -24,6 +24,8 @@ public class AppConfiguration {
     // socket-io
     @Value("${application.socketIo.port}")
     private Integer socketIoPort;
+    @Value("${application.socketIo.ip}")
+    private String socketIoIp;
     @Value("${application.socketIo.maxFramePayloadLength}")
     private Integer maxFramePayloadLength;
     @Value("${application.socketIo.bossCount}")
