@@ -125,14 +125,6 @@
             <version>3.2.1</version>
         </dependency>
 
-        <!--<dependency>
-            <groupId>com.sun</groupId>
-            <artifactId>tools</artifactId>
-            <version>1.8.0</version>
-            <scope>system</scope>
-            <systemPath>${JAVA_HOME}/lib/tools.jar</systemPath>
-        </dependency>-->
-
         <!--fastjson-->
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -150,9 +142,8 @@
             <groupId>it.sauronsoftware</groupId>
             <artifactId>jave</artifactId>
             <version>1.0.2</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/jave-1.0.2.jar</systemPath>
         </dependency>
+
         <!--httpclient-->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -190,7 +181,6 @@
         <dependency>
             <groupId>group.xuxiake</groupId>
             <artifactId>x-netdisk-common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

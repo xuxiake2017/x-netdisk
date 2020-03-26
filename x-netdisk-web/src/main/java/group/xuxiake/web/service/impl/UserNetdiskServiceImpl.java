@@ -350,9 +350,9 @@ public class UserNetdiskServiceImpl implements UserNetdiskService {
 		userNetdisk.setUserStatus(NetdiskConstant.USER_STATUS_NOT_VERIFY + "");
 		userNetdisk.setAvatar(appConfiguration.getCustomConfiguration().getServerHost() + "/logo/default_avatar.gif");
 
-//		String key = UUID.randomUUID().toString();
-		String key = "5af009c7-ac31-4f4c-b4d1-43c4acbf415d";
-//		EmailSendUtil.regNetDisk(userNetdisk.getEmail(), param.getEmail(), key);
+		String key = UUID.randomUUID().toString();
+//		String key = "5af009c7-ac31-4f4c-b4d1-43c4acbf415d";
+		EmailSendUtil.regNetDisk(userNetdisk.getEmail(), param.getEmail(), key);
 
 		userNetdisk.setPassword(PasswordEncoder.encode(param.getPassword(), param.getEmail()));
 		userNetdiskMapper.insertSelective(userNetdisk);

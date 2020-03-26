@@ -37,7 +37,7 @@ public class FastDFSClientWrapper {
     }
 
     public String uploadFile(File file, String fileExtName) throws FileNotFoundException {
-        return this.uploadFile(new FileInputStream(file), file.getTotalSpace(), fileExtName);
+        return this.uploadFile(new FileInputStream(file), file.length(), fileExtName);
     }
 
     /**
