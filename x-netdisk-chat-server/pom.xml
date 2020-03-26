@@ -6,7 +6,6 @@
         <groupId>group.xuxiake</groupId>
         <artifactId>x-netdisk</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>group.xuxiake</groupId>
     <artifactId>x-netdisk-chat-server</artifactId>
@@ -85,11 +84,11 @@
         <dependency>
             <groupId>group.xuxiake</groupId>
             <artifactId>x-netdisk-common</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
     <build>
+        <finalName>x-netdisk-chat-server</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

@@ -11,6 +11,7 @@
     <groupId>group.xuxiake</groupId>
     <artifactId>x-netdisk</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
     <name>x-netdisk</name>
     <description>X-Netdisk Spring Boot</description>
     <modules>
@@ -22,9 +23,18 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <!--打包跳过测试-->
+        <skipTests>true</skipTests>
     </properties>
 
     <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>group.xuxiake</groupId>
+                <artifactId>x-netdisk-common</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+        </dependencies>
     </dependencyManagement>
     <dependencies>
         <dependency>
@@ -59,14 +69,5 @@
             <version>3.4</version>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>

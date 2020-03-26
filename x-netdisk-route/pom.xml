@@ -6,7 +6,6 @@
         <groupId>group.xuxiake</groupId>
         <artifactId>x-netdisk</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>group.xuxiake</groupId>
     <artifactId>x-netdisk-route</artifactId>
@@ -62,6 +61,7 @@
     </dependencies>
 
     <build>
+        <finalName>x-netdisk-route</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

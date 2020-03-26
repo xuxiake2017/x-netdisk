@@ -6,11 +6,11 @@
         <groupId>group.xuxiake</groupId>
         <artifactId>x-netdisk</artifactId>
         <version>0.0.1-SNAPSHOT</version>
-        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>group.xuxiake</groupId>
     <artifactId>x-netdisk-common</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
     <name>x-netdisk-common</name>
     <description>x-netdisk-common</description>
 
@@ -40,5 +40,18 @@
             <version>1.2.37</version>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>
