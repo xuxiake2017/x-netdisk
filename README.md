@@ -12,7 +12,8 @@
 - 储蓄文件使用了分布式文件服务器FastDFS
 - 数据库mysql
 - 网盘文件树实现使用了mysql的储存过程
-#### 框架介绍（待补充）
+#### 框架介绍
+![chat简易流程图](https://raw.githubusercontent.com/xuxiake2017/x-netdisk/master/pic/chat%E7%AE%80%E6%98%93%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg)
 #### 模块介绍（待补充）
 #### 鸣谢
 - [整体框架参考 crossoverJie/cim](https://github.com/crossoverJie/cim)
