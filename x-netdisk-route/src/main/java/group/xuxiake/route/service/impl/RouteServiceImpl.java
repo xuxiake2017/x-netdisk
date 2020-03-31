@@ -1,6 +1,8 @@
 package group.xuxiake.route.service.impl;
 
+import group.xuxiake.common.entity.Recycle;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.RouteShowSimple;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
 import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -78,7 +79,7 @@ public class RouteServiceImpl implements RouteService {
 
         Integer userId = param.getUserId();
         RouteOfSaveRoutePojo routeOfSaveRoutePojo = (RouteOfSaveRoutePojo) this.findRouteByUser(userId).getData();
-        String requestUrl = "http://" + routeOfSaveRoutePojo.getIp() + ":" + routeOfSaveRoutePojo.getHttpPort() + appConfiguration.getSendMsgPath();
+        String requestUrl = "http://" + routeOfSaveRoutePojo.getIp() + ":" + routeOfSaveRoutePojo.getHttpPort() + appConfiguration.getChatSendMsgPath();
         ResponseEntity<Result> responseEntity = restTemplate.postForEntity(requestUrl, param, Result.class);
         return responseEntity.getBody();
     }
@@ -106,7 +107,7 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public Result getChatServer(String sessionId) {
 
-        List<String> serverList = subscribeZK.getAll();
+        List<String> serverList = subscribeZK.getAll(appConfiguration.getChatRoot());
         if (serverList.size() == 0) {
             Result result = new Result();
             result.setCode(NetdiskErrMsgConstant.UN_AVAILABLE_ROUTE_SERVER);
@@ -122,5 +123,44 @@ public class RouteServiceImpl implements RouteService {
         result.setData(data);
         return result;
 
+    }
+
+    /**
+     * 获取 quartz server
+     * @param key
+     * @return
+     */
+    @Override
+    public RouteShowSimple getQuartzServer(String key) {
+
+        List<String> serverList = subscribeZK.getAll(appConfiguration.getQuartzRoot());
+        if (serverList.size() == 0) {
+            return null;
+        }
+        // 192.168.0.104:8081 httpIP:HTTP端口
+        String server = balancer.select(serverList, key);
+        String[] meta = server.split(":");
+        RouteShowSimple route = new RouteShowSimple();
+        route.setIp(meta[0]);
+        route.setPort(meta[1]);
+        return route;
+    }
+
+    @Override
+    public Result delFile(Recycle recycle) {
+
+        RouteShowSimple routeServer = this.getQuartzServer(recycle.getRecycleId().toString());
+        String requestUrl = "http://" + routeServer.getIp() + ":" + routeServer.getPort() + appConfiguration.getDelFilePath();
+        ResponseEntity<Result> responseEntity = restTemplate.postForEntity(requestUrl, recycle, Result.class);
+        return responseEntity.getBody();
+    }
+
+    @Override
+    public Result delJob(Recycle recycle) {
+
+        RouteShowSimple routeServer = this.getQuartzServer(recycle.getRecycleId().toString());
+        String requestUrl = "http://" + routeServer.getIp() + ":" + routeServer.getPort() + appConfiguration.getDelJobPath();
+        ResponseEntity<Result> responseEntity = restTemplate.postForEntity(requestUrl, recycle, Result.class);
+        return responseEntity.getBody();
     }
 }

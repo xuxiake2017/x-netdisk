@@ -6,11 +6,12 @@ import group.xuxiake.common.entity.*;
 import group.xuxiake.common.entity.show.RecycleShowList;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
-import group.xuxiake.web.handler.RecycleHandler;
+import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.mapper.FileUploadMapper;
 import group.xuxiake.common.mapper.RecycleMapper;
 import group.xuxiake.common.mapper.UserNetdiskMapper;
 import group.xuxiake.web.service.RecycleService;
+import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.UserNetdiskService;
 import group.xuxiake.web.util.*;
 import org.apache.shiro.SecurityUtils;
@@ -33,6 +34,10 @@ public class RecycleServiceImpl implements RecycleService {
 	private UserNetdiskMapper userNetdiskMapper;
 	@Resource
 	private UserNetdiskService userNetdiskService;
+	@Resource
+	private RouteService routeService;
+	@Resource
+	private AppConfiguration appConfiguration;
 
 	/**
 	 * 查询回收站列表
@@ -64,8 +69,8 @@ public class RecycleServiceImpl implements RecycleService {
 		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER + "");
 		recycleMapper.updateByPrimaryKeySelective(recycle);
 
-		// 从内存库移除
-		RecycleHandler.remove(id);
+		// 删除定时任务
+		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelJobPath(), recycle, Result.class);
 		return result;
 	}
 
@@ -164,8 +169,8 @@ public class RecycleServiceImpl implements RecycleService {
 
 		userNetdiskService.updatePrincipal();
 
-		// 从内存库移除
-		RecycleHandler.remove(recycleId);
+		// 删除定时任务
+		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelJobPath(), recycle, Result.class);
 
 		if (tag1>0 && tag2>0 && tag3>0) {
 			return result;

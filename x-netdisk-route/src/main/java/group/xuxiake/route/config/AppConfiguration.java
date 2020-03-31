@@ -21,12 +21,18 @@ public class AppConfiguration {
     private String chatRoot;
     @Value("${application.zookeeper.routeRoot}")
     private String routeRoot;
+    @Value("${application.zookeeper.quartzRoot}")
+    private String quartzRoot;
     @Value("${application.zookeeper.IBLA}")
     private String IBLA;
-    @Value("${application.route.chatRoutePrefix}")
+    @Value("${application.route.chat.chatRoutePrefix}")
     private String chatRoutePrefix;
-    @Value("${application.route.sendMsgPath}")
-    private String sendMsgPath;
+    @Value("${application.route.chat.sendMsgPath}")
+    private String chatSendMsgPath;
+    @Value("${application.route.quartz.delFilePath}")
+    private String delFilePath;
+    @Value("${application.route.quartz.delJobPath}")
+    private String delJobPath;
 
     @Value("${server.port}")
     private String httpPort;

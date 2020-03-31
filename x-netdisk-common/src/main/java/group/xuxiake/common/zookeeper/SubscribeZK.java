@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Author by xuxiake, Date on 2020/3/1 20:07.
+ * Author by xuxiake, Date on 2020/3/13 16:40.
  * PS: Not easy to write code, please indicate.
- * Description： zookeeper 注册
+ * Description：zookeeper 订阅
  */
 @Slf4j
 @Data
@@ -20,7 +20,7 @@ public class SubscribeZK {
 
     private ZkClient zkClient;
     private ZkCacheManager zkCacheManager;
-    private String zkRoot;
+    private List<String> zkRoots;
 
     /**
      * 订阅事件
@@ -28,19 +28,23 @@ public class SubscribeZK {
      */
     public void subscribeEvent() {
 
-        new Thread(() -> zkClient.subscribeChildChanges(zkRoot, (parentPath, currentChilds) -> {
-            log.info("清除/更新本地缓存 parentPath=【{}】,currentChilds=【{}】", parentPath, currentChilds.toString());
+        if (zkRoots != null && zkRoots.size() > 0) {
+            for (String zkRoot : zkRoots) {
+                new Thread(() -> zkClient.subscribeChildChanges(zkRoot, (parentPath, currentChilds) -> {
+                    log.info("清除/更新本地缓存 parentPath=【{}】,currentChilds=【{}】", parentPath, currentChilds.toString());
 
-            // 更新所有缓存/先删除 再新增
-            zkCacheManager.updateCache(currentChilds) ;
-        })).start();
+                    // 更新所有缓存/先删除 再新增
+                    zkCacheManager.updateCache(zkRoot, currentChilds) ;
+                })).start();
+            }
+        }
     }
 
     /**
      * 获取所有注册节点
      * @return
      */
-    public List<String> getAllNode(){
+    public List<String> getAllNode(String zkRoot){
         List<String> children = zkClient.getChildren(zkRoot);
         log.info("查询所有节点成功=【{}】", JSON.toJSONString(children));
         return children;
@@ -51,22 +55,19 @@ public class SubscribeZK {
      *
      * @return
      */
-    public List<String> getAll() {
+    public List<String> getAll(String zkRoot) {
 
-        List<String> list = new ArrayList<>();
-
-        Map<String, String> cache = zkCacheManager.getCache();
+        Map<String, List<String>> cache = zkCacheManager.getCache();
         if (cache.size() == 0) {
-            List<String> allNode = this.getAllNode();
+            List<String> allNode = this.getAllNode(zkRoot);
+            List<String> serverList = new ArrayList<>();
             for (String node : allNode) {
-                String key = node.split("-")[1];
-                zkCacheManager.addCache(key);
+                String server = node.split("-")[1];
+                serverList.add(server);
             }
+            cache.put(zkRoot, serverList);
         }
-        for (Map.Entry<String, String> entry : cache.entrySet()) {
-            list.add(entry.getKey());
-        }
-        return list;
+        return cache.get(zkRoot);
 
     }
 }

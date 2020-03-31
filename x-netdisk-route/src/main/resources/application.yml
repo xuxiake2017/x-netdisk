@@ -4,11 +4,16 @@ application:
     connectTimeout: 15000
     chatRoot: /chatRoot
     routeRoot: /routeRoot
+    quartzRoot: /quartzRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
   route:
-    chatRoutePrefix: 'CHAT_ROUTE:'
-    sendMsgPath: /chat-server/sendMsg
+    chat:
+      chatRoutePrefix: 'CHAT_ROUTE:'
+      sendMsgPath: /chat-server/sendMsg
+    quartz:
+      delFilePath: /quartz/delFile
+      delJobPath: /quartz/delJob
 
 spring:
   redis:

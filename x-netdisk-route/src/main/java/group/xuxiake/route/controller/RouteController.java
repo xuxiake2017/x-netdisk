@@ -1,5 +1,6 @@
 package group.xuxiake.route.controller;
 
+import group.xuxiake.common.entity.Recycle;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
 import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
@@ -76,6 +77,22 @@ public class RouteController {
     @RequestMapping("/getChatServer")
     public Result getChatServer(String sessionId) {
         return routeService.getChatServer(sessionId);
+    }
+
+    /**
+     * 删除文件
+     * @param recycle
+     * @return
+     */
+    @RequestMapping("/delFile")
+    public Result delFile(@RequestBody Recycle recycle) {
+        return routeService.delFile(recycle);
+    }
+
+
+    @RequestMapping("/delJob")
+    public Result delJob(@RequestBody Recycle recycle) {
+        return routeService.delJob(recycle);
     }
 
 

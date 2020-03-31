@@ -3,9 +3,12 @@ package group.xuxiake.web.service.impl;
 import group.xuxiake.common.entity.RouteShowSimple;
 import group.xuxiake.common.zookeeper.SubscribeZK;
 import group.xuxiake.common.zookeeper.balancer.Balancer;
+import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.service.RouteService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -23,6 +26,10 @@ public class RouteServiceImpl implements RouteService {
     private SubscribeZK subscribeZK;
     @Resource
     private Balancer balancer;
+    @Resource
+    private AppConfiguration appConfiguration;
+    @Resource
+    private RestTemplate restTemplate;
 
     /**
      * 获取route server
@@ -32,7 +39,7 @@ public class RouteServiceImpl implements RouteService {
     public RouteShowSimple getRouteServer(String key) {
 
 
-        List<String> serverList = subscribeZK.getAll();
+        List<String> serverList = subscribeZK.getAll(appConfiguration.getRouteRoot());
         if (serverList.size() == 0) {
             return null;
         }
@@ -45,5 +52,23 @@ public class RouteServiceImpl implements RouteService {
         routeShowSimple.setIp(ip);
         routeShowSimple.setPort(port);
         return routeShowSimple;
+    }
+
+    /**
+     * post消息给route
+     * @param key
+     * @param path
+     * @param data
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    @Override
+    public <T> T postMsgToRoute(String key, String path, Object data, Class<T> clazz) {
+
+        RouteShowSimple routeServer = this.getRouteServer(key);
+        String requestUrl = "http://" + routeServer.getIp() + ":" + routeServer.getPort() + path;
+        ResponseEntity<T> responseEntity = restTemplate.postForEntity(requestUrl, data, clazz);
+        return responseEntity.getBody();
     }
 }

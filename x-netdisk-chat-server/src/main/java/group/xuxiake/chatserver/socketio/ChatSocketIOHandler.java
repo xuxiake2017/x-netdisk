@@ -239,7 +239,7 @@ public class ChatSocketIOHandler {
      */
     public Map<String, String> getRouteServer(String key) {
 
-        List<String> serverList = subscribeZK.getAll();
+        List<String> serverList = subscribeZK.getAll(appConfiguration.getRouteRoot());
         if (serverList.size() == 0) {
             return null;
         }

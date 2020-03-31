@@ -49,6 +49,10 @@ public class AppConfiguration {
     private String getChatServerPath;
     @Value("${application.route.findRouteByUserPath}")
     private String findRouteByUserPath;
+    @Value("${application.route.quartz.delFilePath}")
+    private String delFilePath;
+    @Value("${application.route.quartz.delJobPath}")
+    private String delJobPath;
 
     @Value("${application.captcha.prefix}")
     private String captchaPrefix;

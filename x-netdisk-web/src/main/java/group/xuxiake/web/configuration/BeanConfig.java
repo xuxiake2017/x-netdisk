@@ -17,6 +17,8 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Author by xuxiake, Date on 2020/3/2 10:05.
@@ -71,7 +73,9 @@ public class BeanConfig {
         SubscribeZK subscribeZK = new SubscribeZK();
         subscribeZK.setZkClient(this.zkClient());
         // 订阅routeRoot
-        subscribeZK.setZkRoot(appConfiguration.getRouteRoot());
+        List<String> roots = new ArrayList<>();
+        roots.add(appConfiguration.getRouteRoot());
+        subscribeZK.setZkRoots(roots);
         subscribeZK.setZkCacheManager(this.zkCacheManager());
         return subscribeZK;
     }

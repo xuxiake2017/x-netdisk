@@ -1,6 +1,8 @@
 package group.xuxiake.route.service;
 
+import group.xuxiake.common.entity.Recycle;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.RouteShowSimple;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
 import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
 
@@ -47,4 +49,20 @@ public interface RouteService {
      * @return
      */
     Result getChatServer(String sessionId);
+
+    /**
+     * 获取 quartz server
+     * @param key
+     * @return
+     */
+    RouteShowSimple getQuartzServer(String key);
+
+    /**
+     * 删除文件
+     * @param recycle
+     * @return
+     */
+    Result delFile(Recycle recycle);
+
+    Result delJob(Recycle recycle);
 }

@@ -1,12 +1,8 @@
-package group.xuxiake.chatserver.configuration;
+package group.xuxiake.quartz.configuration;
 
 import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
-import com.corundumstudio.socketio.SocketConfig;
-import com.corundumstudio.socketio.SocketIOServer;
 import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.common.zookeeper.RegisterZK;
-import group.xuxiake.common.zookeeper.SubscribeZK;
-import group.xuxiake.common.zookeeper.ZkCacheManager;
 import group.xuxiake.common.zookeeper.ZkRegisterUtils;
 import group.xuxiake.common.zookeeper.balancer.Balancer;
 import org.I0Itec.zkclient.ZkClient;
@@ -18,8 +14,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Author by xuxiake, Date on 2020/3/1 21:39.
@@ -44,23 +38,6 @@ public class BeanConfig {
     }
 
     @Bean
-    public SocketIOServer socketIOServer() {
-        SocketConfig socketConfig = new SocketConfig();
-        socketConfig.setTcpNoDelay(true);
-        socketConfig.setSoLinger(0);
-        com.corundumstudio.socketio.Configuration config = new com.corundumstudio.socketio.Configuration();
-        config.setSocketConfig(socketConfig);
-        config.setPort(appConfiguration.getSocketIoPort());
-        config.setBossThreads(appConfiguration.getBossCount());
-        config.setWorkerThreads(appConfiguration.getWorkCount());
-        config.setAllowCustomRequests(appConfiguration.getAllowCustomRequests());
-        config.setUpgradeTimeout(appConfiguration.getUpgradeTimeout());
-        config.setPingTimeout(appConfiguration.getPingTimeout());
-        config.setPingInterval(appConfiguration.getPingInterval());
-        return new SocketIOServer(config);
-    }
-
-    @Bean
     public RedisTemplate redisTemplate(RedisConnectionFactory redisConnectionFactory) {
 
         RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
@@ -71,17 +48,19 @@ public class BeanConfig {
     }
 
     @Bean
-    public Balancer balancer() throws Exception {
-        String ibla = appConfiguration.getIBLA();
-        Balancer balancer = (Balancer) Class.forName(ibla).newInstance();
-        return balancer;
-    }
-    @Bean
     public RedisUtils redisUtils(RedisTemplate redisTemplate) {
         RedisUtils redisUtils = new RedisUtils();
         redisUtils.setRedisTemplate(redisTemplate);
         return redisUtils;
     }
+
+    @Bean
+    public Balancer balancer() throws Exception {
+        String ibla = appConfiguration.getIBLA();
+        Balancer balancer = (Balancer) Class.forName(ibla).newInstance();
+        return balancer;
+    }
+
 
     @Bean
     public ZkRegisterUtils zkRegisterUtils() {
@@ -93,27 +72,9 @@ public class BeanConfig {
     @Bean
     public RegisterZK registerZK() {
         RegisterZK registerZK = new RegisterZK();
-        // 注册chatRoot
-        registerZK.setZkRoot(appConfiguration.getChatRoot());
+        // 注册quartzRoot
+        registerZK.setZkRoot(appConfiguration.getQuartzRoot());
         registerZK.setZkRegistryUtils(this.zkRegisterUtils());
         return registerZK;
-    }
-
-    @Bean
-    public ZkCacheManager zkCacheManager() {
-        ZkCacheManager zkCacheManager = new ZkCacheManager();
-        return zkCacheManager;
-    }
-
-    @Bean
-    public SubscribeZK subscribeZK() {
-        SubscribeZK subscribeZK = new SubscribeZK();
-        subscribeZK.setZkClient(this.zkClient());
-        // 订阅routeRoot
-        List<String> roots = new ArrayList<>();
-        roots.add(appConfiguration.getRouteRoot());
-        subscribeZK.setZkRoots(roots);
-        subscribeZK.setZkCacheManager(this.zkCacheManager());
-        return subscribeZK;
     }
 }

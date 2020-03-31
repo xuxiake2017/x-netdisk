@@ -11,12 +11,12 @@ import group.xuxiake.common.entity.Recycle;
 import group.xuxiake.common.entity.UserNetdisk;
 import group.xuxiake.common.entity.show.FilePathStore;
 import group.xuxiake.web.handler.LowKbpsHandler;
-import group.xuxiake.web.handler.RecycleHandler;
 import group.xuxiake.web.handler.VideoTransformHandler;
 import group.xuxiake.common.mapper.FileUploadMapper;
 import group.xuxiake.common.mapper.RecycleMapper;
 import group.xuxiake.common.mapper.UserNetdiskMapper;
 import group.xuxiake.web.service.FileUploadService;
+import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.UserNetdiskService;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +56,8 @@ public class FileUploadServiceImpl implements FileUploadService {
     private FastDFSClientWrapper fastDFSClientWrapper;
 	@Resource
     private AppConfiguration appConfiguration;
+	@Resource
+	private RouteService routeService;
 
 	/**
 	 * 检查文件MD5值是否在数据库存在
@@ -476,8 +478,7 @@ public class FileUploadServiceImpl implements FileUploadService {
 
 		userNetdiskService.updatePrincipal();
 
-		// 添加至内存库
-		RecycleHandler.put(recycle);
+		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelFilePath(), recycle, Result.class);
 
 		if(tag1 > 0 && tag2 > 0 && tag3 > 0){
 			return result;

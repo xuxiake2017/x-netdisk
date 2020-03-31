@@ -14,4 +14,15 @@ public interface RouteService {
      * @return
      */
     RouteShowSimple getRouteServer(String key);
+
+    /**
+     * post消息给route
+     * @param key
+     * @param path
+     * @param data
+     * @param clazz
+     * @param <T>
+     * @return
+     */
+    <T> T postMsgToRoute(String key, String path, Object data, Class<T> clazz);
 }
