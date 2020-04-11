@@ -1,8 +1,8 @@
 package group.xuxiake.quartz.job;
 
 import com.google.gson.Gson;
-import group.xuxiake.common.entity.Recycle;
-import group.xuxiake.common.mapper.RecycleMapper;
+import group.xuxiake.common.entity.FileRecycle;
+import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
@@ -20,7 +20,7 @@ import java.io.Serializable;
 public class QuartzDelRecycleFileJob extends QuartzJobBean implements Serializable {
 
     @Resource
-    private RecycleMapper recycleMapper;
+    private FileRecycleMapper recycleMapper;
 
     @Override
     protected void executeInternal(JobExecutionContext jobExecutionContext) {
@@ -28,8 +28,8 @@ public class QuartzDelRecycleFileJob extends QuartzJobBean implements Serializab
         log.info("QuartzDelFileJob executeInternal");
         JobDetail jobDetail = jobExecutionContext.getJobDetail();
         String data = (String) jobDetail.getJobDataMap().get("data");
-        Recycle recycle = new Gson().fromJson(data, Recycle.class);
-        recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER + "");
+        FileRecycle recycle = new Gson().fromJson(data, FileRecycle.class);
+        recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER);
         recycleMapper.updateByPrimaryKeySelective(recycle);
     }
 }

@@ -1,6 +1,6 @@
 package group.xuxiake.route.controller;
 
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
 import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
 
 /**
  * Author by xuxiake, Date on 2020/3/5 23:57.
@@ -85,13 +84,13 @@ public class RouteController {
      * @return
      */
     @RequestMapping("/delFile")
-    public Result delFile(@RequestBody Recycle recycle) {
+    public Result delFile(@RequestBody FileRecycle recycle) {
         return routeService.delFile(recycle);
     }
 
 
     @RequestMapping("/delJob")
-    public Result delJob(@RequestBody Recycle recycle) {
+    public Result delJob(@RequestBody FileRecycle recycle) {
         return routeService.delJob(recycle);
     }
 

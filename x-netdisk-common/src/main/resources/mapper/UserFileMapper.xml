@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.UserFileMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.UserFile" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="origin_id" property="originId" jdbcType="INTEGER" />
+    <result column="file_name" property="fileName" jdbcType="VARCHAR" />
+    <result column="file_path" property="filePath" jdbcType="VARCHAR" />
+    <result column="is_dir" property="isDir" jdbcType="INTEGER" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+    <result column="key" property="key" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, origin_id, file_name, file_path, is_dir, user_id, parent_id, `key`, status, create_time,
+    update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_user_file
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_user_file
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.UserFile" >
+    insert into x_user_file (id, origin_id, file_name, 
+      file_path, is_dir, user_id, 
+      parent_id, `key`, status,
+      create_time, update_time)
+    values (#{id,jdbcType=INTEGER}, #{originId,jdbcType=INTEGER}, #{fileName,jdbcType=VARCHAR}, 
+      #{filePath,jdbcType=VARCHAR}, #{isDir,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, 
+      #{parentId,jdbcType=INTEGER}, #{key,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.UserFile" useGeneratedKeys="true" keyColumn="id" keyProperty="id" >
+    insert into x_user_file
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="originId != null" >
+        origin_id,
+      </if>
+      <if test="fileName != null" >
+        file_name,
+      </if>
+      <if test="filePath != null" >
+        file_path,
+      </if>
+      <if test="isDir != null" >
+        is_dir,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="parentId != null" >
+        parent_id,
+      </if>
+      <if test="key != null" >
+        `key`,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="originId != null" >
+        #{originId,jdbcType=INTEGER},
+      </if>
+      <if test="fileName != null" >
+        #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="filePath != null" >
+        #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="isDir != null" >
+        #{isDir,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null" >
+        #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="key != null" >
+        #{key,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.UserFile" >
+    update x_user_file
+    <set >
+      <if test="originId != null" >
+        origin_id = #{originId,jdbcType=INTEGER},
+      </if>
+      <if test="fileName != null" >
+        file_name = #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="filePath != null" >
+        file_path = #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="isDir != null" >
+        is_dir = #{isDir,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null" >
+        parent_id = #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="key != null" >
+        `key` = #{key,jdbcType=VARCHAR},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.UserFile" >
+    update x_user_file
+    set origin_id = #{originId,jdbcType=INTEGER},
+      file_name = #{fileName,jdbcType=VARCHAR},
+      file_path = #{filePath,jdbcType=VARCHAR},
+      is_dir = #{isDir,jdbcType=INTEGER},
+      user_id = #{userId,jdbcType=INTEGER},
+      parent_id = #{parentId,jdbcType=INTEGER},
+      `key` = #{key,jdbcType=VARCHAR},
+      status = #{status,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <!--列出父级目录下所有文件夹-->
+  <select id="findAllDir" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from x_user_file
+  	where
+  	user_id = #{userId}
+  	and parent_id=#{parentId}
+  	and status=${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+  	and is_dir=${@group.xuxiake.common.util.NetdiskConstant@FILE_IS_DIR}
+  	order by create_time desc
+  </select>
+
+  <select id="findFileByKey" resultMap="BaseResultMap">
+  	select
+    <include refid="Base_Column_List" />
+    from
+      x_user_file
+    where
+      `key` = #{fileSaveName} and status=${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+  </select>
+
+  <!--根据fileSaveName查找文件（用于文件还原）-->
+  <select id="findFileBySaveNameForReback" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from
+    x_user_file
+    where `key` = #{key}
+  </select>
+
+  <!--根据文件真实名查找文件（用于检测当前目录下是否有同名文件夹）-->
+  <select id="findFileByRealName" resultMap="BaseResultMap" parameterType="group.xuxiake.common.entity.UserFile">
+    select
+    <include refid="Base_Column_List" />
+    from
+    x_user_file
+    where
+    user_id = #{userId}
+    and file_name = #{fileName}
+    and parent_id = #{parentId}
+    and is_dir = ${@group.xuxiake.common.util.NetdiskConstant@FILE_IS_DIR}
+    and status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+  </select>
+
+  <select id="findAllFile" resultMap="FindAllFileResultMap">
+    select
+    user_file.*,
+    file_origin.file_ext_name,
+    file_origin.file_size,
+    IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type
+    from
+    x_user_file user_file
+    LEFT JOIN x_file_origin file_origin ON user_file.origin_id = file_origin.id
+    where
+    user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    <if test="userFile.userId != null">
+      AND user_file.user_id = #{userFile.userId}
+    </if>
+    <if test="userFile.parentId != null">
+      and user_file.parent_id = #{userFile.parentId}
+    </if>
+    <if test="userFile.id != null">
+      and user_file.id = #{userFile.id}
+    </if>
+    <if test="userFile.fileName != null and userFile.fileName != ''">
+      and user_file.file_name like concat("%", #{userFile.fileName}, "%")
+    </if>
+    <if test="fileTypes != null and fileTypes.size() > 0">
+      and
+      <foreach collection="fileTypes" open="(" separator="or" close=")" item="fileType">
+        file_origin.file_type = #{fileType}
+      </foreach>
+    </if>
+    order by user_file.is_dir, user_file.update_time desc
+  </select>
+
+  <!--查找所有文件-->
+  <resultMap id="FindAllFileResultMap" type="group.xuxiake.common.entity.show.FileShowInfo" extends="BaseResultMap">
+    <result column="file_ext_name" property="fileExtName" jdbcType="VARCHAR" />
+    <result column="file_size" property="fileSize" jdbcType="BIGINT" />
+    <result column="file_type" property="fileType" jdbcType="INTEGER" />
+  </resultMap>
+
+  <!--删除文件（假删除）-->
+  <delete id="deleteFile">
+  	update x_user_file set status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_DEL} where `key` = #{key}
+  </delete>
+
+  <!--查询删除文件的文件大小（包括子文件及子文件夹）-->
+  <select id="getSumsizeDel" parameterType="map" statementType="CALLABLE">
+  	{call pro_cre_get_sumsize_del(#{id,jdbcType=INTEGER,mode=IN},#{sumsize,jdbcType=INTEGER,mode=OUT})}
+  </select>
+
+  <!--删除文件夹-->
+  <select id="deleteDir" parameterType="int" statementType="CALLABLE">
+  	{
+  		call pro_cre_delete_dir(#{id,jdbcType=INTEGER,mode=IN})
+  	}
+  </select>
+
+  <!--从回收站还原文件时，得到其文件大小（包括子文件及子文件夹）-->
+  <select id="getSumsizeRbk" parameterType="map" statementType="CALLABLE">
+  	{call pro_cre_get_sumsize_rbk(#{id,jdbcType=INTEGER,mode=IN},#{sumsize,jdbcType=INTEGER,mode=OUT})}
+  </select>
+
+  <!--从回收站还原文件夹-->
+  <select id="rebackDir" parameterType="int" statementType="CALLABLE">
+  	{
+  		call pro_cre_reback_dir(#{id,jdbcType=INTEGER,mode=IN})
+  	}
+  </select>
+
+  <!--移动文件-->
+  <update id="moveFile" parameterType="group.xuxiake.common.entity.UserFile">
+  	update x_user_file set parent_id = #{parentId} where user_id = #{userId} and `key` = #{key}
+  </update>
+
+  <resultMap id="FindAllImgResultMap" type="group.xuxiake.common.entity.show.FileShowMedia" extends="BaseResultMap">
+    <association property="fileMedia" javaType="group.xuxiake.common.entity.FileMedia">
+      <result column="shoot_time" property="shootTime" jdbcType="TIMESTAMP" />
+      <result column="img_width" property="imgWidth" jdbcType="INTEGER" />
+      <result column="img_height" property="imgHeight" jdbcType="INTEGER" />
+      <result column="video_width" property="videoWidth" jdbcType="INTEGER" />
+      <result column="video_height" property="videoHeight" jdbcType="INTEGER" />
+      <result column="video_duration" property="videoDuration" jdbcType="INTEGER" />
+      <result column="thumbnail_url" property="thumbnailUrl" jdbcType="VARCHAR" />
+      <result column="music_poster" property="musicPoster" jdbcType="VARCHAR" />
+      <result column="music_artist" property="musicArtist" jdbcType="VARCHAR" />
+    </association>
+    <association property="fileOrigin" javaType="group.xuxiake.common.entity.FileOrigin">
+      <result column="preview_url" property="previewUrl" jdbcType="VARCHAR" />
+    </association>
+  </resultMap>
+
+  <select id="findAllImg" resultMap="FindAllImgResultMap">
+  	select
+      user_file.*,
+      file_media.shoot_time,
+      file_media.img_width,
+      file_media.img_height,
+      file_media.video_width,
+      file_media.video_height,
+      file_media.video_duration,
+      file_media.thumbnail_url,
+      file_media.music_poster,
+      file_media.music_artist,
+      file_origin.preview_url
+    from
+      x_user_file user_file,
+      x_file_origin file_origin,
+      x_file_media file_media
+  	where
+      user_file.origin_id = file_origin.id
+      AND file_media.origin_id = file_origin.id
+      AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      AND user_file.user_id = #{userId}
+      AND file_origin.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
+  	  order by file_media.shoot_time desc
+  </select>
+
+  <!--查询文件路径（文件名）-->
+  <select id="findPathname" resultType="String">
+  	select fn_tree_pathname(#{parentId}, '/')
+  </select>
+
+  <!--查找父文件下所有子文件id-->
+  <select id="findChildIds" resultType="int" parameterType="int" statementType="CALLABLE">
+    {
+      call pro_cre_show_childlist(#{fileId,jdbcType=INTEGER,mode=IN})
+    }
+  </select>
+
+  <!--查询文件路径（id）-->
+  <select id="findIdPath" resultType="string">
+    select fn_tree_path(#{fileId}, '/')
+  </select>
+
+  <!--根据key更新file-->
+  <update id="updateByKeySelective" parameterType="group.xuxiake.common.entity.UserFile" >
+    update x_user_file
+    <set >
+      <if test="originId != null" >
+        origin_id = #{originId,jdbcType=INTEGER},
+      </if>
+      <if test="fileName != null" >
+        file_name = #{fileName,jdbcType=VARCHAR},
+      </if>
+      <if test="filePath != null" >
+        file_path = #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="isDir != null" >
+        is_dir = #{isDir,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="parentId != null" >
+        parent_id = #{parentId,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where `key` = #{key}
+  </update>
+</mapper>

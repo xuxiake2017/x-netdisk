@@ -4,16 +4,16 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.Gson;
 import group.xuxiake.common.entity.*;
+import group.xuxiake.common.entity.show.FileShowInfo;
+import group.xuxiake.common.entity.show.FileShowMedia;
+import group.xuxiake.common.mapper.*;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.show.ShareFileShowInfo;
 import group.xuxiake.common.entity.show.ShareFileShowList;
-import group.xuxiake.common.mapper.FileUploadMapper;
-import group.xuxiake.common.mapper.ShareFileMapper;
-import group.xuxiake.common.mapper.UserNetdiskMapper;
 import group.xuxiake.web.service.ShareFileService;
-import group.xuxiake.web.service.UserNetdiskService;
+import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
@@ -35,54 +35,58 @@ import java.util.*;
 public class ShareFileServiceImpl implements ShareFileService {
 
 	@Resource
-	private ShareFileMapper shareFileMapper;
+	private FileShareMapper fileShareMapper;
 	@Resource
-	private FileUploadMapper fileUploadMapper;
+	private UserFileMapper userFileMapper;
 	@Autowired
 	private HttpServletResponse response;
 	@Resource
-	private UserNetdiskMapper userNetdiskMapper;
+	private UserMapper userMapper;
 	@Resource
-	private UserNetdiskService userNetdiskService;
+	private UserService userService;
 	@Resource
 	private FastDFSClientWrapper fastDFSClientWrapper;
 	@Resource
 	private AppConfiguration appConfiguration;
+	@Resource
+	private FileOriginMapper fileOriginMapper;
+	@Resource
+	private FileMediaMapper fileMediaMapper;
 
 	/**
 	 * 创建分享文件
-	 * @param fileSaveName
+	 * @param fileKey
 	 * @return
 	 */
 	@Override
-	public Result shareFile(String fileSaveName) {
+	public Result shareFile(String fileKey) {
 
 		Result result = new Result();
 
-		FileUpload fileUpload = fileUploadMapper.findFileBySaveName(fileSaveName);
-		Integer shareUserId = Integer.valueOf(fileUpload.getUploadUserId());
+		UserFile fileUpload = userFileMapper.findFileByKey(fileKey);
+		Integer shareUserId = fileUpload.getUserId();
 		String shareId = RandomCodeUtil.getRandomShareId();
 		String sharePwd = RandomCodeUtil.getRandomSharePwd();
 
-		if (shareFileMapper.findByShareId(shareId) != null) {
+		if (fileShareMapper.findByShareId(shareId) != null) {
 			shareId = RandomCodeUtil.getRandomShareId();
 		}
 		Date shareTime = new Date();
-		ShareFile shareFile = new ShareFile();
-		shareFile.setShareId(shareId);
-		shareFile.setSharePwd(sharePwd);
-		shareFile.setShareUserId(shareUserId);
-		shareFile.setShareTime(shareTime);
-		shareFile.setShareStatus(NetdiskConstant.SHARE_STATUS_OF_NORMAL);
-		shareFile.setFileId(fileUpload.getId());
-		shareFile.setAccessTimes(0);
-		shareFile.setDownloadTimes(0);
-		shareFile.setSaveTimes(0);
+		FileShare fileShare = new FileShare();
+		fileShare.setShareId(shareId);
+		fileShare.setSharePwd(sharePwd);
+		fileShare.setShareUserId(shareUserId);
+		fileShare.setShareTime(shareTime);
+		fileShare.setShareStatus(NetdiskConstant.SHARE_STATUS_OF_NORMAL);
+		fileShare.setFileId(fileUpload.getId());
+		fileShare.setAccessTimes(0);
+		fileShare.setDownloadTimes(0);
+		fileShare.setSaveTimes(0);
 
-		shareFileMapper.insertSelective(shareFile);
+		fileShareMapper.insertSelective(fileShare);
 
 		Map<String, Object> map = new HashMap<>();
-		map.put("shareFile", shareFile);
+		map.put("shareFile", fileShare);
 		map.put("serverHost", appConfiguration.getCustomConfiguration().getServerHost());
 		result.setData(map);
 
@@ -101,7 +105,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 		if (shareId ==  null || "".equals(shareId)) {
 			return Result.paramIsNull(result);
 		}
-		ShareFileShowInfo shareFileInfo = shareFileMapper.getShareFileInfo(shareId);
+		ShareFileShowInfo shareFileInfo = fileShareMapper.getShareFileInfo(shareId);
 		if (shareFileInfo == null) {
 			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
@@ -110,23 +114,23 @@ public class ShareFileServiceImpl implements ShareFileService {
 		result.setData(shareFileInfo);
 
 		// 增加访问次数
-		ShareFile shareFile = shareFileMapper.findByShareId(shareId);
-		this.addAccessTimes(shareFile.getId());
+		FileShare fileShare = fileShareMapper.findByShareId(shareId);
+		this.addAccessTimes(fileShare.getId());
 		return result;
 	}
 
 	@Override
-	public ShareFile findByShareId(String shareId) {
-		return shareFileMapper.findByShareId(shareId);
+	public FileShare findByShareId(String shareId) {
+		return fileShareMapper.findByShareId(shareId);
 	}
 
 	@Override
 	public Result findAll(Page page) {
 
 		Result result = new Result();
-		UserNetdisk userNetdisk = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		PageHelper.startPage(page.getPageNum(), page.getPageSize());
-		List<ShareFileShowList> list = shareFileMapper.findAllByUserId(userNetdisk.getId(), page.getFileRealName());
+		List<ShareFileShowList> list = fileShareMapper.findAllByUserId(user.getId(), page.getFileRealName());
 		PageInfo<ShareFileShowList> pageInfo = new PageInfo<>(list);
 		Map<String, Object> map = new HashMap<>();
 		map.put("pageInfo", pageInfo);
@@ -139,23 +143,23 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 	@Override
 	public Integer addAccessTimes(Integer id) {
-		ShareFile shareFile = shareFileMapper.selectByPrimaryKey(id);
-		shareFile.setAccessTimes(shareFile.getAccessTimes() + 1);
-		return shareFileMapper.updateByPrimaryKeySelective(shareFile);
+		FileShare fileShare = fileShareMapper.selectByPrimaryKey(id);
+		fileShare.setAccessTimes(fileShare.getAccessTimes() + 1);
+		return fileShareMapper.updateByPrimaryKeySelective(fileShare);
 	}
 
 	@Override
 	public Integer addDownloadTimes(Integer id) {
-		ShareFile shareFile = shareFileMapper.selectByPrimaryKey(id);
+		FileShare shareFile = fileShareMapper.selectByPrimaryKey(id);
 		shareFile.setDownloadTimes(shareFile.getDownloadTimes() + 1);
-		return shareFileMapper.updateByPrimaryKeySelective(shareFile);
+		return fileShareMapper.updateByPrimaryKeySelective(shareFile);
 	}
 
 	@Override
 	public Integer addSaveTimes(Integer id) {
-		ShareFile shareFile = shareFileMapper.selectByPrimaryKey(id);
+		FileShare shareFile = fileShareMapper.selectByPrimaryKey(id);
 		shareFile.setSaveTimes(shareFile.getSaveTimes() + 1);
-		return shareFileMapper.updateByPrimaryKeySelective(shareFile);
+		return fileShareMapper.updateByPrimaryKeySelective(shareFile);
 	}
 
 	@Override
@@ -165,10 +169,10 @@ public class ShareFileServiceImpl implements ShareFileService {
 		if (id == null) {
 			return Result.paramIsNull(result);
 		}
-		ShareFile shareFile = new ShareFile();
+		FileShare shareFile = new FileShare();
 		shareFile.setId(id);
 		shareFile.setShareStatus(NetdiskConstant.SHARE_STATUS_OF_DEL);
-		shareFileMapper.updateByPrimaryKeySelective(shareFile);
+		fileShareMapper.updateByPrimaryKeySelective(shareFile);
 
 		return result;
 	}
@@ -187,7 +191,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return Result.paramIsNull(result);
 		}
 
-		ShareFile shareFile = shareFileMapper.findByShareId(shareId);
+		FileShare shareFile = fileShareMapper.findByShareId(shareId);
 		if (shareFile == null) {
 			// 资源不存在
 			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
@@ -220,7 +224,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return;
 		}
 
-		ShareFile shareFile = shareFileMapper.findByShareId(shareId);
+		FileShare shareFile = fileShareMapper.findByShareId(shareId);
 		if (shareFile == null) {
 			// 资源不存在
 			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
@@ -236,31 +240,32 @@ public class ShareFileServiceImpl implements ShareFileService {
 			this.printlnWithResponse(response, result);
 			return;
 		}
-		FileUpload fileUpload = null;
+		UserFile userFile = null;
 		if (fileId == null) {
-			fileUpload = fileUploadMapper.selectByPrimaryKey(shareFile.getFileId());
+			userFile = userFileMapper.selectByPrimaryKey(shareFile.getFileId());
 		} else {
 			// 检查fileId是否合法
-			List<Integer> childIds = fileUploadMapper.findChildIds(shareFile.getFileId());
+			List<Integer> childIds = userFileMapper.findChildIds(shareFile.getFileId());
 			if (!childIds.contains(fileId)) {
 				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_DOWNLOAD_WRONG);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_DOWNLOAD_WRONG));
 				this.printlnWithResponse(response, result);
 				return;
 			}
-			fileUpload = fileUploadMapper.selectByPrimaryKey(fileId);
+			userFile = userFileMapper.selectByPrimaryKey(fileId);
 		}
+		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 		//增加下载次数
 		this.addDownloadTimes(shareFile.getId());
-		String filePath = fileUpload.getFilePath();
+		String filePath = fileOrigin.getFilePath();
 		OutputStream out = null;
 		BufferedInputStream bis = null;
 		try {
 			bis = new BufferedInputStream(fastDFSClientWrapper.getInputStream(filePath));
 			// 设置响应头，控制浏览器下载该文件
-			response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(fileUpload.getFileRealName(), "UTF-8"));
+			response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(userFile.getFileName(), "UTF-8"));
 			// 设置文件大小
-			response.addHeader("Content-Length", fileUpload.getFileSize().toString());
+			response.addHeader("Content-Length", fileOrigin.getFileSize().toString());
 			out = response.getOutputStream();
 			byte buffer[] = new byte[1024];
 			int len = 0;
@@ -307,16 +312,16 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return Result.paramIsNull(result);
 		}
 
-		ShareFile shareFile = shareFileMapper.findByShareId(shareId);
+		FileShare fileShare = fileShareMapper.findByShareId(shareId);
 
-		if (shareFile == null) {
+		if (fileShare == null) {
 			// 资源不存在
 			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
 			return result;
 		}
 
-		if (!shareFile.getSharePwd().equals(sharePwd)) {
+		if (!fileShare.getSharePwd().equals(sharePwd)) {
 			// 密码错误
 			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
@@ -324,27 +329,26 @@ public class ShareFileServiceImpl implements ShareFileService {
 		}
 
 		// 要保存的文件或者是要保存的最外层文件夹
-		FileUpload fileForSave = null;
+		UserFile fileForSave = null;
 		if (fileId != null) {
-			fileForSave = fileUploadMapper.selectByPrimaryKey(fileId);
+			fileForSave = userFileMapper.selectByPrimaryKey(fileId);
 		} else {
-			fileForSave = fileUploadMapper.selectByPrimaryKey(shareFile.getFileId());
+			fileForSave = userFileMapper.selectByPrimaryKey(fileShare.getFileId());
 		}
 
-		UserNetdisk userNetdisk = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+		User user = (User) SecurityUtils.getSubject().getPrincipal();
 
 		if (fileForSave.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			// 检查用户目录是否存在"我的资源"文件夹
-			FileUpload fileUploadChek = new FileUpload();
-			fileUploadChek.setUploadUserId(userNetdisk.getId() + "");
-			fileUploadChek.setParentId(-1);
-			fileUploadChek.setFileRealName("我的资源");
-			List<FileUpload> list = fileUploadMapper.findFileByRealName(fileUploadChek);
-			if(list != null && list.size() > 0){
-				FileUpload fileUpload = list.get(0);
+			UserFile userFileChek = new UserFile();
+			userFileChek.setUserId(user.getId());
+			userFileChek.setParentId(-1);
+			userFileChek.setFileName("我的资源");
+			UserFile fileSearch = userFileMapper.findFileByRealName(userFileChek);
+			if(fileSearch != null){
 				// 检查目标父目录下是否存在同名文件夹
-				List<FileUpload> list2 = fileUploadMapper.findFileByRealName(fileUpload);
-				if (list2 != null && list2.size() > 0) {
+				UserFile fileSearch2 = userFileMapper.findFileByRealName(fileSearch);
+				if (fileSearch2 != null) {
 					// 目标目录存在同名文件夹，保存失败
 					result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_TARGET_DIR_EXIST_SAME_NAME_DIR);
 					result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_TARGET_DIR_EXIST_SAME_NAME_DIR));
@@ -356,7 +360,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 		// 检查fileId是否合法
 		if (fileId != null) {
-			List<Integer> childIds = fileUploadMapper.findChildIds(shareFile.getFileId());
+			List<Integer> childIds = userFileMapper.findChildIds(fileShare.getFileId());
 			if (!childIds.contains(fileId)) {
 				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED));
@@ -368,14 +372,14 @@ public class ShareFileServiceImpl implements ShareFileService {
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", fileForSave.getId());
 		map.put("sumsize", null);
-		fileUploadMapper.getSumsizeDel(map);
+		userFileMapper.getSumsizeDel(map);
 		Long sumSize = null;
 		if(map.get("sumsize") != null) {
 			sumSize = Long.valueOf(map.get("sumsize") + "");
 		}
 
-		long totalMemory = Long.valueOf(userNetdisk.getTotalMemory());
-		long usedMemory = Long.valueOf(userNetdisk.getUsedMemory());
+		long totalMemory = user.getTotalMemory();
+		long usedMemory = user.getUsedMemory();
 		long availableMemory = totalMemory - usedMemory;
 		if (availableMemory < sumSize) {
 
@@ -385,18 +389,18 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return result;
 		}
 		usedMemory = usedMemory + sumSize;
-		userNetdisk.setUsedMemory(usedMemory + "");
-		userNetdiskMapper.updateByPrimaryKeySelective(userNetdisk);
+		user.setUsedMemory(usedMemory);
+		userMapper.updateByPrimaryKeySelective(user);
 
 		// 递归保存文件夹内的文件到网盘
-		this.saveToCloudIteration(fileForSave.getId(), null, userNetdisk.getId(), shareFile);
+		this.saveToCloudIteration(fileForSave.getId(), null, user.getId(), fileShare);
 
 		result.setMsg("文件已成功保存到\"我的资源\"文件夹！");
 
 		// 更新用户信息
-		userNetdiskService.updatePrincipal();
+		userService.updatePrincipal();
 		// 增加保存次数
-		this.addSaveTimes(shareFile.getId());
+		this.addSaveTimes(fileShare.getId());
 		return result;
 	}
 
@@ -415,7 +419,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return Result.paramIsNull(result);
 		}
 
-		ShareFile shareFile = shareFileMapper.findByShareId(shareId);
+		FileShare shareFile = fileShareMapper.findByShareId(shareId);
 
 		if (shareFile == null) {
 			// 资源不存在
@@ -433,7 +437,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 		// 检查parentId是否合法
 		if (parentId != null) {
-			List<Integer> childIds = fileUploadMapper.findChildIds(shareFile.getFileId());
+			List<Integer> childIds = userFileMapper.findChildIds(shareFile.getFileId());
 			if (!childIds.contains(parentId)) {
 				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_LIST_WRONG);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_LIST_WRONG));
@@ -441,21 +445,62 @@ public class ShareFileServiceImpl implements ShareFileService {
 			}
 		}
 
-		List<FileUpload> files = new ArrayList<>();
+		UserFile param = new UserFile();
 		if (parentId == null) {
-			FileUpload fileUpload = fileUploadMapper.selectByPrimaryKey(shareFile.getFileId());
-			files.add(fileUpload);
+			param.setId(shareFile.getFileId());
 		} else {
-			FileUpload fileUpload = new FileUpload();
-			fileUpload.setUploadUserId(shareFile.getShareUserId() + "");
-			fileUpload.setParentId(parentId);
-			files = fileUploadMapper.findAllFile(fileUpload, null);
+			param.setUserId(shareFile.getShareUserId());
+			param.setParentId(parentId);
 		}
+		List<FileShowInfo> files = userFileMapper.findAllFile(param, null);
 		Map<String, Object> map = new HashMap<>();
 		map.put("nginxServer", appConfiguration.getFdfsNginxServer());
 		map.put("files", files);
 		result.setData(map);
 
+		return result;
+	}
+
+	/**
+	 * 获取分享文件媒体信息
+	 * @param shareId
+	 * @param sharePwd
+	 * @param fileId
+	 * @return
+	 */
+	@Override
+	public Result getFileMediaInfo(String shareId, String sharePwd, Integer fileId) {
+
+		Result result = new Result();
+		if (shareId == null || "".equals(shareId) || sharePwd == null || "".equals(sharePwd)) {
+			return Result.paramIsNull(result);
+		}
+
+		FileShare fileShare = fileShareMapper.findByShareId(shareId);
+		if (fileShare == null) {
+			// 资源不存在
+			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
+			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
+			return result;
+		}
+		if (!fileShare.getSharePwd().equals(sharePwd)) {
+			// 密码错误
+			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
+			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
+			return result;
+		}
+		if (fileShare.getFileId().intValue() != fileId) {
+			// 检查fileId是否合法
+			List<Integer> childIds = userFileMapper.findChildIds(fileShare.getFileId());
+			if (!childIds.contains(fileId)) {
+				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG));
+				return result;
+			}
+		}
+		UserFile userFile = userFileMapper.selectByPrimaryKey(fileId);
+		FileShowMedia fileMediaInfo = fileMediaMapper.getFileMediaInfo(userFile.getKey());
+		result.setData(fileMediaInfo);
 		return result;
 	}
 
@@ -475,49 +520,50 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 * @param oldParentId 旧文件父id
 	 * @param newParentId 新文件父id
 	 * @param userId 保存文件用户id
-	 * @param shareFile 分享文件
+	 * @param fileShare 分享文件
 	 */
-	public void saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, ShareFile shareFile) {
+	public void saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, FileShare fileShare) {
 
-		FileUpload fileUpload = fileUploadMapper.selectByPrimaryKey(oldParentId);
-		fileUpload.setId(null);
-		fileUpload.setFileSaveName(FileUtil.makeDirSaveName());
-		fileUpload.setUploadTime(new Date());
-		fileUpload.setUploadUserId(userId + "");
+		UserFile userFile = userFileMapper.selectByPrimaryKey(oldParentId);
+		userFile.setId(null);
+		userFile.setKey(FileUtil.makeFileKey());
+		userFile.setCreateTime(new Date());
+		userFile.setUpdateTime(new Date());
+		userFile.setUserId(userId);
 
 		if (newParentId == null) {
 			// 检查用户目录是否存在"我的资源"文件夹
-			FileUpload fileUploadChek = new FileUpload();
-			fileUploadChek.setUploadUserId(userId + "");
-			fileUploadChek.setParentId(-1);
-			fileUploadChek.setFileRealName("我的资源");
-			List<FileUpload> list = fileUploadMapper.findFileByRealName(fileUploadChek);
-			if(list.size() == 0){
+			UserFile fileChek = new UserFile();
+			fileChek.setUserId(userId);
+			fileChek.setParentId(-1);
+			fileChek.setFileName("我的资源");
+			UserFile fileSearch = userFileMapper.findFileByRealName(fileChek);
+			if(fileSearch == null){
 
-				fileUploadChek.setFileSaveName(FileUtil.makeDirSaveName());
-				fileUploadChek.setUploadTime(new Date());
-				fileUploadChek.setFileType(NetdiskConstant.FILE_TYPE_OF_DIR);
-				fileUploadChek.setIsDir(NetdiskConstant.FILE_IS_DIR);
-				fileUploadMapper.insertSelective(fileUploadChek);
-				fileUpload.setParentId(fileUploadChek.getId());
+				fileChek.setKey(FileUtil.makeFileKey());
+				fileChek.setCreateTime(new Date());
+				fileChek.setUpdateTime(new Date());
+				fileChek.setIsDir(NetdiskConstant.FILE_IS_DIR);
+				userFileMapper.insertSelective(fileChek);
+				userFile.setParentId(fileChek.getId());
 			}else {
-				fileUpload.setParentId(list.get(0).getId());
+				userFile.setParentId(fileSearch.getId());
 			}
 		} else {
-			fileUpload.setParentId(newParentId);
+			userFile.setParentId(newParentId);
 		}
 
-		fileUploadMapper.insertSelective(fileUpload);
+		userFileMapper.insertSelective(userFile);
 
-		if (fileUpload.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			// 为文件夹，继续递归
-			FileUpload fileUploadSearch = new FileUpload();
-			fileUploadSearch.setParentId(oldParentId);
-			fileUploadSearch.setUploadUserId(shareFile.getShareUserId() + "");
-			List<FileUpload> files = fileUploadMapper.findAllFile(fileUploadSearch, null);
+			UserFile fileSearch = new UserFile();
+			fileSearch.setParentId(oldParentId);
+			fileSearch.setUserId(fileShare.getShareUserId());
+			List<FileShowInfo> files = userFileMapper.findAllFile(fileSearch, null);
 			if (files != null && files.size() > 0) {
-				for (FileUpload f : files) {
-					this.saveToCloudIteration(f.getId(), fileUpload.getId(), userId, shareFile);
+				for (FileShowInfo f : files) {
+					this.saveToCloudIteration(f.getId(), userFile.getId(), userId, fileShare);
 				}
 			}
 		}

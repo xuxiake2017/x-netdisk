@@ -1,16 +1,15 @@
 package group.xuxiake.web.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.SysMessage;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.chat.ChatMessageBase;
+import group.xuxiake.common.mapper.SysMessageMapper;
+import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.web.configuration.AppConfiguration;
-import group.xuxiake.common.entity.Message;
-import group.xuxiake.common.entity.UserNetdisk;
-import group.xuxiake.common.mapper.MessageMapper;
-import group.xuxiake.common.mapper.UserNetdiskMapper;
 import group.xuxiake.web.service.VerifyService;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -27,9 +26,9 @@ import java.util.Map;
 public class VerifyServiceImpl implements VerifyService {
 
     @Resource
-    private UserNetdiskMapper userNetdiskMapper;
+    private UserMapper userMapper;
     @Resource
-    private MessageMapper messageMapper;
+    private SysMessageMapper messageMapper;
     @Autowired
     private HttpSession session;
     @Resource
@@ -57,29 +56,29 @@ public class VerifyServiceImpl implements VerifyService {
             return result;
         }
         Integer userId = (Integer) map.get("id");
-        UserNetdisk userNetdiskCheck = userNetdiskMapper.selectByPrimaryKey(userId);
-        if (userNetdiskCheck != null) {
-            if (new Integer(userNetdiskCheck.getUserStatus()) != NetdiskConstant.USER_STATUS_NOT_VERIFY) {
+        User userCheck = userMapper.selectByPrimaryKey(userId);
+        if (userCheck != null) {
+            if (new Integer(userCheck.getUserStatus()) != NetdiskConstant.USER_STATUS_NOT_VERIFY) {
                 // 已验证
                 result.setData(NetdiskErrMsgConstant.VERIFY_HAVING_BEEN_VERIFIED);
                 return result;
             }
         }
-        UserNetdisk userNetdisk = new UserNetdisk();
-        userNetdisk.setId(userId);
-        userNetdisk.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL + "");
-        userNetdiskMapper.updateByPrimaryKeySelective(userNetdisk);
+        User user = new User();
+        user.setId(userId);
+        user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
+        userMapper.updateByPrimaryKeySelective(user);
         ChatMessageBase chatMessageBase = new ChatMessageBase();
         chatMessageBase.setCreateTime(new Date());
         chatMessageBase.setType("SYSTEM");
         chatMessageBase.setContent("updatePrincipal");
 //        ChatWebSocketHandler.sendMessage(userId, JSONObject.toJSONString(chatMessageBase));
 
-        Message message = new Message();
+        SysMessage message = new SysMessage();
         message.setType(NetdiskConstant.MESSAGE_TYPE_OF_SUCCESS);
         message.setTitle("账户激活成功");
         message.setDescription("您的账户激活成功，所有功能恢复正常使用");
-        message.setUserId(userNetdisk.getId());
+        message.setUserId(user.getId());
         messageMapper.insertSelective(message);
 
         return result;
@@ -87,16 +86,16 @@ public class VerifyServiceImpl implements VerifyService {
 
     /**
      * 给手机发送短信验证码
-     * @param userNetdisk
+     * @param phone
      * @return
      */
     @Override
-    public Result sendCodeToPhone(UserNetdisk userNetdisk) {
+    public Result sendCodeToPhone(String phone) {
 
         Result result = new Result();
         String smsCode = null;
         try {
-            smsCode = SmsSendUtil.regNetDisk(userNetdisk.getPhone());
+            smsCode = SmsSendUtil.regNetDisk(phone);
 //			smsCode = "1234";
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {

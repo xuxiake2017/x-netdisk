@@ -1,8 +1,8 @@
 package group.xuxiake.web.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.web.configuration.AppConfiguration;
-import group.xuxiake.common.entity.UserNetdisk;
 import group.xuxiake.web.service.TulingRebootService;
 import group.xuxiake.web.util.HttpClientUtils;
 import group.xuxiake.common.entity.Result;
@@ -36,7 +36,7 @@ public class TulingRebootServiceImpl implements TulingRebootService {
         if (StringUtils.isAnyEmpty(message)) {
             return Result.paramIsNull(result);
         }
-        UserNetdisk user = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
 
         Map<String, Object> inputText = new HashMap<>();
         inputText.put("text", message);

@@ -127,16 +127,24 @@ public class FileUtil {
 		}
 	}
 
-	// 生成上传文件的文件名，文件名以：日期+"_"uuid
-	public static String makeFileSaveName(String fileExtName) {
+	/**
+	 * 生成临时文件名
+	 * @param fileExtName
+	 * @return
+	 */
+	public static String makeFileTempName(String fileExtName) {
 		// 为防止文件覆盖的现象发生，要为上传文件产生一个唯一的文件名
 		Date date = new Date();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");
 		String formatDate = sdf.format(date);
 		return formatDate + "_" + UUID.randomUUID().toString() + "." + fileExtName;
 	}
-	//生成新建文件夹的fileSaveName
-	public static String makeDirSaveName() {
+
+	/**
+	 * 生成文件标识符
+	 * @return
+	 */
+	public static String makeFileKey () {
 		// 为防止文件覆盖的现象发生，要为上传文件产生一个唯一的文件名
 		Date date = new Date();
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss");

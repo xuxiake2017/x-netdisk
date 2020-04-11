@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.FileOriginMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.FileOrigin" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="file_path" property="filePath" jdbcType="VARCHAR" />
+    <result column="preview_url" property="previewUrl" jdbcType="VARCHAR" />
+    <result column="file_real_name" property="fileRealName" jdbcType="VARCHAR" />
+    <result column="file_ext_name" property="fileExtName" jdbcType="VARCHAR" />
+    <result column="file_size" property="fileSize" jdbcType="BIGINT" />
+    <result column="file_type" property="fileType" jdbcType="INTEGER" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="md5_hex" property="md5Hex" jdbcType="VARCHAR" />
+    <result column="file_status" property="fileStatus" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, file_path, preview_url, file_real_name, file_ext_name, file_size, file_type, 
+    user_id, md5_hex, file_status, create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_file_origin
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_file_origin
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.FileOrigin" >
+    insert into x_file_origin (id, file_path, preview_url, 
+      file_real_name, file_ext_name, file_size, 
+      file_type, user_id, md5_hex, 
+      file_status, create_time, update_time
+      )
+    values (#{id,jdbcType=INTEGER}, #{filePath,jdbcType=VARCHAR}, #{previewUrl,jdbcType=VARCHAR}, 
+      #{fileRealName,jdbcType=VARCHAR}, #{fileExtName,jdbcType=VARCHAR}, #{fileSize,jdbcType=BIGINT}, 
+      #{fileType,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, #{md5Hex,jdbcType=VARCHAR}, 
+      #{fileStatus,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.FileOrigin" useGeneratedKeys="true" keyProperty="id" keyColumn="id" >
+    insert into x_file_origin
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="filePath != null" >
+        file_path,
+      </if>
+      <if test="previewUrl != null" >
+        preview_url,
+      </if>
+      <if test="fileRealName != null" >
+        file_real_name,
+      </if>
+      <if test="fileExtName != null" >
+        file_ext_name,
+      </if>
+      <if test="fileSize != null" >
+        file_size,
+      </if>
+      <if test="fileType != null" >
+        file_type,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="md5Hex != null" >
+        md5_hex,
+      </if>
+      <if test="fileStatus != null" >
+        file_status,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="filePath != null" >
+        #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="previewUrl != null" >
+        #{previewUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="fileRealName != null" >
+        #{fileRealName,jdbcType=VARCHAR},
+      </if>
+      <if test="fileExtName != null" >
+        #{fileExtName,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSize != null" >
+        #{fileSize,jdbcType=BIGINT},
+      </if>
+      <if test="fileType != null" >
+        #{fileType,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="md5Hex != null" >
+        #{md5Hex,jdbcType=VARCHAR},
+      </if>
+      <if test="fileStatus != null" >
+        #{fileStatus,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.FileOrigin" >
+    update x_file_origin
+    <set >
+      <if test="filePath != null" >
+        file_path = #{filePath,jdbcType=VARCHAR},
+      </if>
+      <if test="previewUrl != null" >
+        preview_url = #{previewUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="fileRealName != null" >
+        file_real_name = #{fileRealName,jdbcType=VARCHAR},
+      </if>
+      <if test="fileExtName != null" >
+        file_ext_name = #{fileExtName,jdbcType=VARCHAR},
+      </if>
+      <if test="fileSize != null" >
+        file_size = #{fileSize,jdbcType=BIGINT},
+      </if>
+      <if test="fileType != null" >
+        file_type = #{fileType,jdbcType=INTEGER},
+      </if>
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="md5Hex != null" >
+        md5_hex = #{md5Hex,jdbcType=VARCHAR},
+      </if>
+      <if test="fileStatus != null" >
+        file_status = #{fileStatus,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.FileOrigin" >
+    update x_file_origin
+    set file_path = #{filePath,jdbcType=VARCHAR},
+      preview_url = #{previewUrl,jdbcType=VARCHAR},
+      file_real_name = #{fileRealName,jdbcType=VARCHAR},
+      file_ext_name = #{fileExtName,jdbcType=VARCHAR},
+      file_size = #{fileSize,jdbcType=BIGINT},
+      file_type = #{fileType,jdbcType=INTEGER},
+      user_id = #{userId,jdbcType=INTEGER},
+      md5_hex = #{md5Hex,jdbcType=VARCHAR},
+      file_status = #{fileStatus,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <!-- 根据MD5值查找文件 -->
+  <select id="findFileByMd5Hex" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from x_file_origin
+    WHERE
+    md5_Hex=#{md5Hex}
+  </select>
+
+  <!--根据userFileId查找-->
+  <select id="findByUserFileId" resultMap="BaseResultMap">
+    select
+      file_origin.id, file_origin.file_path, file_origin.preview_url, file_origin.file_real_name,
+      file_origin.file_ext_name, file_origin.file_size, file_origin.file_type,
+      file_origin.user_id, file_origin.md5_hex, file_origin.file_status, file_origin.create_time, file_origin.update_time
+    from
+    x_file_origin file_origin,
+    x_user_file user_file
+    WHERE
+    file_origin.id = user_file.origin_id
+    AND user_file.id = #{userFileId}
+    AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    AND file_origin.file_status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
+  </select>
+</mapper>

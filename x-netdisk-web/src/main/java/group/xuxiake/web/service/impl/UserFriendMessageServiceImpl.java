@@ -3,9 +3,9 @@ package group.xuxiake.web.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import group.xuxiake.common.entity.RouteShowSimple;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.Page;
-import group.xuxiake.common.entity.UserNetdisk;
 import group.xuxiake.common.entity.show.UserFriendListShow;
 import group.xuxiake.common.entity.show.UserFriendMessageShow;
 import group.xuxiake.common.mapper.UserFriendListMapper;
@@ -61,7 +61,7 @@ public class UserFriendMessageServiceImpl implements UserFriendMessageService {
     public Result getFriendMessages() {
 
         Result result = new Result();
-        UserNetdisk user = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
 
         List<UserFriendListShow> friendList = userFriendListMapper.getFriendList(user.getId());
         List<UserFriendMessageShow> friendMessages = new ArrayList<>();
@@ -91,7 +91,7 @@ public class UserFriendMessageServiceImpl implements UserFriendMessageService {
     public Result getFriendMessages(Page page, Integer friendId) {
 
         Result result = new Result();
-        UserNetdisk user = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
         PageHelper.startPage(page.getPageNum(), page.getPageSize());
         List<UserFriendMessageShow> list = userFriendMessageMapper.getFriendMessages(user.getId(), friendId, null);
         list.sort(new Comparator<UserFriendMessageShow>() {

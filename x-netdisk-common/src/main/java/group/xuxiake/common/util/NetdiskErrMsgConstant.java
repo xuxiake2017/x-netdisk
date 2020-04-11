@@ -81,6 +81,8 @@ public class NetdiskErrMsgConstant {
 		errMessage.put(NetdiskErrMsgConstant.UN_AVAILABLE_CHAT_SERVER, "无可用的chat server");
 		errMessage.put(NetdiskErrMsgConstant.GET_CHAT_SERVER_AND_TOKEN_IS_NULL, "token为空");
 		errMessage.put(NetdiskErrMsgConstant.UN_AVAILABLE_ROUTE_SERVER, "无可用的route server");
+
+		errMessage.put(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG, "获取分享文件媒体信息错误!");
 	}
 	public static String getErrMessage(Integer errCode) {
 
@@ -221,5 +223,8 @@ public class NetdiskErrMsgConstant {
 	public static final int GET_CHAT_SERVER_AND_TOKEN_IS_NULL = 20182;
 	/*无可用的route server*/
 	public static final int UN_AVAILABLE_ROUTE_SERVER = 20183;
+
+	/*获取分享文件媒体信息-错误*/
+	public static final int SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG = 20191;
 
 }

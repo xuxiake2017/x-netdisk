@@ -1,6 +1,5 @@
 package group.xuxiake.web.service;
 
-import group.xuxiake.common.entity.UserNetdisk;
 import group.xuxiake.common.entity.Result;
 
 public interface VerifyService {
@@ -13,8 +12,8 @@ public interface VerifyService {
 
     /**
      * 给手机发送短信验证码
-     * @param userNetdisk
+     * @param phone
      * @return
      */
-    Result sendCodeToPhone(UserNetdisk userNetdisk);
+    Result sendCodeToPhone(String phone);
 }

@@ -1,7 +1,7 @@
 package group.xuxiake.chatserver.socketio.entity;
 
 import com.corundumstudio.socketio.SocketIOClient;
-import group.xuxiake.common.entity.UserNetdisk;
+import group.xuxiake.common.entity.User;
 import lombok.Data;
 
 /**
@@ -13,6 +13,6 @@ import lombok.Data;
 public class SocketIOConnection {
 
     private String token;
-    private UserNetdisk user;
+    private User user;
     private SocketIOClient socketIOClient;
 }

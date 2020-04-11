@@ -1,9 +1,7 @@
 package group.xuxiake.web.util;
 
-import it.sauronsoftware.jave.Encoder;
+import group.xuxiake.common.entity.FileMedia;
 import it.sauronsoftware.jave.EncoderException;
-import it.sauronsoftware.jave.MultimediaInfo;
-import it.sauronsoftware.jave.VideoInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,7 +40,7 @@ public class ConvertVideoUtil {
 	}
 
 	// ffmpeg能解析的格式：（asx，asf，mpg，wmv，3gp，mp4，mov，avi，flv等）
-	public static void convertToMp4(String[] paths) throws EncoderException {
+	public static void convertToMp4(String[] paths, FileMedia fileMedia) throws EncoderException {
 
 		List<String> command = new ArrayList<String>();
 		// 转码命令：ffmpeg -y -i 1.mp4 -vf scale="360:trunc(ow/a/2)*2" -vcodec h264 output.mp4 
@@ -55,15 +53,8 @@ public class ConvertVideoUtil {
 		command.add("-i");
 		command.add(paths[0]);
 
-		// 获取视频分辨率时长信息
-		MultimediaInfo mi = new Encoder().getInfo(new File(paths[0]));
-		long duration = mi.getDuration();
-		VideoInfo videoInfo = mi.getVideo();
-		int height = videoInfo.getSize().getHeight();
-		int width = videoInfo.getSize().getWidth();
-		log.debug("--------------------------------------------------width:{}", width);
 		String vf_ = "";
-		if (width > 960) {
+		if (fileMedia.getVideoWidth() > 960) {
 			vf_ = "scale=960:trunc(ow/a/2)*2";
 		} else {
 			vf_ = "scale=480:trunc(ow/a/2)*2";

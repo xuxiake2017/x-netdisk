@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.FileShareMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.FileShare" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="share_id" property="shareId" jdbcType="VARCHAR" />
+    <result column="share_user_id" property="shareUserId" jdbcType="INTEGER" />
+    <result column="share_pwd" property="sharePwd" jdbcType="VARCHAR" />
+    <result column="is_public" property="isPublic" jdbcType="INTEGER" />
+    <result column="share_time" property="shareTime" jdbcType="TIMESTAMP" />
+    <result column="over_time" property="overTime" jdbcType="TIMESTAMP" />
+    <result column="share_status" property="shareStatus" jdbcType="INTEGER" />
+    <result column="file_id" property="fileId" jdbcType="INTEGER" />
+    <result column="access_times" property="accessTimes" jdbcType="INTEGER" />
+    <result column="download_times" property="downloadTimes" jdbcType="INTEGER" />
+    <result column="save_times" property="saveTimes" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, share_id, share_user_id, share_pwd, is_public, share_time, over_time, share_status, 
+    file_id, access_times, download_times, save_times
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_file_share
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_file_share
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.FileShare" >
+    insert into x_file_share (id, share_id, share_user_id, 
+      share_pwd, is_public, share_time, 
+      over_time, share_status, file_id, 
+      access_times, download_times, save_times
+      )
+    values (#{id,jdbcType=INTEGER}, #{shareId,jdbcType=VARCHAR}, #{shareUserId,jdbcType=INTEGER}, 
+      #{sharePwd,jdbcType=VARCHAR}, #{isPublic,jdbcType=INTEGER}, #{shareTime,jdbcType=TIMESTAMP}, 
+      #{overTime,jdbcType=TIMESTAMP}, #{shareStatus,jdbcType=INTEGER}, #{fileId,jdbcType=INTEGER}, 
+      #{accessTimes,jdbcType=INTEGER}, #{downloadTimes,jdbcType=INTEGER}, #{saveTimes,jdbcType=INTEGER}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.FileShare" useGeneratedKeys="true" keyProperty="id" keyColumn="id" >
+    insert into x_file_share
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="shareId != null" >
+        share_id,
+      </if>
+      <if test="shareUserId != null" >
+        share_user_id,
+      </if>
+      <if test="sharePwd != null" >
+        share_pwd,
+      </if>
+      <if test="isPublic != null" >
+        is_public,
+      </if>
+      <if test="shareTime != null" >
+        share_time,
+      </if>
+      <if test="overTime != null" >
+        over_time,
+      </if>
+      <if test="shareStatus != null" >
+        share_status,
+      </if>
+      <if test="fileId != null" >
+        file_id,
+      </if>
+      <if test="accessTimes != null" >
+        access_times,
+      </if>
+      <if test="downloadTimes != null" >
+        download_times,
+      </if>
+      <if test="saveTimes != null" >
+        save_times,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="shareId != null" >
+        #{shareId,jdbcType=VARCHAR},
+      </if>
+      <if test="shareUserId != null" >
+        #{shareUserId,jdbcType=INTEGER},
+      </if>
+      <if test="sharePwd != null" >
+        #{sharePwd,jdbcType=VARCHAR},
+      </if>
+      <if test="isPublic != null" >
+        #{isPublic,jdbcType=INTEGER},
+      </if>
+      <if test="shareTime != null" >
+        #{shareTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="overTime != null" >
+        #{overTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="shareStatus != null" >
+        #{shareStatus,jdbcType=INTEGER},
+      </if>
+      <if test="fileId != null" >
+        #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="accessTimes != null" >
+        #{accessTimes,jdbcType=INTEGER},
+      </if>
+      <if test="downloadTimes != null" >
+        #{downloadTimes,jdbcType=INTEGER},
+      </if>
+      <if test="saveTimes != null" >
+        #{saveTimes,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.FileShare" >
+    update x_file_share
+    <set >
+      <if test="shareId != null" >
+        share_id = #{shareId,jdbcType=VARCHAR},
+      </if>
+      <if test="shareUserId != null" >
+        share_user_id = #{shareUserId,jdbcType=INTEGER},
+      </if>
+      <if test="sharePwd != null" >
+        share_pwd = #{sharePwd,jdbcType=VARCHAR},
+      </if>
+      <if test="isPublic != null" >
+        is_public = #{isPublic,jdbcType=INTEGER},
+      </if>
+      <if test="shareTime != null" >
+        share_time = #{shareTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="overTime != null" >
+        over_time = #{overTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="shareStatus != null" >
+        share_status = #{shareStatus,jdbcType=INTEGER},
+      </if>
+      <if test="fileId != null" >
+        file_id = #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="accessTimes != null" >
+        access_times = #{accessTimes,jdbcType=INTEGER},
+      </if>
+      <if test="downloadTimes != null" >
+        download_times = #{downloadTimes,jdbcType=INTEGER},
+      </if>
+      <if test="saveTimes != null" >
+        save_times = #{saveTimes,jdbcType=INTEGER},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.FileShare" >
+    update x_file_share
+    set share_id = #{shareId,jdbcType=VARCHAR},
+      share_user_id = #{shareUserId,jdbcType=INTEGER},
+      share_pwd = #{sharePwd,jdbcType=VARCHAR},
+      is_public = #{isPublic,jdbcType=INTEGER},
+      share_time = #{shareTime,jdbcType=TIMESTAMP},
+      over_time = #{overTime,jdbcType=TIMESTAMP},
+      share_status = #{shareStatus,jdbcType=INTEGER},
+      file_id = #{fileId,jdbcType=INTEGER},
+      access_times = #{accessTimes,jdbcType=INTEGER},
+      download_times = #{downloadTimes,jdbcType=INTEGER},
+      save_times = #{saveTimes,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <resultMap type="group.xuxiake.common.entity.show.ShareFileShowInfo" id="shareInfoResultMap">
+    <result column="share_Id" property="shareId"/>
+    <result column="share_Time" property="shareTime"/>
+    <result column="username" property="shareUser"/>
+    <result column="avatar" property="avatar"/>
+    <result column="file_id" property="fileId" />
+    <result column="File_Save_Name" property="fileSaveName" />
+    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_Size" property="fileSize" />
+    <result column="file_Type" property="fileType" />
+    <result column="is_Dir" property="isDir" />
+  </resultMap>
+
+  <select id="getShareFileInfo" resultMap="shareInfoResultMap">
+  	SELECT
+  	  file_share.share_Id,
+  	  file_share.share_Time,
+  	  x_user.username,
+  	  x_user.avatar,
+  	  user_file.id file_id,
+  	  user_file.`key`,
+  	  user_file.file_name,
+  	  file_origin.file_size,
+  	  IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type,
+  	  user_file.is_dir
+  	FROM
+  	  x_file_share file_share,
+  	  x_user x_user,
+  	  x_user_file user_file
+  	  LEFT JOIN x_file_origin file_origin ON file_origin.id = user_file.origin_id
+  	WHERE
+  	file_share.share_Id = #{shareId}
+  	AND file_share.file_id = user_file.id
+  	AND file_share.share_status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+  	AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+  	AND file_share.share_user_id = x_user.id
+  </select>
+
+  <select id="findByShareId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from x_file_share
+    where share_Id = #{shareId}
+    and share_status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+  </select>
+
+  <resultMap type="group.xuxiake.common.entity.show.ShareFileShowList" id="ResultMapShowList">
+
+    <result column="id" property="id"></result>
+    <result column="share_Id" property="shareId" />
+    <result column="share_Pwd" property="sharePwd" />
+    <result column="share_Time" property="shareTime" />
+    <result column="access_times" property="accessTimes" />
+    <result column="download_times" property="downloadTimes" />
+    <result column="save_times" property="saveTimes" />
+    <result column="file_id" property="fileId" />
+    <result column="File_Save_Name" property="fileSaveName" />
+    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_Size" property="fileSize" />
+    <result column="file_Type" property="fileType" />
+    <result column="is_Dir" property="isDir" />
+  </resultMap>
+
+  <select id="findAllByUserId" resultMap="ResultMapShowList">
+    SELECT
+      file_share.id,
+      file_share.share_Id,
+      file_share.share_Pwd,
+      file_share.share_Time,
+      file_share.access_times,
+      file_share.download_times,
+      file_share.save_times,
+      user_file.`key`,
+      user_file.file_name,
+      file_origin.file_size,
+      file_origin.file_type,
+      user_file.is_dir
+    FROM
+      x_file_share file_share,
+      x_user_file user_file,
+      x_file_origin file_origin
+    WHERE
+    file_share.share_user_id = #{userId}
+    AND file_share.share_status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+    AND file_share.file_id = user_file.id
+    AND user_file.origin_id = file_origin.id
+    AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    <if test="fileName != null and fileName != ''">
+      AND user_file.file_name LIKE CONCAT('%', #{fileName}, '%')
+    </if>
+    ORDER BY file_share.share_time DESC
+  </select>
+</mapper>

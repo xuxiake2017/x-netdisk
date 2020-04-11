@@ -1,12 +1,10 @@
 package group.xuxiake.route.service;
 
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.RouteShowSimple;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
 import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
-
-import javax.servlet.http.HttpSession;
 
 /**
  * Author by xuxiake, Date on 2020/3/5 23:58.
@@ -62,7 +60,7 @@ public interface RouteService {
      * @param recycle
      * @return
      */
-    Result delFile(Recycle recycle);
+    Result delFile(FileRecycle recycle);
 
-    Result delJob(Recycle recycle);
+    Result delJob(FileRecycle recycle);
 }

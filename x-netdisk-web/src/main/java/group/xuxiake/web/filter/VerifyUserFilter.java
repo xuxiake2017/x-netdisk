@@ -1,7 +1,7 @@
 package group.xuxiake.web.filter;
 
 import com.google.gson.Gson;
-import group.xuxiake.common.entity.UserNetdisk;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.entity.Result;
@@ -23,7 +23,7 @@ public class VerifyUserFilter extends UserFilter {
         HttpServletRequest request = (HttpServletRequest) arg0;
         HttpServletResponse response = (HttpServletResponse) arg1;
         if (SecurityUtils.getSubject().isAuthenticated()) {
-            UserNetdisk userNetdisk = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+            User userNetdisk = (User) SecurityUtils.getSubject().getPrincipal();
             Integer userStatus = new Integer(userNetdisk.getUserStatus());
             if (userStatus == NetdiskConstant.USER_STATUS_NORMAL || userStatus == NetdiskConstant.USER_STATUS_VIP) {
                 return true;

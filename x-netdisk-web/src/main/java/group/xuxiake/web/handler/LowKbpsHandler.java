@@ -1,7 +1,7 @@
 package group.xuxiake.web.handler;
 
-import group.xuxiake.common.entity.FileUpload;
-import group.xuxiake.common.mapper.FileUploadMapper;
+import group.xuxiake.common.entity.FileOrigin;
+import group.xuxiake.common.mapper.FileOriginMapper;
 import group.xuxiake.web.util.ConvertVideoUtil;
 import group.xuxiake.web.util.FastDFSClientWrapper;
 import lombok.extern.slf4j.Slf4j;
@@ -16,17 +16,17 @@ import java.io.File;
 @Slf4j
 public class LowKbpsHandler implements Runnable {
 
-    private FileUploadMapper fileUploadMapper;
+    private FileOriginMapper fileOriginMapper;
     private FastDFSClientWrapper fastDFSClientWrapper;
     private String[] paths;
-    private FileUpload fileUpload;
+    private FileOrigin fileOrigin;
     private String nginxServer;
 
-    public LowKbpsHandler(FileUploadMapper fileUploadMapper, FastDFSClientWrapper fastDFSClientWrapper, String[] paths, FileUpload fileUpload, String nginxServer) {
-        this.fileUploadMapper = fileUploadMapper;
+    public LowKbpsHandler(FileOriginMapper fileOriginMapper, FastDFSClientWrapper fastDFSClientWrapper, String[] paths, FileOrigin fileOrigin, String nginxServer) {
+        this.fileOriginMapper = fileOriginMapper;
         this.fastDFSClientWrapper = fastDFSClientWrapper;
         this.paths = paths;
-        this.fileUpload = fileUpload;
+        this.fileOrigin = fileOrigin;
         this.nginxServer = nginxServer;
     }
 
@@ -38,14 +38,15 @@ public class LowKbpsHandler implements Runnable {
             ConvertVideoUtil.lowKmps(paths);
             Long end = System.currentTimeMillis();
             log.info("降低MP3音质耗时：" + (end - start) / 1000 + "秒");
-            String mediaCachePath = nginxServer + "/" + fastDFSClientWrapper.uploadFile(new File(paths[1]), "mp3");
-            fileUpload.setMediaCachePath(mediaCachePath);
-            fileUploadMapper.updateFileSelective(fileUpload);
+            String previewUrl = nginxServer + "/" + fastDFSClientWrapper.uploadFile(new File(paths[1]), "mp3");
+            fileOrigin.setPreviewUrl(previewUrl);
+            fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
             for (String path : paths) {
                 new File(path).delete();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

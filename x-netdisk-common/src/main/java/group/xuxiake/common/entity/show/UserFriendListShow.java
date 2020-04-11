@@ -22,4 +22,8 @@ public class UserFriendListShow {
     private String avatar;
     // 好友个性签名
     private String signature;
+    // 昵称
+    private String nickName;
+    // 备注
+    private String alias;
 }

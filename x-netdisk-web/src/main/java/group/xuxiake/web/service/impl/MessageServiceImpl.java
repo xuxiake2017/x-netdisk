@@ -1,7 +1,7 @@
 package group.xuxiake.web.service.impl;
 
-import group.xuxiake.common.entity.Message;
-import group.xuxiake.common.mapper.MessageMapper;
+import group.xuxiake.common.entity.SysMessage;
+import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.web.service.MessageService;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
@@ -14,10 +14,10 @@ import javax.annotation.Resource;
 public class MessageServiceImpl implements MessageService {
 
     @Resource
-    private MessageMapper messageMapper;
+    private SysMessageMapper messageMapper;
 
     @Override
-    public Result addMessage(Message message) {
+    public Result addMessage(SysMessage message) {
         Result result = new Result();
         messageMapper.insertSelective(message);
         return result;
@@ -36,7 +36,7 @@ public class MessageServiceImpl implements MessageService {
             result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.PARAM_IS_NULL));
             return result;
         }
-        Message message = new Message();
+        SysMessage message = new SysMessage();
         message.setId(id);
         message.setStatus(NetdiskConstant.DATA_DELETE_STATUS);
         messageMapper.updateByPrimaryKeySelective(message);

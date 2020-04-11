@@ -1,8 +1,9 @@
 package group.xuxiake.common.entity;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class UserFriendMessage {
+public class UserFriendMessage implements Serializable {
     private Integer id;
 
     private Integer from;

@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.FileMediaMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.FileMedia" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="origin_id" property="originId" jdbcType="INTEGER" />
+    <result column="shoot_time" property="shootTime" jdbcType="TIMESTAMP" />
+    <result column="img_width" property="imgWidth" jdbcType="INTEGER" />
+    <result column="img_height" property="imgHeight" jdbcType="INTEGER" />
+    <result column="video_width" property="videoWidth" jdbcType="INTEGER" />
+    <result column="video_height" property="videoHeight" jdbcType="INTEGER" />
+    <result column="video_duration" property="videoDuration" jdbcType="INTEGER" />
+    <result column="thumbnail_url" property="thumbnailUrl" jdbcType="VARCHAR" />
+    <result column="music_poster" property="musicPoster" jdbcType="VARCHAR" />
+    <result column="music_artist" property="musicArtist" jdbcType="VARCHAR" />
+    <result column="reserve_column_1" property="reserveColumn1" jdbcType="VARCHAR" />
+    <result column="reserve_column_2" property="reserveColumn2" jdbcType="VARCHAR" />
+    <result column="reserve_column_3" property="reserveColumn3" jdbcType="VARCHAR" />
+    <result column="reserve_column_4" property="reserveColumn4" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, origin_id, shoot_time, img_width, img_height, video_width, video_height, video_duration, 
+    thumbnail_url, music_poster, music_artist, reserve_column_1, reserve_column_2, reserve_column_3, 
+    reserve_column_4
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_file_media
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_file_media
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.FileMedia" useGeneratedKeys="true" keyProperty="id" keyColumn="id" >
+    insert into x_file_media (id, origin_id, shoot_time, 
+      img_width, img_height, video_width, 
+      video_height, video_duration, thumbnail_url, 
+      music_poster, music_artist, reserve_column_1, 
+      reserve_column_2, reserve_column_3, reserve_column_4
+      )
+    values (#{id,jdbcType=INTEGER}, #{originId,jdbcType=INTEGER}, #{shootTime,jdbcType=TIMESTAMP}, 
+      #{imgWidth,jdbcType=INTEGER}, #{imgHeight,jdbcType=INTEGER}, #{videoWidth,jdbcType=INTEGER}, 
+      #{videoHeight,jdbcType=INTEGER}, #{videoDuration,jdbcType=INTEGER}, #{thumbnailUrl,jdbcType=VARCHAR}, 
+      #{musicPoster,jdbcType=VARCHAR}, #{musicArtist,jdbcType=VARCHAR}, #{reserveColumn1,jdbcType=VARCHAR}, 
+      #{reserveColumn2,jdbcType=VARCHAR}, #{reserveColumn3,jdbcType=VARCHAR}, #{reserveColumn4,jdbcType=VARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.FileMedia" >
+    insert into x_file_media
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="originId != null" >
+        origin_id,
+      </if>
+      <if test="shootTime != null" >
+        shoot_time,
+      </if>
+      <if test="imgWidth != null" >
+        img_width,
+      </if>
+      <if test="imgHeight != null" >
+        img_height,
+      </if>
+      <if test="videoWidth != null" >
+        video_width,
+      </if>
+      <if test="videoHeight != null" >
+        video_height,
+      </if>
+      <if test="videoDuration != null" >
+        video_duration,
+      </if>
+      <if test="thumbnailUrl != null" >
+        thumbnail_url,
+      </if>
+      <if test="musicPoster != null" >
+        music_poster,
+      </if>
+      <if test="musicArtist != null" >
+        music_artist,
+      </if>
+      <if test="reserveColumn1 != null" >
+        reserve_column_1,
+      </if>
+      <if test="reserveColumn2 != null" >
+        reserve_column_2,
+      </if>
+      <if test="reserveColumn3 != null" >
+        reserve_column_3,
+      </if>
+      <if test="reserveColumn4 != null" >
+        reserve_column_4,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="originId != null" >
+        #{originId,jdbcType=INTEGER},
+      </if>
+      <if test="shootTime != null" >
+        #{shootTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="imgWidth != null" >
+        #{imgWidth,jdbcType=INTEGER},
+      </if>
+      <if test="imgHeight != null" >
+        #{imgHeight,jdbcType=INTEGER},
+      </if>
+      <if test="videoWidth != null" >
+        #{videoWidth,jdbcType=INTEGER},
+      </if>
+      <if test="videoHeight != null" >
+        #{videoHeight,jdbcType=INTEGER},
+      </if>
+      <if test="videoDuration != null" >
+        #{videoDuration,jdbcType=INTEGER},
+      </if>
+      <if test="thumbnailUrl != null" >
+        #{thumbnailUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="musicPoster != null" >
+        #{musicPoster,jdbcType=VARCHAR},
+      </if>
+      <if test="musicArtist != null" >
+        #{musicArtist,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn1 != null" >
+        #{reserveColumn1,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn2 != null" >
+        #{reserveColumn2,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn3 != null" >
+        #{reserveColumn3,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn4 != null" >
+        #{reserveColumn4,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.FileMedia" >
+    update x_file_media
+    <set >
+      <if test="originId != null" >
+        origin_id = #{originId,jdbcType=INTEGER},
+      </if>
+      <if test="shootTime != null" >
+        shoot_time = #{shootTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="imgWidth != null" >
+        img_width = #{imgWidth,jdbcType=INTEGER},
+      </if>
+      <if test="imgHeight != null" >
+        img_height = #{imgHeight,jdbcType=INTEGER},
+      </if>
+      <if test="videoWidth != null" >
+        video_width = #{videoWidth,jdbcType=INTEGER},
+      </if>
+      <if test="videoHeight != null" >
+        video_height = #{videoHeight,jdbcType=INTEGER},
+      </if>
+      <if test="videoDuration != null" >
+        video_duration = #{videoDuration,jdbcType=INTEGER},
+      </if>
+      <if test="thumbnailUrl != null" >
+        thumbnail_url = #{thumbnailUrl,jdbcType=VARCHAR},
+      </if>
+      <if test="musicPoster != null" >
+        music_poster = #{musicPoster,jdbcType=VARCHAR},
+      </if>
+      <if test="musicArtist != null" >
+        music_artist = #{musicArtist,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn1 != null" >
+        reserve_column_1 = #{reserveColumn1,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn2 != null" >
+        reserve_column_2 = #{reserveColumn2,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn3 != null" >
+        reserve_column_3 = #{reserveColumn3,jdbcType=VARCHAR},
+      </if>
+      <if test="reserveColumn4 != null" >
+        reserve_column_4 = #{reserveColumn4,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.FileMedia" >
+    update x_file_media
+    set origin_id = #{originId,jdbcType=INTEGER},
+      shoot_time = #{shootTime,jdbcType=TIMESTAMP},
+      img_width = #{imgWidth,jdbcType=INTEGER},
+      img_height = #{imgHeight,jdbcType=INTEGER},
+      video_width = #{videoWidth,jdbcType=INTEGER},
+      video_height = #{videoHeight,jdbcType=INTEGER},
+      video_duration = #{videoDuration,jdbcType=INTEGER},
+      thumbnail_url = #{thumbnailUrl,jdbcType=VARCHAR},
+      music_poster = #{musicPoster,jdbcType=VARCHAR},
+      music_artist = #{musicArtist,jdbcType=VARCHAR},
+      reserve_column_1 = #{reserveColumn1,jdbcType=VARCHAR},
+      reserve_column_2 = #{reserveColumn2,jdbcType=VARCHAR},
+      reserve_column_3 = #{reserveColumn3,jdbcType=VARCHAR},
+      reserve_column_4 = #{reserveColumn4,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <resultMap id="GetFileMediaInfoResultMap" type="group.xuxiake.common.entity.show.FileShowMedia">
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="origin_id" property="originId" jdbcType="INTEGER" />
+    <result column="file_name" property="fileName" jdbcType="VARCHAR" />
+    <result column="file_path" property="filePath" jdbcType="VARCHAR" />
+    <result column="is_dir" property="isDir" jdbcType="INTEGER" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+    <result column="key" property="key" jdbcType="VARCHAR" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <association property="fileMedia" javaType="group.xuxiake.common.entity.FileMedia">
+      <result column="shoot_time" property="shootTime" jdbcType="TIMESTAMP" />
+      <result column="img_width" property="imgWidth" jdbcType="INTEGER" />
+      <result column="img_height" property="imgHeight" jdbcType="INTEGER" />
+      <result column="video_width" property="videoWidth" jdbcType="INTEGER" />
+      <result column="video_height" property="videoHeight" jdbcType="INTEGER" />
+      <result column="video_duration" property="videoDuration" jdbcType="INTEGER" />
+      <result column="thumbnail_url" property="thumbnailUrl" jdbcType="VARCHAR" />
+      <result column="music_poster" property="musicPoster" jdbcType="VARCHAR" />
+      <result column="music_artist" property="musicArtist" jdbcType="VARCHAR" />
+    </association>
+    <association property="fileOrigin" javaType="group.xuxiake.common.entity.FileOrigin">
+      <result column="preview_url" property="previewUrl" jdbcType="VARCHAR" />
+      <result column="file_real_name" property="fileRealName" jdbcType="VARCHAR" />
+      <result column="file_ext_name" property="fileExtName" jdbcType="VARCHAR" />
+      <result column="file_size" property="fileSize" jdbcType="BIGINT" />
+      <result column="file_type" property="fileType" jdbcType="INTEGER" />
+    </association>
+  </resultMap>
+
+  <!--获取文件媒体信息-->
+  <select id="getFileMediaInfo" resultMap="GetFileMediaInfoResultMap">
+  	select
+      user_file.*,
+      file_media.shoot_time,
+      file_media.img_width,
+      file_media.img_height,
+      file_media.video_width,
+      file_media.video_height,
+      file_media.video_duration,
+      file_media.thumbnail_url,
+      file_media.music_poster,
+      file_media.music_artist,
+      file_origin.preview_url,
+      file_origin.file_real_name,
+      file_origin.file_ext_name,
+      file_origin.file_size,
+      file_origin.file_type
+    from
+      x_user_file user_file,
+      x_file_origin file_origin,
+      x_file_media file_media
+  	where
+      user_file.origin_id = file_origin.id
+      AND file_media.origin_id = file_origin.id
+      AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      AND user_file.`key` = #{fileKey}
+  </select>
+</mapper>

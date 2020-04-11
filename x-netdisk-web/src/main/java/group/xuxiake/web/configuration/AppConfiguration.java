@@ -49,6 +49,8 @@ public class AppConfiguration {
     private String getChatServerPath;
     @Value("${application.route.findRouteByUserPath}")
     private String findRouteByUserPath;
+    @Value("${application.route.sendMsgToUserPath}")
+    private String sendMsgToUserPath;
     @Value("${application.route.quartz.delFilePath}")
     private String delFilePath;
     @Value("${application.route.quartz.delJobPath}")

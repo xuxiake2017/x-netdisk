@@ -1,7 +1,7 @@
 package group.xuxiake.quartz.manager;
 
 import com.google.gson.Gson;
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.quartz.entity.ScheduleJob;
 import group.xuxiake.quartz.job.QuartzDelRecycleFileJob;
 import group.xuxiake.quartz.util.ScheduleUtil;
@@ -10,8 +10,6 @@ import org.quartz.*;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Author by xuxiake, Date on 2020/3/30 12:59.
@@ -36,7 +34,7 @@ public class QuartzScheduleManagerImpl implements QuartzScheduleManager {
      * @param recycle
      */
     @Override
-    public void createDelRecycleFleJob(Recycle recycle) {
+    public void createDelRecycleFleJob(FileRecycle recycle) {
 
         try {
             String data = new Gson().toJson(recycle);
@@ -59,7 +57,7 @@ public class QuartzScheduleManagerImpl implements QuartzScheduleManager {
      * @param recycle
      */
     @Override
-    public void delDelRecycleFleJob(Recycle recycle) {
+    public void delDelRecycleFleJob(FileRecycle recycle) {
 
         ScheduleJob scheduleJob = new ScheduleJob();
         scheduleJob.setJobName(JOB_OF_DEL_RECYCLE_FILE + recycle.getRecycleId());

@@ -1,6 +1,6 @@
 package group.xuxiake.quartz.controller;
 
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.quartz.service.IndexService;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +27,7 @@ public class IndexController {
      * @return
      */
     @RequestMapping("/delFile")
-    public Result delFile(@RequestBody Recycle recycle) {
+    public Result delFile(@RequestBody FileRecycle recycle) {
         return indexService.delFile(recycle);
     }
 
@@ -37,7 +37,7 @@ public class IndexController {
      * @return
      */
     @RequestMapping("/delJob")
-    public Result delJob(@RequestBody Recycle recycle) {
+    public Result delJob(@RequestBody FileRecycle recycle) {
         return indexService.delJob(recycle);
     }
 }

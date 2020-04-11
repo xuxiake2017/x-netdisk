@@ -1,6 +1,6 @@
 package group.xuxiake.quartz.service.impl;
 
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.quartz.manager.QuartzScheduleManager;
 import group.xuxiake.quartz.service.IndexService;
@@ -25,7 +25,7 @@ public class IndexServiceImpl implements IndexService {
      * @return
      */
     @Override
-    public Result delFile(Recycle recycle) {
+    public Result delFile(FileRecycle recycle) {
 
         quartzScheduleManager.createDelRecycleFleJob(recycle);
         return Result.SUCCESS;
@@ -37,7 +37,7 @@ public class IndexServiceImpl implements IndexService {
      * @return
      */
     @Override
-    public Result delJob(Recycle recycle) {
+    public Result delJob(FileRecycle recycle) {
 
         quartzScheduleManager.delDelRecycleFleJob(recycle);
         return Result.SUCCESS;

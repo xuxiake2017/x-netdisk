@@ -11,7 +11,7 @@ import lombok.Data;
 public class UserShowSimple {
 
     private Integer userId;
-    private String username;
+    private String nickName;
     private String avatar;
     private String signature;
     private Integer sex;

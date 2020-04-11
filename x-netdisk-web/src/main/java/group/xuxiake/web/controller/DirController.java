@@ -1,8 +1,8 @@
 package group.xuxiake.web.controller;
 
-import group.xuxiake.common.entity.FileUpload;
-import group.xuxiake.web.service.FileUploadService;
+import group.xuxiake.common.entity.UserFile;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.web.service.FileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -19,7 +19,7 @@ import javax.annotation.Resource;
 public class DirController {
 
 	@Resource
-	protected FileUploadService fileUploadService;
+	protected FileService fileService;
 
 	/**
 	 * 列出所有文件夹，用于文件移动
@@ -29,29 +29,29 @@ public class DirController {
 	@RequestMapping(value="/listAllDir")
 	@ResponseBody
 	public Result listAllDir(Integer parentId) {
-		return fileUploadService.listAllDir(parentId);
+		return fileService.listAllDir(parentId);
 	}
 
 	/**
 	 * 移动文件
-	 * @param fileUpload
+	 * @param param
 	 * @return
 	 */
 	@RequestMapping(value="/moveFile")
 	@ResponseBody
-	public Result moveFile(FileUpload fileUpload) {
-		return fileUploadService.moveFile(fileUpload);
+	public Result moveFile(UserFile param) {
+		return fileService.moveFile(param);
 	}
 
 	/**
 	 * 创建新的文件夹
-	 * @param fileUpload
+	 * @param userFile
 	 * @return
 	 */
 	@RequestMapping(value="/mkDir")
 	@ResponseBody
-	public Result mkDir(FileUpload fileUpload) {
+	public Result mkDir(UserFile userFile) {
 		
-		return fileUploadService.mkDir(fileUpload);
+		return fileService.mkDir(userFile);
 	}
 }

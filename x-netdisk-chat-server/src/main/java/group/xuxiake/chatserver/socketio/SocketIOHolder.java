@@ -1,7 +1,7 @@
 package group.xuxiake.chatserver.socketio;
 
 import group.xuxiake.chatserver.socketio.entity.SocketIOConnection;
-import group.xuxiake.common.entity.UserNetdisk;
+import group.xuxiake.common.entity.User;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class SocketIOHolder {
         clientMap.put(token, socketIOConnection);
     }
 
-    public static UserNetdisk getUser(String token) {
+    public static User getUser(String token) {
         SocketIOConnection socketIOConnection = clientMap.get(token);
         if (socketIOConnection != null) {
             return socketIOConnection.getUser();

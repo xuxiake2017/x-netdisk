@@ -7,8 +7,8 @@ import com.vdurmont.emoji.EmojiParser;
 import group.xuxiake.chatserver.configuration.AppConfiguration;
 import group.xuxiake.chatserver.socketio.entity.SocketIOConnection;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.UserFriendMessage;
-import group.xuxiake.common.entity.UserNetdisk;
 import group.xuxiake.common.entity.chat.ChatMessageBase;
 import group.xuxiake.common.entity.chat.ChatMessageType;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
@@ -74,7 +74,7 @@ public class ChatSocketIOHandler {
                     client.disconnect();
                     return;
                 }
-                UserNetdisk user = (UserNetdisk) redisUtils.get(token);
+                User user = (User) redisUtils.get(token);
                 if (user == null) {
                     // 用户未登陆或登陆过期
                     client.sendEvent(PUSH_EVENT, Result.IS_NOT_AUTH);
@@ -115,7 +115,7 @@ public class ChatSocketIOHandler {
             if (StringUtils.isEmpty(token)) {
                 return;
             }
-            UserNetdisk user = SocketIOHolder.getUser(token);
+            User user = SocketIOHolder.getUser(token);
             if (user != null) {
                 log.info("------- {} 下线 -------", user.getUsername());
             }

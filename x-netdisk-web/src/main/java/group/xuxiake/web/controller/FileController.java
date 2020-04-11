@@ -1,8 +1,8 @@
 package group.xuxiake.web.controller;
 
-import group.xuxiake.common.entity.FileUpload;
 import group.xuxiake.common.entity.Result;
-import group.xuxiake.web.service.FileUploadService;
+import group.xuxiake.common.entity.UserFile;
+import group.xuxiake.web.service.FileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -20,7 +20,7 @@ import javax.annotation.Resource;
 public class FileController {
 
 	@Resource
-	private FileUploadService fileUploadService;
+	private FileService fileService;
 
 	/**
 	 * 文件上传
@@ -33,7 +33,7 @@ public class FileController {
 	@RequestMapping(value="/fileUpload")
 	@ResponseBody
 	public Result fileUplaod(Integer parentId, String md5Hex, Long lastModifiedDate, MultipartFile file) {
-		return fileUploadService.fileUpload(parentId, md5Hex, lastModifiedDate, file);
+		return fileService.fileUpload(parentId, md5Hex, lastModifiedDate, file);
 	}
 	
 	/*
@@ -41,28 +41,28 @@ public class FileController {
 	 */
 	@RequestMapping(value="/deleteFile")
 	@ResponseBody
-	public Result deleteFile(String fileSaveName) {
-		return fileUploadService.deleteFile(fileSaveName);
+	public Result deleteFile(String fileKey) {
+		return fileService.deleteFile(fileKey);
 	}
 
 	/*
 	 * 下载文件
 	 */
 	@RequestMapping("/downLoad")
-	public void downloadFile(FileUpload fileUpload) {
+	public void downloadFile(String fileKey) {
 
-		fileUploadService.downLoad(fileUpload);
+		fileService.downLoad(fileKey);
 	}
 
 	/**
 	 * 重命名文件
-	 * @param fileUpload
+	 * @param userFile
 	 * @return
 	 */
 	@RequestMapping(value="/reName")
 	@ResponseBody
-	public Result reName(FileUpload fileUpload) {
-		return fileUploadService.reName(fileUpload);
+	public Result reName(UserFile userFile) {
+		return fileService.reName(userFile);
 	}
 
 	/**
@@ -74,7 +74,7 @@ public class FileController {
 	@ResponseBody
 	public Result findPathname(Integer parentId){
 
-		return fileUploadService.findPathname(parentId);
+		return fileService.findPathname(parentId);
 	}
 
 	/**
@@ -85,7 +85,7 @@ public class FileController {
 	@RequestMapping("findChildIds")
 	@ResponseBody
 	public Result findChildIds(Integer fileId) {
-		return fileUploadService.findChildIds(fileId);
+		return fileService.findChildIds(fileId);
 	}
 
 	/**
@@ -96,7 +96,7 @@ public class FileController {
 	@RequestMapping("getPathStore")
 	@ResponseBody
 	public Result getPathStore(Integer fileId) {
-		return fileUploadService.getPathStore(fileId);
+		return fileService.getPathStore(fileId);
 	}
 
 	/**
@@ -107,7 +107,18 @@ public class FileController {
 	@RequestMapping("findById")
 	@ResponseBody
 	public Result findById(Integer id) {
-		return fileUploadService.findById(id);
+		return fileService.findById(id);
+	}
+
+	/**
+	 * 获取文件媒体信息
+	 * @param fileKey
+	 * @return
+	 */
+	@RequestMapping("/getFileMediaInfo")
+	@ResponseBody
+	public Result getFileMediaInfo(String fileKey) {
+		return fileService.getFileMediaInfo(fileKey);
 	}
 
 }

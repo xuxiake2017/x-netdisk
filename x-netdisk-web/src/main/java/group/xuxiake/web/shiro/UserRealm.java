@@ -2,11 +2,11 @@ package group.xuxiake.web.shiro;
 
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.RouteShowSimple;
-import group.xuxiake.common.entity.UserNetdisk;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.exception.UserRepeatLoginException;
 import group.xuxiake.web.service.RouteService;
-import group.xuxiake.web.service.UserNetdiskService;
+import group.xuxiake.web.service.UserService;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
@@ -21,7 +21,7 @@ import javax.annotation.Resource;
 public class UserRealm extends AuthorizingRealm {
 
 	@Resource
-	private UserNetdiskService userNetdiskService;
+	private UserService userService;
 	@Resource
 	private AppConfiguration appConfiguration;
 	@Resource
@@ -43,29 +43,29 @@ public class UserRealm extends AuthorizingRealm {
 		//realm名字
 		String realmName = getName();
 		//这里做登陆信息验证。。。
-		UserNetdisk userNetdisk = null;
+		User user = null;
 		if(loginInfo.contains("@")){
-			userNetdisk = userNetdiskService.findByEmail(loginInfo);
+			user = userService.findByEmail(loginInfo);
 		}else {
-			userNetdisk = userNetdiskService.findByName(loginInfo);
-			if (userNetdisk == null) {
-				userNetdisk = userNetdiskService.findByPhone(loginInfo);
+			user = userService.findByName(loginInfo);
+			if (user == null) {
+				user = userService.findByPhone(loginInfo);
 			}
 		}
-		if (userNetdisk==null) {
+		if (user == null) {
 			throw new UnknownAccountException();
 		}
-        RouteShowSimple route = routeService.getRouteServer(userNetdisk.getId().toString());
-        String url = "http://" + route.getIp() + ":" + route.getPort() + appConfiguration.getFindRouteByUserPath() + "?userId=" + userNetdisk.getId();
+        RouteShowSimple route = routeService.getRouteServer(user.getId().toString());
+        String url = "http://" + route.getIp() + ":" + route.getPort() + appConfiguration.getFindRouteByUserPath() + "?userId=" + user.getId();
         ResponseEntity<Result> responseEntity = restTemplate.getForEntity(url, Result.class);
         if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody().getData() != null) {
 			// 用户重复登录
 			throw new UserRepeatLoginException();
 		}
 		//盐
-		ByteSource credentialsSalt =  ByteSource.Util.bytes(userNetdisk.getUsername());
+		ByteSource credentialsSalt =  ByteSource.Util.bytes(user.getUsername());
 		SimpleAuthenticationInfo simpleAuthenticationInfo = 
-				new SimpleAuthenticationInfo(userNetdisk, userNetdisk.getPassword(), credentialsSalt, realmName);
+				new SimpleAuthenticationInfo(user, user.getPassword(), credentialsSalt, realmName);
 		return simpleAuthenticationInfo;
 	}
 

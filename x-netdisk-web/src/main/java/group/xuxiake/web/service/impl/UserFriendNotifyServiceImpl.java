@@ -1,9 +1,9 @@
 package group.xuxiake.web.service.impl;
 
-import group.xuxiake.common.entity.UserNetdisk;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.show.UserFriendApplyForShowList;
 import group.xuxiake.common.entity.show.UserFriendNotifyShow;
-import group.xuxiake.common.mapper.UserFriendApplyForMapper;
+import group.xuxiake.common.mapper.UserFriendRequestMapper;
 import group.xuxiake.web.service.UserFriendNotifyService;
 import group.xuxiake.common.entity.Result;
 import org.apache.shiro.SecurityUtils;
@@ -22,7 +22,7 @@ import java.util.List;
 public class UserFriendNotifyServiceImpl implements UserFriendNotifyService {
 
     @Resource
-    private UserFriendApplyForMapper userFriendApplyForMapper;
+    private UserFriendRequestMapper userFriendRequestMapper;
 
     /**
      * 获取好友通知
@@ -32,8 +32,8 @@ public class UserFriendNotifyServiceImpl implements UserFriendNotifyService {
     public Result getAllNotify() {
 
         Result result = new Result();
-        UserNetdisk user = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
-        List<UserFriendApplyForShowList> list = userFriendApplyForMapper.findAll(user.getId());
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
+        List<UserFriendApplyForShowList> list = userFriendRequestMapper.findAll(user.getId());
         List<UserFriendNotifyShow> notifies = new ArrayList<>();
         for (UserFriendApplyForShowList item : list) {
             UserFriendNotifyShow userFriendNotifyShow = new UserFriendNotifyShow();

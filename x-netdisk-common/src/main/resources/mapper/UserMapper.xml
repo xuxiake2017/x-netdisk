@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.UserMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.User" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="INTEGER" />
+    <result column="real_name" property="realName" jdbcType="VARCHAR" />
+    <result column="reg_time" property="regTime" jdbcType="TIMESTAMP" />
+    <result column="total_memory" property="totalMemory" jdbcType="BIGINT" />
+    <result column="used_memory" property="usedMemory" jdbcType="BIGINT" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="user_status" property="userStatus" jdbcType="INTEGER" />
+    <result column="avatar" property="avatar" jdbcType="VARCHAR" />
+    <result column="signature" property="signature" jdbcType="VARCHAR" />
+    <result column="nick_name" property="nickName" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, username, password, sex, real_name, reg_time, total_memory, used_memory, phone, 
+    email, user_status, avatar, signature, nick_name
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_user
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_user
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.User" >
+    insert into x_user (id, username, password, 
+      sex, real_name, reg_time, 
+      total_memory, used_memory, phone, 
+      email, user_status, avatar, 
+      signature, nick_name)
+    values (#{id,jdbcType=INTEGER}, #{username,jdbcType=VARCHAR}, #{password,jdbcType=VARCHAR}, 
+      #{sex,jdbcType=INTEGER}, #{realName,jdbcType=VARCHAR}, #{regTime,jdbcType=TIMESTAMP}, 
+      #{totalMemory,jdbcType=BIGINT}, #{usedMemory,jdbcType=BIGINT}, #{phone,jdbcType=VARCHAR}, 
+      #{email,jdbcType=VARCHAR}, #{userStatus,jdbcType=INTEGER}, #{avatar,jdbcType=VARCHAR}, 
+      #{signature,jdbcType=VARCHAR}, #{nickName,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.User" useGeneratedKeys="true" keyColumn="id" keyProperty="id" >
+    insert into x_user
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="username != null" >
+        username,
+      </if>
+      <if test="password != null" >
+        password,
+      </if>
+      <if test="sex != null" >
+        sex,
+      </if>
+      <if test="realName != null" >
+        real_name,
+      </if>
+      <if test="regTime != null" >
+        reg_time,
+      </if>
+      <if test="totalMemory != null" >
+        total_memory,
+      </if>
+      <if test="usedMemory != null" >
+        used_memory,
+      </if>
+      <if test="phone != null" >
+        phone,
+      </if>
+      <if test="email != null" >
+        email,
+      </if>
+      <if test="userStatus != null" >
+        user_status,
+      </if>
+      <if test="avatar != null" >
+        avatar,
+      </if>
+      <if test="signature != null" >
+        signature,
+      </if>
+      <if test="nickName != null" >
+        nick_name,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="username != null" >
+        #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        #{sex,jdbcType=INTEGER},
+      </if>
+      <if test="realName != null" >
+        #{realName,jdbcType=VARCHAR},
+      </if>
+      <if test="regTime != null" >
+        #{regTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="totalMemory != null" >
+        #{totalMemory,jdbcType=BIGINT},
+      </if>
+      <if test="usedMemory != null" >
+        #{usedMemory,jdbcType=BIGINT},
+      </if>
+      <if test="phone != null" >
+        #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="userStatus != null" >
+        #{userStatus,jdbcType=INTEGER},
+      </if>
+      <if test="avatar != null" >
+        #{avatar,jdbcType=VARCHAR},
+      </if>
+      <if test="signature != null" >
+        #{signature,jdbcType=VARCHAR},
+      </if>
+      <if test="nickName != null" >
+        #{nickName,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.User" >
+    update x_user
+    <set >
+      <if test="username != null" >
+        username = #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="password != null" >
+        password = #{password,jdbcType=VARCHAR},
+      </if>
+      <if test="sex != null" >
+        sex = #{sex,jdbcType=INTEGER},
+      </if>
+      <if test="realName != null" >
+        real_name = #{realName,jdbcType=VARCHAR},
+      </if>
+      <if test="regTime != null" >
+        reg_time = #{regTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="totalMemory != null" >
+        total_memory = #{totalMemory,jdbcType=BIGINT},
+      </if>
+      <if test="usedMemory != null" >
+        used_memory = #{usedMemory,jdbcType=BIGINT},
+      </if>
+      <if test="phone != null" >
+        phone = #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="email != null" >
+        email = #{email,jdbcType=VARCHAR},
+      </if>
+      <if test="userStatus != null" >
+        user_status = #{userStatus,jdbcType=INTEGER},
+      </if>
+      <if test="avatar != null" >
+        avatar = #{avatar,jdbcType=VARCHAR},
+      </if>
+      <if test="signature != null" >
+        signature = #{signature,jdbcType=VARCHAR},
+      </if>
+      <if test="nickName != null" >
+        nick_name = #{nickName,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.User" >
+    update x_user
+    set username = #{username,jdbcType=VARCHAR},
+      password = #{password,jdbcType=VARCHAR},
+      sex = #{sex,jdbcType=INTEGER},
+      real_name = #{realName,jdbcType=VARCHAR},
+      reg_time = #{regTime,jdbcType=TIMESTAMP},
+      total_memory = #{totalMemory,jdbcType=BIGINT},
+      used_memory = #{usedMemory,jdbcType=BIGINT},
+      phone = #{phone,jdbcType=VARCHAR},
+      email = #{email,jdbcType=VARCHAR},
+      user_status = #{userStatus,jdbcType=INTEGER},
+      avatar = #{avatar,jdbcType=VARCHAR},
+      signature = #{signature,jdbcType=VARCHAR},
+      nick_name = #{nickName,jdbcType=VARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <!--findByLoginInfo-->
+  <select id="findByLoginInfo" parameterType="group.xuxiake.common.entity.User" resultMap="BaseResultMap">
+
+    select * from x_user
+    where
+    (user_status=${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NORMAL} or user_status=${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NOT_VERIFY} or user_status=${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_VIP})
+    <if test="phone != null and phone!=''">
+      and phone = #{phone}
+    </if>
+    <if test="email != null and email!=''">
+      and email = #{email}
+    </if>
+    <if test="username != null and username!=''">
+      and username = #{username}
+    </if>
+  </select>
+
+  <resultMap id="ResultMapSearchFriend" type="group.xuxiake.common.entity.show.UserShowSimple">
+    <result property="userId" column="user_id"></result>
+    <result property="nickName" column="nick_name"></result>
+    <result property="avatar" column="avatar"></result>
+    <result property="signature" column="signature"></result>
+    <result property="sex" column="sex"></result>
+  </resultMap>
+
+  <!--搜索好友-->
+  <select id="searchFriend" resultMap="ResultMapSearchFriend">
+    select
+      x_user.id user_id,
+      x_user.nick_name nick_name,
+      x_user.avatar avatar,
+      x_user.signature signature,
+      x_user.sex sex
+    from x_user
+    where
+      user_status != ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NOT_EXIST}
+    AND id != #{userId}
+    AND
+    (
+      phone = #{key}
+      OR email= #{key}
+      OR nick_name LIKE CONCAT('%',#{key},'%')
+    )
+  </select>
+</mapper>

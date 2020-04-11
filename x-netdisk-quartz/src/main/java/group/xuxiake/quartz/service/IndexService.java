@@ -1,6 +1,6 @@
 package group.xuxiake.quartz.service;
 
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.Result;
 
 /**
@@ -15,12 +15,12 @@ public interface IndexService {
      * @param recycle
      * @return
      */
-    Result delFile(Recycle recycle);
+    Result delFile(FileRecycle recycle);
 
     /**
      * 删除定时清理过期文件的任务
      * @param recycle
      * @return
      */
-    Result delJob(Recycle recycle);
+    Result delJob(FileRecycle recycle);
 }

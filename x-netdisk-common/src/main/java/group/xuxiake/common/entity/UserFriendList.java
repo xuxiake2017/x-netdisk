@@ -9,6 +9,8 @@ public class UserFriendList {
 
     private Integer friendId;
 
+    private String alias;
+
     private Integer status;
 
     private Date createTime;
@@ -37,6 +39,14 @@ public class UserFriendList {
 
     public void setFriendId(Integer friendId) {
         this.friendId = friendId;
+    }
+
+    public String getAlias() {
+        return alias;
+    }
+
+    public void setAlias(String alias) {
+        this.alias = alias == null ? null : alias.trim();
     }
 
     public Integer getStatus() {

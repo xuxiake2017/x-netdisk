@@ -1,9 +1,7 @@
 package group.xuxiake.web.controller;
 
 import group.xuxiake.common.entity.Result;
-import group.xuxiake.common.entity.UserNetdisk;
 import group.xuxiake.web.service.VerifyService;
-import group.xuxiake.web.util.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -27,8 +25,8 @@ public class VerifyController {
 	 */
 	@RequestMapping(value = "/sendCodeToPhone")
 	@ResponseBody
-	public Result sendCodeToPhone(UserNetdisk userNetdisk) {
-		return verifyService.sendCodeToPhone(userNetdisk);
+	public Result sendCodeToPhone(String phone) {
+		return verifyService.sendCodeToPhone(phone);
 	}
 
 	@RequestMapping("verifyEmail")

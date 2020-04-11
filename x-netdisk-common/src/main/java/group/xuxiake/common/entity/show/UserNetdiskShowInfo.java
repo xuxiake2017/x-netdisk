@@ -1,6 +1,6 @@
 package group.xuxiake.common.entity.show;
 
-import group.xuxiake.common.entity.Message;
+import group.xuxiake.common.entity.SysMessage;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class UserNetdiskShowInfo {
     // token
     private String token;
     // 消息
-    private List<Message> messages;
+    private List<SysMessage> messages;
     // 好友列表
     private List<UserFriendListShow> friendList;
 
@@ -38,11 +38,11 @@ public class UserNetdiskShowInfo {
         this.friendList = friendList;
     }
 
-    public List<Message> getMessages() {
+    public List<SysMessage> getMessages() {
         return messages;
     }
 
-    public void setMessages(List<Message> messages) {
+    public void setMessages(List<SysMessage> messages) {
         this.messages = messages;
     }
 

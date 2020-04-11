@@ -4,15 +4,16 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import group.xuxiake.common.entity.*;
 import group.xuxiake.common.entity.show.RecycleShowList;
+import group.xuxiake.common.mapper.FileOriginMapper;
+import group.xuxiake.common.mapper.FileRecycleMapper;
+import group.xuxiake.common.mapper.UserFileMapper;
+import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.web.configuration.AppConfiguration;
-import group.xuxiake.common.mapper.FileUploadMapper;
-import group.xuxiake.common.mapper.RecycleMapper;
-import group.xuxiake.common.mapper.UserNetdiskMapper;
 import group.xuxiake.web.service.RecycleService;
 import group.xuxiake.web.service.RouteService;
-import group.xuxiake.web.service.UserNetdiskService;
+import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.*;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.stereotype.Service;
@@ -27,17 +28,19 @@ import java.util.Map;
 public class RecycleServiceImpl implements RecycleService {
 
 	@Resource
-	private RecycleMapper recycleMapper;
+	private FileRecycleMapper recycleMapper;
 	@Resource
-	private FileUploadMapper fileUploadMapper;
+	private UserFileMapper userFileMapper;
 	@Resource
-	private UserNetdiskMapper userNetdiskMapper;
+	private UserMapper userNetdiskMapper;
 	@Resource
-	private UserNetdiskService userNetdiskService;
+	private UserService userService;
 	@Resource
 	private RouteService routeService;
 	@Resource
 	private AppConfiguration appConfiguration;
+	@Resource
+	private FileOriginMapper fileOriginMapper;
 
 	/**
 	 * 查询回收站列表
@@ -47,9 +50,9 @@ public class RecycleServiceImpl implements RecycleService {
 	@Override
 	public Result toRecycleList(Page page) {
 		Result result = new Result();
-		UserNetdisk userNetdisk = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		PageHelper.startPage(page.getPageNum(), page.getPageSize());
-		List<RecycleShowList> list = recycleMapper.findByUserId(userNetdisk.getId(), page.getFileRealName());
+		List<RecycleShowList> list = recycleMapper.findByUserId(user.getId(), page.getFileRealName());
 		PageInfo<RecycleShowList> pageInfo = new PageInfo<>(list);
 		result.setData(pageInfo);
 		return result;
@@ -64,9 +67,9 @@ public class RecycleServiceImpl implements RecycleService {
 	public Result delete(Integer id) {
 
 		Result result = new Result();
-		Recycle recycle = new Recycle();
+		FileRecycle recycle = new FileRecycle();
 		recycle.setRecycleId(id);
-		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER + "");
+		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER);
 		recycleMapper.updateByPrimaryKeySelective(recycle);
 
 		// 删除定时任务
@@ -84,14 +87,15 @@ public class RecycleServiceImpl implements RecycleService {
 	public Result reback(Integer recycleId, String fileSaveName) {
 
 		Result result = new Result();
-		FileUpload fileUpload = fileUploadMapper.findFileBySaveNameForReback(fileSaveName);
-		UserNetdisk userNetdisk = (UserNetdisk) SecurityUtils.getSubject().getPrincipal();
+		UserFile userFile = userFileMapper.findFileBySaveNameForReback(fileSaveName);
+		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 
 		// 检查剩余空间
-		Long usedMemory = Long.valueOf(userNetdisk.getUsedMemory());
-		Long totalMemory = Long.valueOf(userNetdisk.getTotalMemory());
+		Long usedMemory = user.getUsedMemory();
+		Long totalMemory = user.getTotalMemory();
 		Long availableMemory = totalMemory - usedMemory;
-		if (Long.valueOf(fileUpload.getFileSize()) > availableMemory) {
+		if (fileOrigin.getFileSize() > availableMemory) {
 			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH));
 			return result;
@@ -99,86 +103,81 @@ public class RecycleServiceImpl implements RecycleService {
 		Integer tag1 = null;
 
 		//检查父目录是否被删除
-		if (fileUpload.getParentId() != -1) {
-			if (new Integer(fileUploadMapper.selectByPrimaryKey(fileUpload.getParentId()).getFileStatus()) != NetdiskConstant.FILE_STATUS_OF_NORMAL) {
+		if (userFile.getParentId() != -1) {
+			if (userFileMapper.selectByPrimaryKey(userFile.getParentId()).getStatus() != NetdiskConstant.FILE_STATUS_OF_NORMAL) {
 				result.setData(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR));
 
 				//检查用户目录是否存在"我的资源"文件夹
 
-				FileUpload fileUploadChek = new FileUpload();
-				fileUploadChek.setUploadUserId(userNetdisk.getId() + "");
-				fileUploadChek.setParentId(-1);
-				fileUploadChek.setFileRealName("我的资源");
-				List<FileUpload> list = fileUploadMapper.findFileByRealName(fileUploadChek);
-				if(list.size() == 0){
+				UserFile userFileChek = new UserFile();
+				userFileChek.setUserId(user.getId());
+				userFileChek.setParentId(-1);
+				userFileChek.setFileName("我的资源");
+				UserFile fileSearch = userFileMapper.findFileByRealName(userFileChek);
+				if(fileSearch == null){
 
-					fileUploadChek.setFileSaveName(FileUtil.makeDirSaveName());
-					fileUploadChek.setUploadTime(new Date());
-					fileUploadChek.setFileType(NetdiskConstant.FILE_TYPE_OF_DIR);
-					fileUploadChek.setIsDir(NetdiskConstant.FILE_IS_DIR);
-					fileUploadMapper.insertSelective(fileUploadChek);
-					fileUpload.setParentId(fileUploadChek.getId());
-				}else {
-					fileUpload.setParentId(list.get(0).getId());
+					userFileChek.setKey(FileUtil.makeFileKey());
+					userFileChek.setCreateTime(new Date());
+					userFileChek.setUpdateTime(new Date());
+					userFileChek.setIsDir(NetdiskConstant.FILE_IS_DIR);
+					userFileMapper.insertSelective(userFileChek);
+					userFile.setParentId(userFileChek.getId());
+				} else {
+					userFile.setParentId(fileSearch.getId());
 				}
 			}
 		}
 
 		// 检查目标父目录下是否存在同名文件夹
-		List<FileUpload> list = fileUploadMapper.findFileByRealName(fileUpload);
-		if (list != null && list.size() > 0) {
+		UserFile fileSearch = userFileMapper.findFileByRealName(userFile);
+		if (fileSearch != null) {
 			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR));
 			return result;
 		}
 
-		if(fileUpload.getIsDir() == NetdiskConstant.FILE_IS_NOT_DIR){
+		if(userFile.getIsDir() == NetdiskConstant.FILE_IS_NOT_DIR){
 			//如果是文件
-			long fileSize = Long.valueOf(fileUpload.getFileSize());
+			long fileSize = fileOrigin.getFileSize();
 			usedMemory = usedMemory + fileSize;
-			userNetdisk.setUsedMemory(usedMemory + "");
+			user.setUsedMemory(usedMemory);
 			//更新文件状态
-			fileUpload.setUploadTime(new Date());
-			fileUpload.setFileStatus(NetdiskConstant.DATA_NORMAL_STATUS + "");
-			tag1 = fileUploadMapper.updateFileSelective(fileUpload);
+			userFile.setCreateTime(new Date());
+			userFile.setUpdateTime(new Date());
+			userFile.setStatus(NetdiskConstant.DATA_NORMAL_STATUS);
+			userFileMapper.updateByKeySelective(userFile);
 
-		}else if (fileUpload.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+		}else if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			//如果是文件夹，还要恢复文件夹里面的子文件及子文件夹
 			Map<String, Object> map = new HashMap<>();
-			map.put("id", fileUpload.getId());
+			map.put("id", userFile.getId());
 			map.put("sumsize", null);
-			fileUploadMapper.getSumsizeRbk(map);
+			userFileMapper.getSumsizeRbk(map);
 			if (map.get("sumsize") != null) {
 				Long sumSize = Long.valueOf(map.get("sumsize")+"");
 				usedMemory = usedMemory + sumSize;
-				userNetdisk.setUsedMemory(usedMemory+"");
+				user.setUsedMemory(usedMemory);
 			}
-			fileUpload.setFileStatus(NetdiskConstant.FILE_STATUS_OF_DEL_PASSIVE + "");
-			tag1 = fileUploadMapper.updateFileSelective(fileUpload);
-			fileUploadMapper.rebackDir(fileUpload.getId());
+			userFile.setStatus(NetdiskConstant.FILE_STATUS_OF_DEL_PASSIVE);
+			userFileMapper.updateByKeySelective(userFile);
+			userFileMapper.rebackDir(userFile.getId());
 		}
 		//更新用户所用空间
-		Integer tag2 = userNetdiskMapper.updateByPrimaryKeySelective(userNetdisk);
+		Integer tag2 = userNetdiskMapper.updateByPrimaryKeySelective(user);
 
-		Recycle recycle = new Recycle();
+		FileRecycle recycle = new FileRecycle();
 		recycle.setRecycleId(recycleId);
-		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_RESTORE + "");
+		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_RESTORE);
 		//更新回收站
 		Integer tag3 = recycleMapper.updateByPrimaryKeySelective(recycle);
 
-		userNetdiskService.updatePrincipal();
+		userService.updatePrincipal();
 
 		// 删除定时任务
 		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelJobPath(), recycle, Result.class);
 
-		if (tag1>0 && tag2>0 && tag3>0) {
-			return result;
-		}else {
-			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_FAILED);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_FAILED));
-			return result;
-		}
+		return result;
 	}
 
 }

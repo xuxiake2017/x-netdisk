@@ -1,17 +1,17 @@
 package group.xuxiake.web.service;
 
+import group.xuxiake.common.entity.FileShare;
 import group.xuxiake.common.entity.Page;
-import group.xuxiake.common.entity.ShareFile;
 import group.xuxiake.common.entity.Result;
 
 public interface ShareFileService {
 
 	/**
 	 * 创建分享文件
-	 * @param fileSaveName
+	 * @param fileKey
 	 * @return
 	 */
-  	Result shareFile(String fileSaveName);
+  	Result shareFile(String fileKey);
 
 	/**
 	 * 获取分享文件
@@ -25,7 +25,7 @@ public interface ShareFileService {
 	 * @param shareId
 	 * @return
 	 */
-  	ShareFile findByShareId(String shareId);
+  	FileShare findByShareId(String shareId);
 
 	/**
 	 * 查找所有分享文件
@@ -91,4 +91,13 @@ public interface ShareFileService {
 	 * @return
 	 */
 	Result getSubList(String shareId, String sharePwd, Integer parentId);
+
+	/**
+	 * 获取分享文件媒体信息
+	 * @param shareId
+	 * @param sharePwd
+	 * @param fileId
+	 * @return
+	 */
+	Result getFileMediaInfo(String shareId, String sharePwd, Integer fileId);
 }

@@ -1,6 +1,6 @@
 package group.xuxiake.route.service.impl;
 
-import group.xuxiake.common.entity.Recycle;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.RouteShowSimple;
 import group.xuxiake.common.entity.route.RouteOfSaveRoutePojo;
@@ -147,7 +147,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    public Result delFile(Recycle recycle) {
+    public Result delFile(FileRecycle recycle) {
 
         RouteShowSimple routeServer = this.getQuartzServer(recycle.getRecycleId().toString());
         String requestUrl = "http://" + routeServer.getIp() + ":" + routeServer.getPort() + appConfiguration.getDelFilePath();
@@ -156,7 +156,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    public Result delJob(Recycle recycle) {
+    public Result delJob(FileRecycle recycle) {
 
         RouteShowSimple routeServer = this.getQuartzServer(recycle.getRecycleId().toString());
         String requestUrl = "http://" + routeServer.getIp() + ":" + routeServer.getPort() + appConfiguration.getDelJobPath();

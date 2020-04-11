@@ -1,5 +1,7 @@
 package group.xuxiake.common.entity.show;
 
+import lombok.Data;
+
 import java.util.Date;
 
 /**
@@ -7,6 +9,7 @@ import java.util.Date;
  * PS: Not easy to write code, please indicate.
  * Description：显示回收站文件列表
  */
+@Data
 public class RecycleShowList {
 
     // id
@@ -16,77 +19,13 @@ public class RecycleShowList {
     // 文件过期时间
     private Date overTime;
     // 文件保存名
-    private String fileSaveName;
+    private String key;
     // 文件真实名
-    private String fileRealName;
+    private String fileName;
     // 文件大小
     private Long fileSize;
     // 文件类型
     private Integer fileType;
     // 是否是文件
     private Integer isDir;
-
-    public Integer getRecycleId() {
-        return recycleId;
-    }
-
-    public void setRecycleId(Integer recycleId) {
-        this.recycleId = recycleId;
-    }
-
-    public Date getDeleteTime() {
-        return deleteTime;
-    }
-
-    public void setDeleteTime(Date deleteTime) {
-        this.deleteTime = deleteTime;
-    }
-
-    public Date getOverTime() {
-        return overTime;
-    }
-
-    public void setOverTime(Date overTime) {
-        this.overTime = overTime;
-    }
-
-    public String getFileSaveName() {
-        return fileSaveName;
-    }
-
-    public void setFileSaveName(String fileSaveName) {
-        this.fileSaveName = fileSaveName;
-    }
-
-    public String getFileRealName() {
-        return fileRealName;
-    }
-
-    public void setFileRealName(String fileRealName) {
-        this.fileRealName = fileRealName;
-    }
-
-    public Long getFileSize() {
-        return fileSize;
-    }
-
-    public void setFileSize(Long fileSize) {
-        this.fileSize = fileSize;
-    }
-
-    public Integer getFileType() {
-        return fileType;
-    }
-
-    public void setFileType(Integer fileType) {
-        this.fileType = fileType;
-    }
-
-    public Integer getIsDir() {
-        return isDir;
-    }
-
-    public void setIsDir(Integer isDir) {
-        this.isDir = isDir;
-    }
 }

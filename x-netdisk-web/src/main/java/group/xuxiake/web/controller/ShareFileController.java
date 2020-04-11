@@ -86,13 +86,13 @@ public class ShareFileController {
 
 	/**
 	 * 创建分享文件
-	 * @param fileSaveName
+	 * @param fileKey
 	 * @return
 	 */
 	@RequestMapping(value="/shareFile")
 	@ResponseBody
-	public Result shareFile(String fileSaveName) {
-		return shareFileService.shareFile(fileSaveName);
+	public Result shareFile(String fileKey) {
+		return shareFileService.shareFile(fileKey);
 	}
 
 	/*
@@ -114,5 +114,18 @@ public class ShareFileController {
 	@ResponseBody
 	public Result deleteShare(@PathVariable("id")Integer id) {
 		return shareFileService.deleteShare(id);
+	}
+
+	/**
+	 * 获取分享文件媒体信息
+	 * @param shareId
+	 * @param sharePwd
+	 * @param fileId
+	 * @return
+	 */
+	@RequestMapping("/getFileMediaInfo")
+	@ResponseBody
+	public Result getFileMediaInfo(String shareId, String sharePwd, Integer fileId) {
+		return shareFileService.getFileMediaInfo(shareId, sharePwd, fileId);
 	}
 }

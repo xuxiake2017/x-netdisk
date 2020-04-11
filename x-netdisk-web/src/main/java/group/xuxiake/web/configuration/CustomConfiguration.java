@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class CustomConfiguration {
 
     @Value("${app.config.totalMemory}")
-    private String totalMemory;
+    private Long totalMemory;
     @Value("${app.config.fileSizeMax}")
     private Long fileSizeMax;
     @Value("${app.config.vipFileSizeMax}")
@@ -24,7 +24,7 @@ public class CustomConfiguration {
     private Integer recycleDelayTime;
 
 
-    private static Integer verifyEmailExpire;
+    private static Long verifyEmailExpire;
     private static String emailAccount;
     private static String emailPassword;
     private static String emailSMTPHost;
@@ -51,12 +51,12 @@ public class CustomConfiguration {
         CustomConfiguration.serverHost = serverHost;
     }
 
-    public static Integer getVerifyEmailExpire() {
+    public static Long getVerifyEmailExpire() {
         return verifyEmailExpire;
     }
 
     @Value("${app.config.email.verifyEmailExpire}")
-    public void setVerifyEmailExpire(Integer verifyEmailExpire) {
+    public void setVerifyEmailExpire(Long verifyEmailExpire) {
         CustomConfiguration.verifyEmailExpire = verifyEmailExpire;
     }
 
