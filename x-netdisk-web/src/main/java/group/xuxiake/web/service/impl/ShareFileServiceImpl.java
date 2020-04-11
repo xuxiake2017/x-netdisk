@@ -328,6 +328,16 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return result;
 		}
 
+		// 检查fileId是否合法
+		if (fileId != null) {
+			List<Integer> childIds = userFileMapper.findChildIds(fileShare.getFileId());
+			if (!childIds.contains(fileId)) {
+				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED));
+				return result;
+			}
+		}
+
 		// 要保存的文件或者是要保存的最外层文件夹
 		UserFile fileForSave = null;
 		if (fileId != null) {
@@ -338,32 +348,38 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 
-		if (fileForSave.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
-			// 检查用户目录是否存在"我的资源"文件夹
-			UserFile userFileChek = new UserFile();
-			userFileChek.setUserId(user.getId());
-			userFileChek.setParentId(-1);
-			userFileChek.setFileName("我的资源");
-			UserFile fileSearch = userFileMapper.findFileByRealName(userFileChek);
-			if(fileSearch != null){
-				// 检查目标父目录下是否存在同名文件夹
-				UserFile fileSearch2 = userFileMapper.findFileByRealName(fileSearch);
-				if (fileSearch2 != null) {
-					// 目标目录存在同名文件夹，保存失败
-					result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_TARGET_DIR_EXIST_SAME_NAME_DIR);
-					result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_TARGET_DIR_EXIST_SAME_NAME_DIR));
-					return result;
-				}
-			}
+		// 检查用户目录是否存在"我的资源"文件夹
+		UserFile userFileCheck = new UserFile();
+		userFileCheck.setUserId(user.getId());
+		userFileCheck.setParentId(-1);
+		userFileCheck.setFileName("我的资源");
+		UserFile fileResources = userFileMapper.findFileByRealName(userFileCheck);
+		if (fileResources == null) {
+			// 用户目录不存在"我的资源"文件夹
+			fileResources = new UserFile();
+			fileResources.setUserId(user.getId());
+			fileResources.setParentId(-1);
+			fileResources.setFileName("我的资源");
+			fileResources.setKey(FileUtil.makeFileKey());
+			fileResources.setCreateTime(new Date());
+			fileResources.setUpdateTime(new Date());
+			fileResources.setIsDir(NetdiskConstant.FILE_IS_DIR);
+			fileResources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
+			fileResources.setFilePath("/");
+			userFileMapper.insertSelective(fileResources);
 		}
 
-
-		// 检查fileId是否合法
-		if (fileId != null) {
-			List<Integer> childIds = userFileMapper.findChildIds(fileShare.getFileId());
-			if (!childIds.contains(fileId)) {
-				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED));
+		if (fileForSave.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+			// 检查目标父目录下是否存在同名文件夹
+			userFileCheck = new UserFile();
+			userFileCheck.setUserId(user.getId());
+			userFileCheck.setParentId(fileResources.getId());
+			userFileCheck.setFileName(fileForSave.getFileName());
+			UserFile fileSearchResult = userFileMapper.findFileByRealName(userFileCheck);
+			if (fileSearchResult != null) {
+				// 目标目录存在同名文件夹，保存失败
+				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_TARGET_DIR_EXIST_SAME_NAME_DIR);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_TARGET_DIR_EXIST_SAME_NAME_DIR));
 				return result;
 			}
 		}
@@ -393,7 +409,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 		userMapper.updateByPrimaryKeySelective(user);
 
 		// 递归保存文件夹内的文件到网盘
-		this.saveToCloudIteration(fileForSave.getId(), null, user.getId(), fileShare);
+		this.saveToCloudIteration(fileForSave.getId(), fileResources.getId(), user.getId(), fileShare);
 
 		result.setMsg("文件已成功保存到\"我的资源\"文件夹！");
 
@@ -530,29 +546,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 		userFile.setCreateTime(new Date());
 		userFile.setUpdateTime(new Date());
 		userFile.setUserId(userId);
-
-		if (newParentId == null) {
-			// 检查用户目录是否存在"我的资源"文件夹
-			UserFile fileChek = new UserFile();
-			fileChek.setUserId(userId);
-			fileChek.setParentId(-1);
-			fileChek.setFileName("我的资源");
-			UserFile fileSearch = userFileMapper.findFileByRealName(fileChek);
-			if(fileSearch == null){
-
-				fileChek.setKey(FileUtil.makeFileKey());
-				fileChek.setCreateTime(new Date());
-				fileChek.setUpdateTime(new Date());
-				fileChek.setIsDir(NetdiskConstant.FILE_IS_DIR);
-				userFileMapper.insertSelective(fileChek);
-				userFile.setParentId(fileChek.getId());
-			}else {
-				userFile.setParentId(fileSearch.getId());
-			}
-		} else {
-			userFile.setParentId(newParentId);
-		}
-
+		userFile.setParentId(newParentId);
 		userFileMapper.insertSelective(userFile);
 
 		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {

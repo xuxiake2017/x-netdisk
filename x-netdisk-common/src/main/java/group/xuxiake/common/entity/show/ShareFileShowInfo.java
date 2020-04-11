@@ -19,9 +19,9 @@ public class ShareFileShowInfo {
 
     private Integer fileId;
 
-    private String fileSaveName;
+    private String fileKey;
 
-    private String fileRealName;
+    private String fileName;
 
     private Long fileSize;
     
@@ -69,20 +69,20 @@ public class ShareFileShowInfo {
         this.fileId = fileId;
     }
 
-    public String getFileSaveName() {
-        return fileSaveName;
+    public String getFileKey() {
+        return fileKey;
     }
 
-    public void setFileSaveName(String fileSaveName) {
-        this.fileSaveName = fileSaveName;
+    public void setFileKey(String fileKey) {
+        this.fileKey = fileKey;
     }
 
-    public String getFileRealName() {
-        return fileRealName;
+    public String getFileName() {
+        return fileName;
     }
 
-    public void setFileRealName(String fileRealName) {
-        this.fileRealName = fileRealName;
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public Long getFileSize() {

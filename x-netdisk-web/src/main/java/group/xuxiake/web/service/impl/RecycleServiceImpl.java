@@ -80,14 +80,14 @@ public class RecycleServiceImpl implements RecycleService {
 	/**
 	 * 恢复文件
 	 * @param recycleId
-	 * @param fileSaveName
+	 * @param fileKey
 	 * @return
 	 */
 	@Override
-	public Result reback(Integer recycleId, String fileSaveName) {
+	public Result reback(Integer recycleId, String fileKey) {
 
 		Result result = new Result();
-		UserFile userFile = userFileMapper.findFileBySaveNameForReback(fileSaveName);
+		UserFile userFile = userFileMapper.findFileBySaveNameForReback(fileKey);
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 
@@ -114,17 +114,24 @@ public class RecycleServiceImpl implements RecycleService {
 				userFileChek.setUserId(user.getId());
 				userFileChek.setParentId(-1);
 				userFileChek.setFileName("我的资源");
-				UserFile fileSearch = userFileMapper.findFileByRealName(userFileChek);
-				if(fileSearch == null){
+				// "我的资源"文件夹
+				UserFile fileResources = userFileMapper.findFileByRealName(userFileChek);
+				if(fileResources == null){
 
-					userFileChek.setKey(FileUtil.makeFileKey());
-					userFileChek.setCreateTime(new Date());
-					userFileChek.setUpdateTime(new Date());
-					userFileChek.setIsDir(NetdiskConstant.FILE_IS_DIR);
-					userFileMapper.insertSelective(userFileChek);
-					userFile.setParentId(userFileChek.getId());
+					// 用户目录不存在"我的资源"文件夹
+					fileResources = new UserFile();
+					fileResources.setUserId(user.getId());
+					fileResources.setParentId(-1);
+					fileResources.setFileName("我的资源");
+					fileResources.setKey(FileUtil.makeFileKey());
+					fileResources.setCreateTime(new Date());
+					fileResources.setUpdateTime(new Date());
+					fileResources.setIsDir(NetdiskConstant.FILE_IS_DIR);
+					fileResources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
+					fileResources.setFilePath("/");
+					userFileMapper.insertSelective(fileResources);
 				} else {
-					userFile.setParentId(fileSearch.getId());
+					userFile.setParentId(fileResources.getId());
 				}
 			}
 		}

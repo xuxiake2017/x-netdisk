@@ -90,7 +90,7 @@ public interface UserFileMapper {
     Integer moveFile(UserFile userFile);
 
     /**
-     * 根据fileSaveName查找文件（用于文件还原）
+     * 根据fileKey查找文件（用于文件还原）
      * @param key
      * @return
      */

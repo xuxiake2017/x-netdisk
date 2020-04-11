@@ -181,10 +181,10 @@
     from
       x_user_file
     where
-      `key` = #{fileSaveName} and status=${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      `key` = #{key} and status=${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
   </select>
 
-  <!--根据fileSaveName查找文件（用于文件还原）-->
+  <!--根据fileKey查找文件（用于文件还原）-->
   <select id="findFileBySaveNameForReback" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />

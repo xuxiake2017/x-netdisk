@@ -22,9 +22,9 @@ public interface RecycleService {
 	/**
 	 * 恢复文件
 	 * @param recycleId
-	 * @param fileSaveName
+	 * @param fileKey
 	 * @return
 	 */
-	Result reback(Integer recycleId, String fileSaveName);
+	Result reback(Integer recycleId, String fileKey);
 	
 }

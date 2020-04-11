@@ -177,12 +177,12 @@
 
   <resultMap type="group.xuxiake.common.entity.show.ShareFileShowInfo" id="shareInfoResultMap">
     <result column="share_Id" property="shareId"/>
-    <result column="share_Time" property="shareTime"/>
-    <result column="username" property="shareUser"/>
+    <result column="share_time" property="shareTime"/>
+    <result column="nick_name" property="shareUser"/>
     <result column="avatar" property="avatar"/>
     <result column="file_id" property="fileId" />
-    <result column="File_Save_Name" property="fileSaveName" />
-    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_key" property="fileKey" />
+    <result column="file_name" property="fileName" />
     <result column="file_Size" property="fileSize" />
     <result column="file_Type" property="fileType" />
     <result column="is_Dir" property="isDir" />
@@ -192,10 +192,10 @@
   	SELECT
   	  file_share.share_Id,
   	  file_share.share_Time,
-  	  x_user.username,
+  	  x_user.nick_name,
   	  x_user.avatar,
   	  user_file.id file_id,
-  	  user_file.`key`,
+  	  user_file.`key` file_key,
   	  user_file.file_name,
   	  file_origin.file_size,
   	  IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type,
@@ -231,8 +231,8 @@
     <result column="download_times" property="downloadTimes" />
     <result column="save_times" property="saveTimes" />
     <result column="file_id" property="fileId" />
-    <result column="File_Save_Name" property="fileSaveName" />
-    <result column="File_Real_Name" property="fileRealName" />
+    <result column="file_key" property="fileKey" />
+    <result column="file_name" property="fileRealName" />
     <result column="file_Size" property="fileSize" />
     <result column="file_Type" property="fileType" />
     <result column="is_Dir" property="isDir" />
@@ -247,7 +247,7 @@
       file_share.access_times,
       file_share.download_times,
       file_share.save_times,
-      user_file.`key`,
+      user_file.`key` file_key,
       user_file.file_name,
       file_origin.file_size,
       file_origin.file_type,

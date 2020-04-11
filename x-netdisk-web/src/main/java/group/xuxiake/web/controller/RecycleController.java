@@ -46,12 +46,12 @@ public class RecycleController {
 	/**
 	 * 恢复文件
 	 * @param recycleId
-	 * @param fileSaveName
+	 * @param fileKey
 	 * @return
 	 */
 	@RequestMapping(value="/reback")
 	@ResponseBody
-	public Result reback(Integer recycleId, String fileSaveName) {
-		return recycleService.reback(recycleId, fileSaveName);
+	public Result reback(Integer recycleId, String fileKey) {
+		return recycleService.reback(recycleId, fileKey);
 	}
 }
