@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.UserFriendMessageMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.UserFriendMessage" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="from" property="from" jdbcType="INTEGER" />
+    <result column="to" property="to" jdbcType="INTEGER" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="file_id" property="fileId" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, `from`, `to`, content, file_id, status, create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_user_friend_message
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_user_friend_message
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.UserFriendMessage" >
+    insert into x_user_friend_message (id, `from`, `to`,
+      content, file_id, status, 
+      create_time, update_time)
+    values (#{id,jdbcType=INTEGER}, #{from,jdbcType=INTEGER}, #{to,jdbcType=INTEGER}, 
+      #{content,jdbcType=VARCHAR}, #{fileId,jdbcType=INTEGER}, #{status,jdbcType=INTEGER}, 
+      #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.UserFriendMessage" useGeneratedKeys="true" keyColumn="id" keyProperty="id" >
+    insert into x_user_friend_message
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="from != null" >
+        `from`,
+      </if>
+      <if test="to != null" >
+        `to`,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="fileId != null" >
+        file_id,
+      </if>
+      <if test="status != null" >
+        status,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="from != null" >
+        #{from,jdbcType=INTEGER},
+      </if>
+      <if test="to != null" >
+        #{to,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="fileId != null" >
+        #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.UserFriendMessage" >
+    update x_user_friend_message
+    <set >
+      <if test="from != null" >
+        `from` = #{from,jdbcType=INTEGER},
+      </if>
+      <if test="to != null" >
+        `to` = #{to,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="fileId != null" >
+        file_id = #{fileId,jdbcType=INTEGER},
+      </if>
+      <if test="status != null" >
+        status = #{status,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.UserFriendMessage" >
+    update x_user_friend_message
+    set `from` = #{from,jdbcType=INTEGER},
+      `to` = #{to,jdbcType=INTEGER},
+      content = #{content,jdbcType=VARCHAR},
+      file_id = #{fileId,jdbcType=INTEGER},
+      status = #{status,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <resultMap id="ResultMapGetFriendMessages" type="group.xuxiake.common.entity.show.UserFriendMessageShow" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="from" property="from" jdbcType="INTEGER" />
+    <result column="to" property="to" jdbcType="INTEGER" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="file_id" property="fileId" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    <result column="user_id" property="userId"/>
+    <result column="username" property="userName"/>
+    <result column="user_avatar" property="userAvatar"/>
+    <result column="friend_id" property="friendId"/>
+    <result column="friend_name" property="friendName"/>
+    <result column="friend_avatar" property="friendAvatar"/>
+  </resultMap>
+
+  <!--获取好友消息列表-->
+  <select id="getFriendMessages" resultMap="ResultMapGetFriendMessages">
+    SELECT
+    t.*,
+    x_user.avatar     user_avatar,
+    x_user.nick_name username,
+    friend.avatar   friend_avatar,
+    friend.nick_name friend_name
+    FROM
+    (
+    SELECT
+    message.*,
+    #{userId}                                                    user_id,
+    IF(message.`from` = #{userId}, message.`to`, message.`from`) friend_id
+    FROM x_user_friend_message message
+    WHERE message.status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS} AND message.`from` = #{userId} OR message.`to` = #{userId}
+    ) t
+    LEFT JOIN x_user x_user
+    ON x_user.user_Status != ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NOT_EXIST} AND x_user.id = t.user_id
+    LEFT JOIN x_user friend
+    ON friend.user_status != ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NOT_EXIST} AND friend.id = t.friend_id
+    <where>
+      <if test="friendId != null">
+        AND t.friend_id = #{friendId}
+      </if>
+    </where>
+    ORDER BY t.id DESC
+    <if test="limit != null">
+      LIMIT #{limit}
+    </if>
+  </select>
+</mapper>
