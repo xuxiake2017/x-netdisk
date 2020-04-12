@@ -192,6 +192,7 @@ public class FileServiceImpl implements FileService {
 	 * @param param
 	 * @return
 	 */
+	@Transactional
 	@Override
 	public Result reName(UserFile param) {
 		Result result = new Result();
@@ -496,7 +497,7 @@ public class FileServiceImpl implements FileService {
 			map.put("sumsize", null);
 			userFileMapper.getSumsizeDel(map);
 			if(map.get("sumsize") != null) {
-				Long sumSize = Long.valueOf((String) map.get("sumsize"));
+				Long sumSize = new Long((Integer) map.get("sumsize"));
 				usedMemory = usedMemory - sumSize;
 				user.setUsedMemory(usedMemory);
 			}
@@ -533,7 +534,7 @@ public class FileServiceImpl implements FileService {
 
 	/**
 	 * 移动文件
-	 * @param param
+	 * @param param fileKey parentId
 	 * @return
 	 */
 	@Transactional
@@ -542,26 +543,46 @@ public class FileServiceImpl implements FileService {
 
 		Result result = new Result();
 		UserFile userFile = userFileMapper.findFileByKey(param.getKey());
-		UserFile searchParam = new UserFile();
-		searchParam.setParentId(param.getParentId());
-		searchParam.setFileName(userFile.getFileName());
-		searchParam.setUserId(userFile.getUserId());
-		UserFile searchResult = userFileMapper.findFileByRealName(searchParam);
-		if (searchResult != null) {
-			// 移动失败，目标目录存在同名文件夹
-			result.setCode(NetdiskErrMsgConstant.MOVEFILE_TARGET_DIR_EXIST_SAME_NAME_DIR);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.MOVEFILE_TARGET_DIR_EXIST_SAME_NAME_DIR));
-			return result;
+		String targetPatentFilePath = "/";
+		if (param.getParentId() != -1) {
+            targetPatentFilePath = userFileMapper.findPathname(param.getParentId());
+        }
+		String nowParentFilePath = "/";
+		if (userFile.getParentId() != -1) {
+			nowParentFilePath = userFileMapper.findPathname(userFile.getParentId());
 		}
 
-		param.setUserId(userFile.getUserId());
-		if(userFileMapper.moveFile(param) > 0) {
-			return result;
-		}else {
-			result.setCode(NetdiskErrMsgConstant.MOVEFILE_FAILED);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.MOVEFILE_FAILED));
-			return result;
+		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+			UserFile searchParam = new UserFile();
+			searchParam.setParentId(param.getParentId());
+			searchParam.setFileName(userFile.getFileName());
+			searchParam.setUserId(userFile.getUserId());
+			UserFile searchResult = userFileMapper.findFileByRealName(searchParam);
+			if (searchResult != null) {
+				// 移动失败，目标目录存在同名文件夹
+				result.setCode(NetdiskErrMsgConstant.MOVEFILE_TARGET_DIR_EXIST_SAME_NAME_DIR);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.MOVEFILE_TARGET_DIR_EXIST_SAME_NAME_DIR));
+				return result;
+			}
 		}
+
+		// 更新filePath
+		List<Integer> childIds = userFileMapper.findChildIds(userFile.getId());
+		if (childIds.size() > 0) {
+			List<UserFile> userFiles = userFileMapper.finFiledByIds(childIds);
+			for (UserFile file : userFiles) {
+				String filePath = file.getFilePath().replaceFirst("^" + nowParentFilePath, targetPatentFilePath);
+				file.setFilePath(filePath);
+			}
+			if (userFiles.size() > 0) {
+				userFileMapper.updateBatch(userFiles);
+			}
+		}
+
+		userFile.setParentId(param.getParentId());
+        userFile.setFilePath(null);
+		userFileMapper.updateByPrimaryKeySelective(userFile);
+		return result;
 	}
 
 	/**

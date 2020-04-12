@@ -19,6 +19,7 @@ import group.xuxiake.web.service.UserFriendRequestService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -51,6 +52,7 @@ public class UserFriendRequestServiceImpl implements UserFriendRequestService {
      * @param option 操作 1：同意；2：拒绝
      * @return
      */
+    @Transactional
     @Override
     public Result friendRequestOption(Integer applicant, Integer option) {
 
@@ -131,6 +133,7 @@ public class UserFriendRequestServiceImpl implements UserFriendRequestService {
      * @param param
      * @return
      */
+    @Transactional
     @Override
     public Result addFriendRequest(UserFriendRequest param) {
 

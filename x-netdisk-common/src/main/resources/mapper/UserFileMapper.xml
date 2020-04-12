@@ -275,11 +275,6 @@
   	}
   </select>
 
-  <!--移动文件-->
-  <update id="moveFile" parameterType="group.xuxiake.common.entity.UserFile">
-  	update x_user_file set parent_id = #{parentId} where user_id = #{userId} and `key` = #{key}
-  </update>
-
   <resultMap id="FindAllImgResultMap" type="group.xuxiake.common.entity.show.FileShowMedia" extends="BaseResultMap">
     <association property="fileMedia" javaType="group.xuxiake.common.entity.FileMedia">
       <result column="shoot_time" property="shootTime" jdbcType="TIMESTAMP" />
@@ -294,12 +289,14 @@
     </association>
     <association property="fileOrigin" javaType="group.xuxiake.common.entity.FileOrigin">
       <result column="preview_url" property="previewUrl" jdbcType="VARCHAR" />
+      <result column="file_path" property="filePath" jdbcType="VARCHAR" />
     </association>
   </resultMap>
 
   <select id="findAllImg" resultMap="FindAllImgResultMap">
   	select
-      user_file.*,
+      user_file.id, user_file.file_name, user_file.is_dir, user_file.user_id, user_file.parent_id, user_file.`key`, user_file.status, user_file.create_time,
+      user_file.update_time,
       file_media.shoot_time,
       file_media.img_width,
       file_media.img_height,
@@ -309,7 +306,8 @@
       file_media.thumbnail_url,
       file_media.music_poster,
       file_media.music_artist,
-      file_origin.preview_url
+      file_origin.preview_url,
+      file_origin.file_path
     from
       x_user_file user_file,
       x_file_origin file_origin,
@@ -325,7 +323,7 @@
 
   <!--查询文件路径（文件名）-->
   <select id="findPathname" resultType="String">
-  	select fn_tree_pathname(#{parentId}, '/')
+  	select CONCAT('/', fn_tree_pathname(#{parentId}, '/'))
   </select>
 
   <!--查找父文件下所有子文件id-->
@@ -373,5 +371,35 @@
       </if>
     </set>
     where `key` = #{key}
+  </update>
+
+  <!--根据ids查找-->
+  <select id="finFiledByIds" resultMap="BaseResultMap" parameterType="list">
+    select
+    <include refid="Base_Column_List" />
+    from x_user_file
+    WHERE
+    id IN
+    <foreach collection="list" open="(" separator="," close=")" item="id">
+      #{id}
+    </foreach>
+  </select>
+
+  <!--批量更新filePath-->
+  <update id="updateBatch" parameterType="java.util.List">
+    update x_user_file
+    <trim prefix="set" suffixOverrides=",">
+      <trim prefix="file_path = case" suffix="end,">
+        <foreach collection="list" item="i" index="index">
+          <if test="i.filePath != null">
+            when id = #{i.id} then #{i.filePath}
+          </if>
+        </foreach>
+      </trim>
+    </trim>
+    where
+    <foreach collection="list" separator="or" item="i" index="index" >
+      id = #{i.id}
+    </foreach>
   </update>
 </mapper>

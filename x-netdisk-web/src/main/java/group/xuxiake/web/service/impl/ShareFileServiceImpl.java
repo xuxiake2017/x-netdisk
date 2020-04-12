@@ -20,6 +20,7 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -58,6 +59,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 * @param fileKey
 	 * @return
 	 */
+	@Transactional
 	@Override
 	public Result shareFile(String fileKey) {
 
@@ -296,6 +298,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 * @param sharePwd
 	 * @return
 	 */
+	@Transactional
 	@Override
 	public Result saveToCloud(String shareId, String sharePwd, Integer fileId) {
 

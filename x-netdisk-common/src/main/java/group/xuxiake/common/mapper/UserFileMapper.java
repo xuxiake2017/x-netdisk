@@ -81,14 +81,6 @@ public interface UserFileMapper {
      */
     void getSumsizeRbk(Map<String, Object> map);
 
-
-    /**
-     * 移动文件
-     * @param userFile
-     * @return
-     */
-    Integer moveFile(UserFile userFile);
-
     /**
      * 根据fileKey查找文件（用于文件还原）
      * @param key
@@ -128,4 +120,17 @@ public interface UserFileMapper {
      * @param userFile
      */
     void updateByKeySelective(UserFile userFile);
+
+    /**
+     * 根据ids查找
+     * @param ids
+     * @return
+     */
+    List<UserFile> finFiledByIds(List<Integer> ids);
+
+    /**
+     * 批量更新filePath
+     * @param list
+     */
+    void updateBatch(List<UserFile> list);
 }

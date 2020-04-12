@@ -196,7 +196,5 @@
     WHERE
     file_origin.id = user_file.origin_id
     AND user_file.id = #{userFileId}
-    AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
-    AND file_origin.file_status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
   </select>
 </mapper>

@@ -124,15 +124,14 @@
     user_file.`key`,
     user_file.file_name,
     file_origin.file_size,
-    file_origin.file_type,
+    IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type,
     user_file.is_dir
     from
     x_file_recycle file_recycle,
-    x_user_file user_file,
-    x_file_origin file_origin
+    x_user_file user_file
+    LEFT JOIN x_file_origin file_origin ON user_file.origin_id = file_origin.id
     where
     file_recycle.file_id = user_file.id
-    AND user_file.origin_id = file_origin.id
     AND file_recycle.delete_user_id = #{deleteUserId}
     AND file_recycle.recycle_status = ${@group.xuxiake.common.util.NetdiskConstant@RECYCLE_STATUS_FILE_DEL}
     <if test="fileName != null and fileName != ''">

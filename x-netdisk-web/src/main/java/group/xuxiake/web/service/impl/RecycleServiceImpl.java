@@ -17,6 +17,7 @@ import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.*;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -32,7 +33,7 @@ public class RecycleServiceImpl implements RecycleService {
 	@Resource
 	private UserFileMapper userFileMapper;
 	@Resource
-	private UserMapper userNetdiskMapper;
+	private UserMapper userMapper;
 	@Resource
 	private UserService userService;
 	@Resource
@@ -83,6 +84,7 @@ public class RecycleServiceImpl implements RecycleService {
 	 * @param fileKey
 	 * @return
 	 */
+	@Transactional
 	@Override
 	public Result reback(Integer recycleId, String fileKey) {
 
@@ -95,12 +97,35 @@ public class RecycleServiceImpl implements RecycleService {
 		Long usedMemory = user.getUsedMemory();
 		Long totalMemory = user.getTotalMemory();
 		Long availableMemory = totalMemory - usedMemory;
-		if (fileOrigin.getFileSize() > availableMemory) {
+		Long sumSize = null;
+		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("id", userFile.getId());
+			map.put("sumsize", null);
+			userFileMapper.getSumsizeRbk(map);
+			if (map.get("sumsize") == null) {
+				sumSize = 0L;
+			} else {
+				sumSize = new Long((Integer) map.get("sumsize"));
+			}
+
+			// 检查目标父目录下是否存在同名文件夹
+			UserFile fileSearch = userFileMapper.findFileByRealName(userFile);
+			if (fileSearch != null) {
+				result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR));
+				return result;
+			}
+		} else {
+			sumSize = fileOrigin.getFileSize();
+		}
+		usedMemory = usedMemory + sumSize;
+		user.setUsedMemory(usedMemory);
+		if (sumSize > availableMemory) {
 			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH));
 			return result;
 		}
-		Integer tag1 = null;
 
 		//检查父目录是否被删除
 		if (userFile.getParentId() != -1) {
@@ -136,48 +161,23 @@ public class RecycleServiceImpl implements RecycleService {
 			}
 		}
 
-		// 检查目标父目录下是否存在同名文件夹
-		UserFile fileSearch = userFileMapper.findFileByRealName(userFile);
-		if (fileSearch != null) {
-			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR));
-			return result;
-		}
+		//更新文件状态
+		userFile.setUpdateTime(new Date());
+		userFile.setStatus(NetdiskConstant.DATA_NORMAL_STATUS);
+		userFileMapper.updateByKeySelective(userFile);
 
-		if(userFile.getIsDir() == NetdiskConstant.FILE_IS_NOT_DIR){
-			//如果是文件
-			long fileSize = fileOrigin.getFileSize();
-			usedMemory = usedMemory + fileSize;
-			user.setUsedMemory(usedMemory);
-			//更新文件状态
-			userFile.setCreateTime(new Date());
-			userFile.setUpdateTime(new Date());
-			userFile.setStatus(NetdiskConstant.DATA_NORMAL_STATUS);
-			userFileMapper.updateByKeySelective(userFile);
-
-		}else if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
-			//如果是文件夹，还要恢复文件夹里面的子文件及子文件夹
-			Map<String, Object> map = new HashMap<>();
-			map.put("id", userFile.getId());
-			map.put("sumsize", null);
-			userFileMapper.getSumsizeRbk(map);
-			if (map.get("sumsize") != null) {
-				Long sumSize = Long.valueOf(map.get("sumsize")+"");
-				usedMemory = usedMemory + sumSize;
-				user.setUsedMemory(usedMemory);
-			}
-			userFile.setStatus(NetdiskConstant.FILE_STATUS_OF_DEL_PASSIVE);
-			userFileMapper.updateByKeySelective(userFile);
+		if(userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR){
 			userFileMapper.rebackDir(userFile.getId());
 		}
+
 		//更新用户所用空间
-		Integer tag2 = userNetdiskMapper.updateByPrimaryKeySelective(user);
+		userMapper.updateByPrimaryKeySelective(user);
 
 		FileRecycle recycle = new FileRecycle();
 		recycle.setRecycleId(recycleId);
 		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_RESTORE);
 		//更新回收站
-		Integer tag3 = recycleMapper.updateByPrimaryKeySelective(recycle);
+		recycleMapper.updateByPrimaryKeySelective(recycle);
 
 		userService.updatePrincipal();
 

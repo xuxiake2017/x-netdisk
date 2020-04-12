@@ -232,7 +232,7 @@
     <result column="save_times" property="saveTimes" />
     <result column="file_id" property="fileId" />
     <result column="file_key" property="fileKey" />
-    <result column="file_name" property="fileRealName" />
+    <result column="file_name" property="fileName" />
     <result column="file_Size" property="fileSize" />
     <result column="file_Type" property="fileType" />
     <result column="is_Dir" property="isDir" />
@@ -250,17 +250,16 @@
       user_file.`key` file_key,
       user_file.file_name,
       file_origin.file_size,
-      file_origin.file_type,
+      IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type,
       user_file.is_dir
     FROM
       x_file_share file_share,
-      x_user_file user_file,
-      x_file_origin file_origin
+      x_user_file user_file
+    LEFT JOIN x_file_origin file_origin ON user_file.origin_id = file_origin.id
     WHERE
     file_share.share_user_id = #{userId}
     AND file_share.share_status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
     AND file_share.file_id = user_file.id
-    AND user_file.origin_id = file_origin.id
     AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
     <if test="fileName != null and fileName != ''">
       AND user_file.file_name LIKE CONCAT('%', #{fileName}, '%')

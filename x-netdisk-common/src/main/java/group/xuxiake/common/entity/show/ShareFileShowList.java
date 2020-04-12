@@ -30,7 +30,7 @@ public class ShareFileShowList {
 
     private String fileKey;
 
-    private String fileRealName;
+    private String fileName;
 
     private Long fileSize;
 
