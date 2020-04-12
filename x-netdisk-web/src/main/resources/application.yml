@@ -18,6 +18,7 @@ application:
   route:
     getChatServerPath: /route/getChatServer
     findRouteByUserPath: /route/findRouteByUser
+    sendMsgToUserPath: /route/sendMsgToUser
     quartz:
       delFilePath: /route/delFile
       delJobPath: /route/delJob
