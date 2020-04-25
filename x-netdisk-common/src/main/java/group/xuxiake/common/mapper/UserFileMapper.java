@@ -102,7 +102,7 @@ public interface UserFileMapper {
     String findPathname(Integer parentId);
 
     /**
-     * 查找父文件下所有子文件id
+     * 查找父文件下所有子文件id（包含父文件本身）
      * @param fileId
      * @return
      */

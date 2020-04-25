@@ -372,6 +372,7 @@ public class UserServiceImpl implements UserService {
 		message.setType(NetdiskConstant.MESSAGE_TYPE_OF_SUCCESS);
 		message.setTitle("注册成功");
 		message.setDescription("恭喜您注册成功，网盘初始容量为" + new Double(appConfiguration.getCustomConfiguration().getTotalMemory()) / (1024*1024) + "M");
+		message.setUserId(user.getId());
 		messageMapper.insertSelective(message);
 
 		Map<String, Object> map = new HashMap<>();
@@ -384,6 +385,10 @@ public class UserServiceImpl implements UserService {
 		UsernamePasswordToken token =
 				new UsernamePasswordToken(param.getEmail(), noencodePassword);
 		currentUser.login(token);
+
+		User userNow = (User)SecurityUtils.getSubject().getPrincipal();
+		Long timeOut = appConfiguration.getGlobalSessionTimeout().longValue();
+		redisUtils.set(session.getId(), userNow, timeOut);
 
 		UserNetdiskShowInfo userNetdiskShowInfo = (UserNetdiskShowInfo) this.getInfo().getData();
 		session.setAttribute("userId", userNetdiskShowInfo.getId());

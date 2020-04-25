@@ -4,12 +4,14 @@ import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.chat.ChatMessageBase;
+import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
 import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.web.configuration.AppConfiguration;
+import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.VerifyService;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,8 @@ public class VerifyServiceImpl implements VerifyService {
     private AppConfiguration appConfiguration;
     @Resource
     private RedisUtils redisUtils;
+    @Resource
+    private RouteService routeService;
 
     /**
      * 验证邮箱
@@ -72,7 +76,10 @@ public class VerifyServiceImpl implements VerifyService {
         chatMessageBase.setCreateTime(new Date());
         chatMessageBase.setType("SYSTEM");
         chatMessageBase.setContent("updatePrincipal");
-//        ChatWebSocketHandler.sendMessage(userId, JSONObject.toJSONString(chatMessageBase));
+        RouteOfSendMsgPojo data = new RouteOfSendMsgPojo();
+        data.setUserId(userId);
+        data.setChatMessageBase(chatMessageBase);
+        routeService.postMsgToRoute(userId.toString(), appConfiguration.getSendMsgToUserPath(), data, Result.class);
 
         SysMessage message = new SysMessage();
         message.setType(NetdiskConstant.MESSAGE_TYPE_OF_SUCCESS);

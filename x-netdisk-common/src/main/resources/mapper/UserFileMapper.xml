@@ -326,7 +326,7 @@
   	select CONCAT('/', fn_tree_pathname(#{parentId}, '/'))
   </select>
 
-  <!--查找父文件下所有子文件id-->
+  <!--查找父文件下所有子文件id（包含父文件本身）-->
   <select id="findChildIds" resultType="int" parameterType="int" statementType="CALLABLE">
     {
       call pro_cre_show_childlist(#{fileId,jdbcType=INTEGER,mode=IN})

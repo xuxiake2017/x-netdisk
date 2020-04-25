@@ -129,7 +129,8 @@ public class RecycleServiceImpl implements RecycleService {
 
 		//检查父目录是否被删除
 		if (userFile.getParentId() != -1) {
-			if (userFileMapper.selectByPrimaryKey(userFile.getParentId()).getStatus() != NetdiskConstant.FILE_STATUS_OF_NORMAL) {
+			UserFile oldParentFile = userFileMapper.selectByPrimaryKey(userFile.getParentId());
+			if (oldParentFile.getStatus() != NetdiskConstant.FILE_STATUS_OF_NORMAL) {
 				result.setData(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR));
 
@@ -155,8 +156,22 @@ public class RecycleServiceImpl implements RecycleService {
 					fileResources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
 					fileResources.setFilePath("/");
 					userFileMapper.insertSelective(fileResources);
-				} else {
-					userFile.setParentId(fileResources.getId());
+				}
+				userFile.setParentId(fileResources.getId());
+
+				// 父目录更改，更新filePath
+				String targetPatentFilePath = userFileMapper.findPathname(fileResources.getId());
+				String nowParentFilePath = userFileMapper.findPathname(oldParentFile.getId());
+				List<Integer> childIds = userFileMapper.findChildIds(userFile.getId());
+				if (childIds.size() > 0) {
+					List<UserFile> userFiles = userFileMapper.finFiledByIds(childIds);
+					for (UserFile file : userFiles) {
+						String filePath = file.getFilePath().replaceFirst("^" + nowParentFilePath, targetPatentFilePath);
+						file.setFilePath(filePath);
+					}
+					if (userFiles.size() > 0) {
+						userFileMapper.updateBatch(userFiles);
+					}
 				}
 			}
 		}
