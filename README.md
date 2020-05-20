@@ -12,6 +12,7 @@
 - 储蓄文件使用了分布式文件服务器FastDFS
 - 数据库mysql
 - 网盘文件树实现使用了mysql的储存过程
+- 确保电脑上安装了mvn，而且加进了系统path中，运行`x-netdisk-web\src\main\resources\lib\install.cmd`，安装`jave-1.0.2.jar`这个lib
 #### 框架介绍
 - chat简易流程图
 ![chat简易流程图](https://raw.githubusercontent.com/xuxiake2017/x-netdisk/master/pic/chat%E7%AE%80%E6%98%93%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg)
