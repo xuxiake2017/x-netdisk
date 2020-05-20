@@ -136,6 +136,44 @@ public class ConvertVideoUtil {
 			e.printStackTrace();
 		}
 	}
+
+	/**
+	 * 获取视频缩率图
+	 * @param videoPath
+	 * @param thumbnailPath
+	 * @param duration
+	 */
+	public static void thumbnail(String videoPath, String thumbnailPath, Long duration){
+
+		List<String> command = new ArrayList<>();
+		if(isLinux()){
+			command.add(FFMPEG_PATH_OF_LINUX);
+		}else {
+			command.add(FFMPEG_PATH_OF_WINDOWS);
+		}
+		command.add("-ss");
+		if (duration >= 2000L) {
+			command.add("2");
+		} else {
+			command.add("0");
+		}
+		command.add("-i");
+		command.add(videoPath);
+		command.add("-f");
+		command.add("image2");
+		command.add("-y");
+		command.add(thumbnailPath);
+
+		try {
+			Process process = new ProcessBuilder(command).start();
+			new PrintStream(process.getErrorStream()).start();
+			new PrintStream(process.getInputStream()).start();
+			process.waitFor();
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+
+	}
 }
 
 //判断转码以及mp4格式文件转码后处理是否完成，没完成之前线程会一直被阻塞

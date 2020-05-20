@@ -365,6 +365,7 @@ public class FileServiceImpl implements FileService {
 			previewUrl = fdfsNginxServer + "/" + previewUrl;
 			fileOrigin.setPreviewUrl(previewUrl);
 			fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+			fileMedia.setThumbnailUrl(previewUrl);
 		}
 		// 对于上传上来的视频，开辟线程进行转码，方便在线播放
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_VIDEO) {
@@ -389,6 +390,14 @@ public class FileServiceImpl implements FileService {
 			fileMedia.setVideoDuration(duration.intValue());
 			fileMedia.setVideoHeight(height);
 			fileMedia.setVideoWidth(width);
+
+			// 获取缩率图
+			String thumbnailCachePath = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("jpg"));
+			ConvertVideoUtil.thumbnail(cachePathBefore, thumbnailCachePath, duration);
+			File thumbnailCacheFile = new File(thumbnailCachePath);
+			String thumbnailPath = fastDFSClientWrapper.uploadFile(thumbnailCacheFile, "jpg");
+			fileMedia.setThumbnailUrl(fdfsNginxServer + "/" + thumbnailPath);
+			thumbnailCacheFile.delete();
 
 			new Thread(new VideoTransformHandler(fileOriginMapper, fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer, fileMedia)).start();
 		}

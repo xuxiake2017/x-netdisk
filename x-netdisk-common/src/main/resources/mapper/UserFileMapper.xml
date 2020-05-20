@@ -212,10 +212,13 @@
     user_file.*,
     file_origin.file_ext_name,
     file_origin.file_size,
-    IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type
+    IFNULL(file_origin.file_type, ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_DIR}) file_type,
+    file_media.thumbnail_url,
+    file_media.music_poster
     from
     x_user_file user_file
     LEFT JOIN x_file_origin file_origin ON user_file.origin_id = file_origin.id
+    LEFT JOIN x_file_media file_media ON file_media.origin_id = file_origin.id
     where
     user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
     <if test="userFile.userId != null">
@@ -244,6 +247,8 @@
     <result column="file_ext_name" property="fileExtName" jdbcType="VARCHAR" />
     <result column="file_size" property="fileSize" jdbcType="BIGINT" />
     <result column="file_type" property="fileType" jdbcType="INTEGER" />
+    <result column="thumbnail_url" property="thumbnailUrl" jdbcType="VARCHAR" />
+    <result column="music_poster" property="musicPoster" jdbcType="VARCHAR" />
   </resultMap>
 
   <!--删除文件（假删除）-->

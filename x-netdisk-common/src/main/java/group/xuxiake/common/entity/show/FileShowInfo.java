@@ -39,4 +39,8 @@ public class FileShowInfo {
     private Long fileSize;
 
     private Integer fileType;
+
+    private String thumbnailUrl;
+
+    private String musicPoster;
 }
