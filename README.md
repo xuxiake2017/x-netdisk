@@ -1,5 +1,5 @@
 # x-netdisk
-![](https://img.shields.io/badge/language-java-green.svg) ![GitHub followers](https://img.shields.io/github/followers/xuxiake2017?label=Follow&style=social) ![GitHub stars](https://img.shields.io/github/stars/xuxiake2017/x-netdisk?style=social) ![GitHub watchers](https://img.shields.io/github/watchers/xuxiake2017/x-netdisk?style=social)  
+![language java](https://img.shields.io/badge/language-java-green.svg) ![GitHub followers](https://img.shields.io/github/followers/xuxiake2017?label=Follow&style=social) ![GitHub stars](https://img.shields.io/github/stars/xuxiake2017/x-netdisk?style=social) ![GitHub watchers](https://img.shields.io/github/watchers/xuxiake2017/x-netdisk?style=social)  
 #### 项目简介
 一个分布式在线网盘系统，包含一个Web IM
 #### 使用需知
@@ -17,7 +17,22 @@
 ![chat简易流程图](https://raw.githubusercontent.com/xuxiake2017/x-netdisk/master/pic/chat%E7%AE%80%E6%98%93%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg)
 - 文件上传时序图
 ![文件上传时序图](https://raw.githubusercontent.com/xuxiake2017/x-netdisk/master/pic/%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6%E6%97%B6%E5%BA%8F%E5%9B%BE.jpeg)
-#### 模块介绍（待补充）
+#### 模块介绍
+##### `x-netdisk-web`
+- 处理web请求，可以部署多个，内部采用redis session集群共享方案
+##### `x-netdisk-route`
+- 路由集中处理
+- 订阅子模块
+- 保存、获取用户聊天的路由
+- 分发请求
+- 可以部署多个（无状态）
+##### `x-netdisk-chat-server`
+- web im 的服务端，可以部署多个
+##### `x-netdisk-quartz`
+- 使用quartz处理回收站，定时清理用户回收站
+- 可以部署多个，quartz自带集群方案
+##### `x-netdisk-common`
+- 公用mapper、entity、utils，被其他模块所依赖
 #### 鸣谢
 - [整体框架参考 crossoverJie/cim](https://github.com/crossoverJie/cim)
 - [shiro session 共享实现 alexxiyang/shiro-redis](https://github.com/alexxiyang/shiro-redis)
