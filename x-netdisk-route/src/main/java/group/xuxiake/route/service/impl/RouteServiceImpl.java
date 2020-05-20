@@ -79,9 +79,13 @@ public class RouteServiceImpl implements RouteService {
 
         Integer userId = param.getUserId();
         RouteOfSaveRoutePojo routeOfSaveRoutePojo = (RouteOfSaveRoutePojo) this.findRouteByUser(userId).getData();
-        String requestUrl = "http://" + routeOfSaveRoutePojo.getIp() + ":" + routeOfSaveRoutePojo.getHttpPort() + appConfiguration.getChatSendMsgPath();
-        ResponseEntity<Result> responseEntity = restTemplate.postForEntity(requestUrl, param, Result.class);
-        return responseEntity.getBody();
+        if (routeOfSaveRoutePojo != null) {
+            String requestUrl = "http://" + routeOfSaveRoutePojo.getIp() + ":" + routeOfSaveRoutePojo.getHttpPort() + appConfiguration.getChatSendMsgPath();
+            ResponseEntity<Result> responseEntity = restTemplate.postForEntity(requestUrl, param, Result.class);
+            return responseEntity.getBody();
+        } else {
+            return Result.SUCCESS;
+        }
     }
 
     /**

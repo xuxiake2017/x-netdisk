@@ -9,8 +9,8 @@ app:
     # 回收站超时时间(测试1小时)
     recycleDelayTime: 3600000
     email:
-      # 邮件验证超时时间(一天)
-      verifyEmailExpire: 86400
+      # 邮件验证超时时间(一天、毫秒)
+      verifyEmailExpire: 86400000
       #发送邮件
       emailAccount: xxx
       emailPassword: xxx
