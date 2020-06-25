@@ -6,6 +6,7 @@ import group.xuxiake.common.zookeeper.SubscribeZK;
 import group.xuxiake.common.zookeeper.ZkCacheManager;
 import group.xuxiake.common.zookeeper.balancer.Balancer;
 import org.I0Itec.zkclient.ZkClient;
+import org.jodconverter.spring.JodConverterBean;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -132,5 +133,18 @@ public class BeanConfig {
         bean.setOrder(0);
 
         return bean;
+    }
+
+    /**
+     * JodConverter doc、xls、ppt、txt转pdf
+     * @return
+     */
+    @Bean
+    public JodConverterBean springJodConverter() {
+
+        final JodConverterBean jodConverterBean = new JodConverterBean();
+        jodConverterBean.setPortNumbers(appConfiguration.getPortNumbers());
+        jodConverterBean.setOfficeHome(appConfiguration.getOfficeHome());
+        return jodConverterBean;
     }
 }

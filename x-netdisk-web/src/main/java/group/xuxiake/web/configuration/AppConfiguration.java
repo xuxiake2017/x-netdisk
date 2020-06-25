@@ -61,6 +61,11 @@ public class AppConfiguration {
     @Value("${application.captcha.timeout}")
     private Long captchaTimeout;
 
+    @Value("${jodconverter.local.officeHome}")
+    private String officeHome;
+    @Value("${jodconverter.local.portNumbers}")
+    private String portNumbers;
+
     @Resource
     private CustomConfiguration customConfiguration;
 }

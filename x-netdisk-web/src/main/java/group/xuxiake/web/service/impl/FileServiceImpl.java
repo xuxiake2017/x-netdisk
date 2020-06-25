@@ -68,6 +68,8 @@ public class FileServiceImpl implements FileService {
 	private UserMapper userMapper;
 	@Resource
 	private FileRecycleMapper fileRecycleMapper;
+	@Resource
+	private DocConverterUtil docConverterUtil;
 
 	/**
 	 * 检查文件MD5值是否在数据库存在
@@ -336,6 +338,20 @@ public class FileServiceImpl implements FileService {
 
 		FileMedia fileMedia = new FileMedia();
 		fileMedia.setOriginId(fileOrigin.getId());
+
+		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_WORD
+				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_EXCEL
+				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_POWERPOINT
+				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
+
+			InputStream is = fastDFSClientWrapper.getInputStream(filePath);
+			byte[] bytes = docConverterUtil.docToPDF(is, fileOrigin.getFileExtName());
+			ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+			String previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, "pdf");
+			previewUrl = fdfsNginxServer + "/" + previewUrl;
+			fileOrigin.setPreviewUrl(previewUrl);
+			fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+		}
 
 		//获得图片的信息（拍摄时间、宽、高）
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_PIC) {
