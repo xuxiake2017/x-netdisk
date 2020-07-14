@@ -353,6 +353,13 @@ public class FileServiceImpl implements FileService {
 			fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
 		}
 
+		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_PDF) {
+
+			String previewUrl = fdfsNginxServer + "/" + fileOrigin.getFilePath();
+			fileOrigin.setPreviewUrl(previewUrl);
+			fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+		}
+
 		//获得图片的信息（拍摄时间、宽、高）
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_PIC) {
 			try {
