@@ -99,3 +99,9 @@ fdfs:
 logging:
   level:
     root: INFO
+jodconverter:
+  local:
+    # 设置LibreOffice主目录
+    officeHome: /opt/libreoffice6.3
+    # 开启多个LibreOffice进程，每个端口对应一个进程
+    portNumbers: 2002, 2003, 2004
