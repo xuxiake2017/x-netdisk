@@ -63,4 +63,14 @@ public class FastDFSClientWrapper {
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
         return inputStream;
     }
+
+    /**
+     * 获取文件bytes
+     * @param filePath
+     * @return
+     */
+    public byte[] getFileBytes(String filePath) {
+        byte[] bytes = this.downloadFile(filePath);
+        return bytes;
+    }
 }

@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.*;
 
 @Slf4j
@@ -260,7 +261,7 @@ public class FileServiceImpl implements FileService {
 				return result;
 			}
 			//根据文件后缀判断文件类型
-			Integer fileType = FileUtil.getFileType(fileExtName);
+			Integer fileType = FileUtil.getFileType(fileExtName.toLowerCase());
 			if (parentId == null) {
 				parentId = -1;
 			}
@@ -344,8 +345,14 @@ public class FileServiceImpl implements FileService {
 				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_POWERPOINT
 				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
 
-			InputStream is = fastDFSClientWrapper.getInputStream(filePath);
-			byte[] bytes = docConverterUtil.docToPDF(is, fileOrigin.getFileExtName());
+			byte[] fileBytes = fastDFSClientWrapper.getFileBytes(filePath);
+			if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
+				String textCharset = FileUtil.getTextCharset(new ByteArrayInputStream(fileBytes));
+				if (!textCharset.equals("UTF-8")) {
+					// 转换编码
+				}
+			}
+			byte[] bytes = docConverterUtil.docToPDF(new ByteArrayInputStream(fileBytes), fileOrigin.getFileExtName());
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 			String previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, "pdf");
 			previewUrl = fdfsNginxServer + "/" + previewUrl;
