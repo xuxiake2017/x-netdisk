@@ -57,20 +57,6 @@ spring:
     multipart:
       max-file-size: 200MB
       max-request-size: 1024MB
-  # mqtt
-  mqtt:
-    url: tcp://192.168.0.10:1883
-    client:
-      # 订阅客户端ID
-      inboundClientId: netdisk-mqttInbound
-      # 发布客户端ID
-      outboundClientId: netdisk-mqttOutbound
-    topic:
-      # 订阅默认主题
-      inboundTopic: outTopic
-      # 发布默认主题
-      outboundTopic: inTopic
-    completionTimeout: 3000
   shiro:
     sessionManager:
       # 设置session超时时间半天，默认半小时

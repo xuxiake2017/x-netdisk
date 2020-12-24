@@ -21,18 +21,6 @@ public class AppConfiguration {
     private String redisHost;
     @Value("${spring.redis.port}")
     private Integer redisPort;
-    @Value("${spring.mqtt.url}")
-    private String mqttUrl;
-    @Value("${spring.mqtt.client.inboundClientId}")
-    private String inboundClientId;
-    @Value("${spring.mqtt.client.outboundClientId}")
-    private String outboundClientId;
-    @Value("${spring.mqtt.topic.inboundTopic}")
-    private String inboundTopic;
-    @Value("${spring.mqtt.topic.outboundTopic}")
-    private String outboundTopic;
-    @Value("${spring.mqtt.completionTimeout}")
-    private Integer completionTimeout;
     @Value("${fdfs.fdfs-nginx-server}")
     private String fdfsNginxServer;
 
