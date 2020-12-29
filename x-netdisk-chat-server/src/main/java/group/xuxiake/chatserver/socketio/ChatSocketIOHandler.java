@@ -81,6 +81,18 @@ public class ChatSocketIOHandler {
                     client.disconnect();
                     return;
                 }
+                /*
+                * 如果是重复登录，需要将上一次登录踢掉
+                * */
+                // 上一次登录的连接信息
+                SocketIOConnection socketIOConnectionLast = SocketIOHolder.getSocketIOConnection(user.getId());
+                if (socketIOConnectionLast != null) {
+                    socketIOConnectionLast.getSocketIOClient().disconnect();
+                }
+
+                /*
+                 * 保存本次登录的连接信息
+                 * */
                 SocketIOConnection socketIOConnection = new SocketIOConnection();
                 socketIOConnection.setSocketIOClient(client);
                 socketIOConnection.setToken(token);

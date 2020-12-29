@@ -1,33 +1,27 @@
 package group.xuxiake.web.shiro;
 
-import group.xuxiake.common.entity.Result;
-import group.xuxiake.common.entity.RouteShowSimple;
 import group.xuxiake.common.entity.User;
-import group.xuxiake.web.configuration.AppConfiguration;
-import group.xuxiake.web.exception.UserRepeatLoginException;
-import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.UserService;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.support.DefaultSubjectContext;
 import org.apache.shiro.util.ByteSource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
+import org.crazycake.shiro.RedisSessionDAO;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 
 public class UserRealm extends AuthorizingRealm {
 
 	@Resource
 	private UserService userService;
 	@Resource
-	private AppConfiguration appConfiguration;
-	@Resource
-	private RestTemplate restTemplate;
-	@Resource
-	private RouteService routeService;
+	private RedisSessionDAO redisSessionDAO;
+
 	@Override
 	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection arg0) {
 		return null;
@@ -44,9 +38,9 @@ public class UserRealm extends AuthorizingRealm {
 		String realmName = getName();
 		//这里做登陆信息验证。。。
 		User user = null;
-		if(loginInfo.contains("@")){
+		if (loginInfo.contains("@")) {
 			user = userService.findByEmail(loginInfo);
-		}else {
+		} else {
 			user = userService.findByName(loginInfo);
 			if (user == null) {
 				user = userService.findByPhone(loginInfo);
@@ -55,13 +49,21 @@ public class UserRealm extends AuthorizingRealm {
 		if (user == null) {
 			throw new UnknownAccountException();
 		}
-        RouteShowSimple route = routeService.getRouteServer(user.getId().toString());
-        String url = "http://" + route.getIp() + ":" + route.getPort() + appConfiguration.getFindRouteByUserPath() + "?userId=" + user.getId();
-        ResponseEntity<Result> responseEntity = restTemplate.getForEntity(url, Result.class);
-        if (responseEntity.getStatusCode() == HttpStatus.OK && responseEntity.getBody().getData() != null) {
-			// 用户重复登录
-			throw new UserRepeatLoginException();
+
+		// 不允许用户重复登录
+		Collection<Session> sessions = redisSessionDAO.getActiveSessions();
+		for (Session session: sessions) {
+			SimplePrincipalCollection simplePrincipalCollection = (SimplePrincipalCollection) session.getAttribute(DefaultSubjectContext.PRINCIPALS_SESSION_KEY);
+			if (simplePrincipalCollection != null) {
+				User primaryPrincipal = (User) simplePrincipalCollection.getPrimaryPrincipal();
+				System.out.println(primaryPrincipal);
+				if (primaryPrincipal.getId().intValue() == user.getId().intValue()) {
+					// 删除session，即将其踢出系统
+					redisSessionDAO.delete(session);
+				}
+			}
 		}
+
 		//盐
 		ByteSource credentialsSalt =  ByteSource.Util.bytes(user.getUsername());
 		SimpleAuthenticationInfo simpleAuthenticationInfo = 
