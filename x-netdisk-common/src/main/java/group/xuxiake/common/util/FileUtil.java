@@ -1,11 +1,15 @@
-package group.xuxiake.web.util;
+package group.xuxiake.common.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.mozilla.universalchardet.UniversalDetector;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.UUID;
 
@@ -164,27 +168,75 @@ public class FileUtil {
 	}
 
 	/**
-	 * 以指定编码方式写文本文件，存在会覆盖
-	 *
-	 * @param file
-	 *            要写入的文件
-	 * @param toCharsetName
-	 *            要转换的编码
-	 * @param content
-	 *            文件内容
-	 * @throws Exception
+	 * 根据txt文件bytes获取编码
+	 * @param fileBytes
+	 * @return
 	 */
-//	public static void saveFile2Charset(OutputStream outputStream, String toCharsetName,
-//										String content) throws Exception {
-//		if (!Charset.isSupported(toCharsetName)) {
-//			throw new UnsupportedCharsetException(toCharsetName);
-//		}
-//		OutputStream outputStream = new FileOutputStream(file);
-//		//增加头文件标识
-//		outputStream.write(new byte[]{(byte)0xEF, (byte)0xBB, (byte)0xBF});
-//		OutputStreamWriter outWrite = new OutputStreamWriter(outputStream,
-//				toCharsetName);
-//		outWrite.write(content);
-//		outWrite.close();
-//	}
+	public static String getTextEncoding(byte[] fileBytes) {
+		byte[] bytes = Arrays.copyOf(fileBytes, 3);
+		String encoding = "gb2312";
+		if (bytes[0] == -1 && bytes[1] == -2 ) {
+			encoding = "UTF-16";
+		} else if (bytes[0] == -2 && bytes[1] == -1 ) {
+			encoding = "Unicode";
+		} else if(bytes[0]==-17 && bytes[1]==-69 && bytes[2] ==-65) {
+			encoding = "UTF-8_BOM";
+		} else {
+			encoding = guessEncoding(fileBytes);
+		}
+		return encoding;
+	}
+
+	/**
+     * 根据字节判断编码
+	 * @param bytes
+     * @return
+     */
+	public static String guessEncoding(byte[] bytes) {
+		String DEFAULT_ENCODING = "UTF-8";
+		UniversalDetector detector =
+				new UniversalDetector(null);
+		detector.handleData(bytes, 0, bytes.length);
+		detector.dataEnd();
+		String encoding = detector.getDetectedCharset();
+		detector.reset();
+		if (encoding == null) {
+			encoding = DEFAULT_ENCODING;
+		}
+		return encoding;
+	}
+
+	/**
+     *
+	 * @param fileBytes
+     * @return
+     */
+	public static byte[] textEncodingConvert(byte[] fileBytes) {
+
+		byte[] convertedBytes = null;
+		try {
+			String encoding = FileUtil.getTextEncoding(fileBytes);
+			if (!encoding.equals("UTF-8")) {
+				if ("UTF-8_BOM".equals(encoding)) { // UTF-8带BOM
+					convertedBytes = new byte[fileBytes.length - 3];
+					System.arraycopy(fileBytes, 3 , convertedBytes, 0, fileBytes.length - 3); // 去掉BOM
+				} else {
+					// 转换编码
+					String payload = IOUtils.toString(fileBytes, encoding);
+					try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+						IOUtils.write(payload, out, "UTF-8");
+						convertedBytes = out.toByteArray();
+					} catch (IOException e) {
+						log.error(e.getMessage(), e);
+					}
+				}
+			} else { // UTF-8不带BOM
+				convertedBytes = fileBytes;
+			}
+
+		} catch (IOException e) {
+			log.error(e.getMessage(), e);
+		}
+		return convertedBytes;
+	}
 }

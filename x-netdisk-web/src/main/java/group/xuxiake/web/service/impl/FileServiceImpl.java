@@ -6,6 +6,7 @@ import group.xuxiake.common.entity.*;
 import group.xuxiake.common.entity.param.FileUploadParamByMD5;
 import group.xuxiake.common.entity.show.FileShowMedia;
 import group.xuxiake.common.mapper.*;
+import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.MP3Utils;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
@@ -24,6 +25,7 @@ import it.sauronsoftware.jave.MultimediaInfo;
 import it.sauronsoftware.jave.VideoInfo;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -347,17 +349,18 @@ public class FileServiceImpl implements FileService {
 
 			byte[] fileBytes = fastDFSClientWrapper.getFileBytes(filePath);
 			if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
-				String textCharset = FileUtil.getTextCharset(new ByteArrayInputStream(fileBytes));
-				if (!textCharset.equals("UTF-8")) {
-					// 转换编码
-				}
+				fileBytes = FileUtil.textEncodingConvert(fileBytes);
 			}
-			byte[] bytes = docConverterUtil.docToPDF(new ByteArrayInputStream(fileBytes), fileOrigin.getFileExtName());
-			ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-			String previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, "pdf");
-			previewUrl = fdfsNginxServer + "/" + previewUrl;
-			fileOrigin.setPreviewUrl(previewUrl);
-			fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+			byte[] bytes = null;
+			try (InputStream in = new ByteArrayInputStream(fileBytes)) {
+				bytes = docConverterUtil.docToPDF(in, fileOrigin.getFileExtName());
+			}
+			try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);) {
+				String previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, "pdf");
+				previewUrl = fdfsNginxServer + "/" + previewUrl;
+				fileOrigin.setPreviewUrl(previewUrl);
+				fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+			}
 		}
 
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_PDF) {
@@ -369,8 +372,7 @@ public class FileServiceImpl implements FileService {
 
 		//获得图片的信息（拍摄时间、宽、高）
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_PIC) {
-			try {
-				InputStream is = fastDFSClientWrapper.getInputStream(filePath);
+			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath)) {
 				Map<String, Object> imgInfo = ImageUtil.getImgInfo(is, lastModifiedDate);
 				fileMedia.setShootTime((Date) imgInfo.get("shootTime"));
 				fileMedia.setImgHeight((Integer) imgInfo.get("imgHeight"));
@@ -380,17 +382,33 @@ public class FileServiceImpl implements FileService {
 				fileMedia.setImgHeight(1000);
 				fileMedia.setImgWidth(1000);
 			}
-			String previewUrl = null;
-			//如果图片大小超过100kb，对图片进行缩略，否则不缩略
-			if (fileOrigin.getFileSize() >= 100 * 1024 * 1024) {
-				InputStream is = fastDFSClientWrapper.getInputStream(filePath);
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-				Thumbnails.of(is).size(500, 500).toOutputStream(byteArrayOutputStream);
-				byte[] bytes = byteArrayOutputStream.toByteArray();
-				ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-				previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileOrigin.getFileExtName());
-			}else {
+			String previewUrl = filePath;
+			ByteArrayOutputStream byteArrayOutputStream = null;
+			ByteArrayInputStream inputStream = null;
+			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath)) {
+				//如果图片大小超过100kb，对图片进行缩略，否则不缩略
+				if (fileOrigin.getFileSize() >= 100 * 1024 * 1024) {
+					byteArrayOutputStream = new ByteArrayOutputStream();
+					Thumbnails.of(is).size(500, 500).toOutputStream(byteArrayOutputStream);
+					byte[] bytes = byteArrayOutputStream.toByteArray();
+					inputStream = new ByteArrayInputStream(bytes);
+					previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileOrigin.getFileExtName());
+				} else {
+					previewUrl = filePath;
+				}
+			} catch (Exception e) {
 				previewUrl = filePath;
+			} finally {
+				try {
+					if (byteArrayOutputStream != null) {
+						byteArrayOutputStream.close();
+					}
+					if (inputStream != null) {
+						inputStream.close();
+					}
+				} catch (Exception e) {
+					log.error(e.getMessage(), e);
+				}
 			}
 			previewUrl = fdfsNginxServer + "/" + previewUrl;
 			fileOrigin.setPreviewUrl(previewUrl);
@@ -403,14 +421,12 @@ public class FileServiceImpl implements FileService {
 			String cachePathBefore = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
 			String cachePathMiddle = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("mp4"));
 			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("mp4"));
-
-			InputStream is = fastDFSClientWrapper.getInputStream(filePath);
-			FileOutputStream fos = new FileOutputStream(new File(cachePathBefore));
-			IOUtils.copy(is, fos);
-			is.close();
-			fos.close();
 			String[] paths = {cachePathBefore, cachePathMiddle, cachePathAfter};
 
+			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath);
+				 FileOutputStream fos = new FileOutputStream(new File(cachePathBefore))) {
+				IOUtils.copy(is, fos);
+			}
 			// 获取视频分辨率时长信息
 			MultimediaInfo mi = new Encoder().getInfo(new File(paths[0]));
 			Long duration = mi.getDuration();
@@ -437,11 +453,10 @@ public class FileServiceImpl implements FileService {
 			String cachePathBefore = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
 			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
 
-			InputStream is = fastDFSClientWrapper.getInputStream(filePath);
-			FileOutputStream fos = new FileOutputStream(new File(cachePathBefore));
-			IOUtils.copy(is, fos);
-			is.close();
-			fos.close();
+			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath);
+				 FileOutputStream fos = new FileOutputStream(new File(cachePathBefore))) {
+				IOUtils.copy(is, fos);
+			}
 			String[] paths = {cachePathBefore,cachePathAfter};
 
 			try {

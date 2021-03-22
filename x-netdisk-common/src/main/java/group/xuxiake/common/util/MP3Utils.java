@@ -23,20 +23,6 @@ public class MP3Utils {
         }
     }
 
-    public static String guessEncoding(byte[] bytes) {
-        String DEFAULT_ENCODING = "UTF-8";
-        UniversalDetector detector =
-                new UniversalDetector(null);
-        detector.handleData(bytes, 0, bytes.length);
-        detector.dataEnd();
-        String encoding = detector.getDetectedCharset();
-        detector.reset();
-        if (encoding == null) {
-            encoding = DEFAULT_ENCODING;
-        }
-        return encoding;
-    }
-
     public static MP3Info getMP3Info(String fileName) throws InvalidDataException, IOException, UnsupportedTagException, NotSupportedException {
 
         Mp3File mp3file = new Mp3File(fileName);
@@ -50,7 +36,7 @@ public class MP3Utils {
         byte[] albumImageData = null;
         if (mp3file.hasId3v1Tag()) {
             ID3v1 id3v1Tag = mp3file.getId3v1Tag();
-            String charsetName = guessEncoding(id3v1Tag.toBytes());
+            String charsetName = FileUtil.guessEncoding(id3v1Tag.toBytes());
             if (charsetName.equals("UTF-8")) {
                 title = id3v1Tag.getTitle();
                 artist = id3v1Tag.getArtist();
@@ -63,7 +49,7 @@ public class MP3Utils {
         if (mp3file.hasId3v2Tag()) {
             ID3v2 id3v2Tag = mp3file.getId3v2Tag();
 
-            String charsetName = guessEncoding(id3v2Tag.toBytes());
+            String charsetName = FileUtil.guessEncoding(id3v2Tag.toBytes());
             if (charsetName.equals("UTF-8")) {
                 title = id3v2Tag.getTitle();
                 artist = id3v2Tag.getArtist();

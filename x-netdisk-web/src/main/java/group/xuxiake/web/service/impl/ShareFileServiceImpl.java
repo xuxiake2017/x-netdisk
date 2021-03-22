@@ -7,6 +7,7 @@ import group.xuxiake.common.entity.*;
 import group.xuxiake.common.entity.show.FileShowInfo;
 import group.xuxiake.common.entity.show.FileShowMedia;
 import group.xuxiake.common.mapper.*;
+import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.web.configuration.AppConfiguration;
