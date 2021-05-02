@@ -31,7 +31,7 @@ application:
     delRoute: /route/delRoute
     findRouteByUser: /route/findRouteByUser
 server:
-  port: 8081
+  port: 8100
   servlet:
     context-path: /chat-server
 spring:
