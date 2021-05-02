@@ -19,7 +19,7 @@ app:
     # 发送短信
     sms:
       # 短信验证超时时间(5分钟)
-      verifySmsExpire: 300
+      verifySmsExpire: 300000
       accessKeyId: xxx
       accessKeySecret: xxx
       signName: xxx
@@ -28,3 +28,6 @@ app:
     tuling:
       tuling_apiKey: xxx
       tuling_apiUrl: http://openapi.tuling123.com/openapi/api/v2
+    wechat:
+      appID: xxx
+      appSecret: xxx

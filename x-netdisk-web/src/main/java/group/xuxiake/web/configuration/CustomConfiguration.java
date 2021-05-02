@@ -42,6 +42,11 @@ public class CustomConfiguration {
     @Value("${app.config.tuling.tuling_apiUrl}")
     private String tulingApiUrl;
 
+    @Value("${app.config.wechat.appID}")
+    private String wechatAppID;
+    @Value("${app.config.wechat.appSecret}")
+    private String wechatAppSecret;
+
     public static String getServerHost() {
         return serverHost;
     }

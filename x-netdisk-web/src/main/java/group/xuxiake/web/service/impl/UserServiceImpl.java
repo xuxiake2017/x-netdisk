@@ -18,6 +18,8 @@ import group.xuxiake.common.entity.show.UserNetdiskShowInfo;
 import group.xuxiake.web.exception.UserRepeatLoginException;
 import group.xuxiake.common.mapper.UserFriendListMapper;
 import group.xuxiake.web.service.UserService;
+import group.xuxiake.web.shiro.AutoLoginToken;
+import group.xuxiake.web.shiro.LoginType;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -26,7 +28,6 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
@@ -271,8 +272,7 @@ public class UserServiceImpl implements UserService {
 		Subject currentUser = SecurityUtils.getSubject();
 		//判断是否登陆
 		if(!currentUser.isAuthenticated()) {
-			UsernamePasswordToken token =
-					new UsernamePasswordToken(param.getLoginInfo(), param.getPassword());
+			AutoLoginToken token = new AutoLoginToken(param.getLoginInfo(), param.getPassword(), LoginType.PASSWORD);
 			try {
 				if (param.getRemindPwd()!=null) {
 					token.setRememberMe(true);
@@ -382,8 +382,7 @@ public class UserServiceImpl implements UserService {
 
 		// 注册完立即登录
 		Subject currentUser = SecurityUtils.getSubject();
-		UsernamePasswordToken token =
-				new UsernamePasswordToken(param.getEmail(), noencodePassword);
+		AutoLoginToken token = new AutoLoginToken(param.getEmail(), noencodePassword, LoginType.PASSWORD);
 		currentUser.login(token);
 
 		User userNow = (User)SecurityUtils.getSubject().getPrincipal();

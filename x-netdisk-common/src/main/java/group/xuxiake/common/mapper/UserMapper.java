@@ -28,4 +28,11 @@ public interface UserMapper {
      * @return
      */
     List<UserShowSimple> searchFriend(@Param("key") String key, @Param("userId") Integer userId);
+
+    /**
+     * 根据openid查找用户
+     * @param openid
+     * @return
+     */
+    User findByOpenid(String openid);
 }

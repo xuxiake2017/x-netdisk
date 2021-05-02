@@ -1,5 +1,6 @@
 package group.xuxiake.web.controller;
 
+import com.aliyuncs.exceptions.ClientException;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
@@ -7,6 +8,7 @@ import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.web.service.UserService;
+import group.xuxiake.web.util.SmsSendUtil;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -36,6 +38,12 @@ public class UserController {
 	@RequestMapping(value="/login")
 	public Result login(@RequestBody UserLoginParam param) {
 		return userService.login(param);
+	}
+
+	@RequestMapping(value="/test")
+	public Result test() throws ClientException {
+		SmsSendUtil.sendSms("1234", "13155834135");
+		return new Result();
 	}
 
 	@RequestMapping("/getInfo")

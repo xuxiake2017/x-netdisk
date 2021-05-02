@@ -1,6 +1,7 @@
 package group.xuxiake.web.shiro;
 
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.web.service.UserService;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
@@ -21,6 +22,8 @@ public class UserRealm extends AuthorizingRealm {
 	private UserService userService;
 	@Resource
 	private RedisSessionDAO redisSessionDAO;
+	@Resource
+	private UserMapper userMapper;
 
 	@Override
 	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection arg0) {
@@ -29,13 +32,25 @@ public class UserRealm extends AuthorizingRealm {
 
 	@Override
 	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+
+		AutoLoginToken autoLoginToken = (AutoLoginToken) token;
 		//Principal 当事人
 		//Credentials 认证信息
 		
 		//获取从前端传过来的登录信息
-		String loginInfo = (String) token.getPrincipal();
+		String loginInfo = (String) autoLoginToken.getPrincipal();
 		//realm名字
 		String realmName = getName();
+
+		if (autoLoginToken.getLoginType().equals(LoginType.NO_PASSWORD)) {
+			// 如果是免密登录传过来的是openid
+			User userByOpenid = userMapper.findByOpenid(loginInfo);
+			if (userByOpenid == null) {
+				throw new UnknownAccountException("未注册");
+			}
+			return new SimpleAuthenticationInfo(userByOpenid, null, null, realmName);
+		}
+
 		//这里做登陆信息验证。。。
 		User user = null;
 		if (loginInfo.contains("@")) {
@@ -56,7 +71,6 @@ public class UserRealm extends AuthorizingRealm {
 			SimplePrincipalCollection simplePrincipalCollection = (SimplePrincipalCollection) session.getAttribute(DefaultSubjectContext.PRINCIPALS_SESSION_KEY);
 			if (simplePrincipalCollection != null) {
 				User primaryPrincipal = (User) simplePrincipalCollection.getPrimaryPrincipal();
-				System.out.println(primaryPrincipal);
 				if (primaryPrincipal.getId().intValue() == user.getId().intValue()) {
 					// 删除session，即将其踢出系统
 					redisSessionDAO.delete(session);

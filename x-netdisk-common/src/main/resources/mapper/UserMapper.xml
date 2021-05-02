@@ -241,4 +241,15 @@
       OR nick_name LIKE CONCAT('%',#{key},'%')
     )
   </select>
+
+  <!-- 根据openid查找用户 -->
+  <select id="findByOpenid" parameterType="string" resultMap="BaseResultMap">
+    SELECT USER.*
+    FROM x_user USER,
+         x_wechat_user wechat_user
+    WHERE (USER.user_status = ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_NORMAL} OR USER.user_status = ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_VIP})
+      AND wechat_user.STATUS = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
+      AND wechat_user.user_id = USER.id
+      AND wechat_user.openid = #{openid}
+  </select>
 </mapper>

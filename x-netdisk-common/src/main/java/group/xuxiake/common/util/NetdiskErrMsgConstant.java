@@ -9,8 +9,9 @@ public class NetdiskErrMsgConstant {
 	static {
 		errMessage = new HashMap<>();
 		errMessage.put(NetdiskErrMsgConstant.EXCEPTION, "程序错误");
+		errMessage.put(NetdiskErrMsgConstant.REQUEST_ERROR, "请求错误");
 		errMessage.put(NetdiskErrMsgConstant.UN_AUTHENTICATED, "未授权");
-		errMessage.put(NetdiskErrMsgConstant.PARAM_IS_NULL, "参数为空");
+		errMessage.put(NetdiskErrMsgConstant.PARAM_IS_NULL, "参数为空或错误");
 		errMessage.put(NetdiskErrMsgConstant.USER_IS_NOT_VERIFY, "账户未验证激活");
 
 		errMessage.put(NetdiskErrMsgConstant.LOGIN_IMG_CODE_ERR, "验证码错误");
@@ -95,6 +96,8 @@ public class NetdiskErrMsgConstant {
 	}
 	/*通用请求成功*/
 	public static final int REQUEST_SUCCESS = 20000;
+	/*通用请求错误*/
+	public static final int REQUEST_ERROR = 21000;
 	/*参数为空*/
 	public static final int PARAM_IS_NULL = 30000;
 	/*程序异常*/

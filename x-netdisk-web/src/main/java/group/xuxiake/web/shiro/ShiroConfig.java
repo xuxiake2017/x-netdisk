@@ -59,20 +59,20 @@ public class ShiroConfig {
     }
 
     @Bean
-    public HashedCredentialsMatcher hashedCredentialsMatcher() {
-        HashedCredentialsMatcher hashedCredentialsMatcher = new HashedCredentialsMatcher();
+    public AutoLoginCredentialsMatcher autoLoginCredentialsMatcher() {
+        AutoLoginCredentialsMatcher autoLoginCredentialsMatcher = new AutoLoginCredentialsMatcher();
         // 加密的算法
-        hashedCredentialsMatcher.setHashAlgorithmName("MD5");
+        autoLoginCredentialsMatcher.setHashAlgorithmName("MD5");
         // 加密的次数
-        hashedCredentialsMatcher.setHashIterations(1024);
-        return hashedCredentialsMatcher;
+        autoLoginCredentialsMatcher.setHashIterations(1024);
+        return autoLoginCredentialsMatcher;
     }
 
     //注入自定义的realm，告诉shiro如何获取用户信息来做登录或权限控制
     @Bean
     public UserRealm userRealm() {
         UserRealm userRealm = new UserRealm();
-        userRealm.setCredentialsMatcher(this.hashedCredentialsMatcher());
+        userRealm.setCredentialsMatcher(this.autoLoginCredentialsMatcher());
         return userRealm;
     }
 
@@ -139,6 +139,7 @@ public class ShiroConfig {
         // 设置拦截器
         Map<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
         filterChainDefinitionMap.put("/user/logout", "anon");
+        filterChainDefinitionMap.put("/user/test", "anon");
         filterChainDefinitionMap.put("/user/login", "anon");
         filterChainDefinitionMap.put("/user/getInfo", "anon");
         filterChainDefinitionMap.put("/user/checkUserName", "anon");
@@ -151,6 +152,7 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/user/createImg/**", "anon");
         filterChainDefinitionMap.put("/share/**", "anon");
         filterChainDefinitionMap.put("/friendMessage/getServer", "anon");
+        filterChainDefinitionMap.put("/wechat/**", "anon");
         filterChainDefinitionMap.put("/share/shareFile", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/findAll", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/delete/*", "VerifyUserFilter");
