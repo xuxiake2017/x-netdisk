@@ -48,6 +48,7 @@ public class UserRealm extends AuthorizingRealm {
 			if (userByOpenid == null) {
 				throw new UnknownAccountException("未注册");
 			}
+			this.keepOneLogin(userByOpenid);
 			return new SimpleAuthenticationInfo(userByOpenid, null, null, realmName);
 		}
 
@@ -65,6 +66,17 @@ public class UserRealm extends AuthorizingRealm {
 			throw new UnknownAccountException();
 		}
 
+
+
+		//盐
+		ByteSource credentialsSalt =  ByteSource.Util.bytes(user.getUsername());
+		SimpleAuthenticationInfo simpleAuthenticationInfo = 
+				new SimpleAuthenticationInfo(user, user.getPassword(), credentialsSalt, realmName);
+		this.keepOneLogin(user);
+		return simpleAuthenticationInfo;
+	}
+
+	private void keepOneLogin(User user) {
 		// 不允许用户重复登录
 		Collection<Session> sessions = redisSessionDAO.getActiveSessions();
 		for (Session session: sessions) {
@@ -77,12 +89,6 @@ public class UserRealm extends AuthorizingRealm {
 				}
 			}
 		}
-
-		//盐
-		ByteSource credentialsSalt =  ByteSource.Util.bytes(user.getUsername());
-		SimpleAuthenticationInfo simpleAuthenticationInfo = 
-				new SimpleAuthenticationInfo(user, user.getPassword(), credentialsSalt, realmName);
-		return simpleAuthenticationInfo;
 	}
 
 }

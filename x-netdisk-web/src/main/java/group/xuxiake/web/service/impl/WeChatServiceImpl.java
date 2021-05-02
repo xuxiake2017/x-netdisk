@@ -100,8 +100,84 @@ public class WeChatServiceImpl implements WeChatService {
         }
 
         String openid = authCode2SessionRes.getOpenid();
-        User UserByPhone = userService.findByPhone(phone);
-        if (UserByPhone != null) { // 已注册自动登录
+        User userByPhone = userService.findByPhone(phone);
+        WechatUser wechatUserByOpenid = wechatUserMapper.findByOpenid(openid);
+        if (wechatUserByOpenid != null && userByPhone != null) { // 已注册自动登录
+            // 获取当前登录对象
+            Subject currentUser = SecurityUtils.getSubject();
+            // 判断是否登陆
+            if(!currentUser.isAuthenticated()) {
+                AutoLoginToken autoLoginToken = new AutoLoginToken(openid, "", LoginType.NO_PASSWORD);
+                try {
+                    // 进行登陆
+                    currentUser.login(autoLoginToken);
+                } catch (UnknownAccountException uae) { // 未知用户名
+                    result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+                    result.setMsg(uae.getMessage());
+                    return result;
+                }
+            }
+            result.setData(httpSession.getId());
+            result.setMsg("登录成功！");
+            return result;
+        } else if (wechatUserByOpenid == null && userByPhone != null){
+            WechatUser wechatUser = new WechatUser(wechatUserInfo);
+            wechatUser.setOpenid(authCode2SessionRes.getOpenid());
+            wechatUser.setUserId(userByPhone.getId());
+            wechatUserMapper.insertSelective(wechatUser);
+
+            // 获取当前登录对象
+            Subject currentUser = SecurityUtils.getSubject();
+            // 判断是否登陆
+            if(!currentUser.isAuthenticated()) {
+                AutoLoginToken autoLoginToken = new AutoLoginToken(openid, "", LoginType.NO_PASSWORD);
+                try {
+                    //进行登陆
+                    currentUser.login(autoLoginToken);
+                } catch (UnknownAccountException uae) { // 未知用户名
+                    result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+                    result.setMsg(uae.getMessage());
+                    return result;
+                }
+            }
+            result.setData(httpSession.getId());
+            result.setMsg("登录成功！");
+            return result;
+        } else {
+            // 获取微信用户头像并上传到服务器
+            ResponseEntity<byte[]> entity = restTemplate.getForEntity(wechatUserInfo.getAvatarUrl(), byte[].class);
+            byte[] bytes = entity.getBody();
+            assert bytes != null;
+            String path = "";
+            try(InputStream is = new ByteArrayInputStream(bytes)) {
+                path = fastDFSClientWrapper.uploadFile(is, bytes.length, "jpg");
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                result.setCode(NetdiskErrMsgConstant.EXCEPTION);
+                result.setMsg("头像上传失败");
+                return result;
+            }
+
+            User user = new User();
+            user.setUsername(phone);
+            user.setPassword("");
+            user.setSex(wechatUserInfo.getGender());
+            user.setRealName("");
+            user.setRegTime(new Date());
+            user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
+            user.setUsedMemory(0L);
+            user.setPhone(phone);
+            user.setEmail("");
+            user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
+            user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
+            user.setNickName(wechatUserInfo.getNickName());
+            userMapper.insertSelective(user);
+
+            WechatUser wechatUser = new WechatUser(wechatUserInfo);
+            wechatUser.setOpenid(authCode2SessionRes.getOpenid());
+            wechatUser.setUserId(user.getId());
+            wechatUserMapper.insertSelective(wechatUser);
+
             // 获取当前登录对象
             Subject currentUser = SecurityUtils.getSubject();
             // 判断是否登陆
@@ -121,57 +197,6 @@ public class WeChatServiceImpl implements WeChatService {
             return result;
         }
 
-        // 获取微信用户头像并上传到服务器
-        ResponseEntity<byte[]> entity = restTemplate.getForEntity(wechatUserInfo.getAvatarUrl(), byte[].class);
-        byte[] bytes = entity.getBody();
-        assert bytes != null;
-        String path = "";
-        try(InputStream is = new ByteArrayInputStream(bytes)) {
-            path = fastDFSClientWrapper.uploadFile(is, bytes.length, "jpg");
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-            result.setCode(NetdiskErrMsgConstant.EXCEPTION);
-            result.setMsg("头像上传失败");
-            return result;
-        }
-
-        User user = new User();
-        user.setUsername(phone);
-        user.setPassword("");
-        user.setSex(wechatUserInfo.getGender());
-        user.setRealName("");
-        user.setRegTime(new Date());
-        user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
-        user.setUsedMemory(0L);
-        user.setPhone(phone);
-        user.setEmail("");
-        user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
-        user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
-        user.setNickName(wechatUserInfo.getNickName());
-        userMapper.insertSelective(user);
-
-        WechatUser wechatUser = new WechatUser(wechatUserInfo);
-        wechatUser.setOpenid(authCode2SessionRes.getOpenid());
-        wechatUser.setUserId(user.getId());
-        wechatUserMapper.insertSelective(wechatUser);
-
-        // 获取当前登录对象
-        Subject currentUser = SecurityUtils.getSubject();
-        // 判断是否登陆
-        if(!currentUser.isAuthenticated()) {
-            AutoLoginToken autoLoginToken = new AutoLoginToken(openid, "", LoginType.NO_PASSWORD);
-            try {
-                //进行登陆
-                currentUser.login(autoLoginToken);
-            } catch (UnknownAccountException uae) { // 未知用户名
-                result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
-                result.setMsg(uae.getMessage());
-                return result;
-            }
-        }
-        result.setData(httpSession.getId());
-        result.setMsg("登录成功！");
-        return result;
     }
 
     /**
