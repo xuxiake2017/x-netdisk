@@ -27,13 +27,14 @@ public class FileController {
 	 * @param parentId
 	 * @param md5Hex
 	 * @param lastModifiedDate
+	 * @param fileRealName
 	 * @param file
 	 * @return
 	 */
 	@RequestMapping(value="/fileUpload")
 	@ResponseBody
-	public Result fileUplaod(Integer parentId, String md5Hex, Long lastModifiedDate, MultipartFile file) {
-		return fileService.fileUpload(parentId, md5Hex, lastModifiedDate, file);
+	public Result fileUplaod(Integer parentId, String md5Hex, Long lastModifiedDate, String fileRealName,  MultipartFile file) {
+		return fileService.fileUpload(parentId, md5Hex, lastModifiedDate, fileRealName, file);
 	}
 	
 	/*

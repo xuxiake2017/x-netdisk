@@ -117,6 +117,7 @@ public class WeChatServiceImpl implements WeChatService {
                     return result;
                 }
             }
+            redisUtils.del(CustomConfiguration.getTemplateCode() + uuid);
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
@@ -140,6 +141,7 @@ public class WeChatServiceImpl implements WeChatService {
                     return result;
                 }
             }
+            redisUtils.del(CustomConfiguration.getTemplateCode() + uuid);
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
@@ -192,6 +194,7 @@ public class WeChatServiceImpl implements WeChatService {
                     return result;
                 }
             }
+            redisUtils.del(CustomConfiguration.getTemplateCode() + uuid);
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
@@ -224,7 +227,7 @@ public class WeChatServiceImpl implements WeChatService {
                 //进行登陆
                 currentUser.login(autoLoginToken);
             } catch (UnknownAccountException uae) { // 未知用户名
-                result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+                result.setCode(NetdiskErrMsgConstant.LOGIN_ACCOUNT_ERR);
                 result.setMsg(uae.getMessage());
                 return result;
             }
@@ -293,6 +296,7 @@ public class WeChatServiceImpl implements WeChatService {
             result.setCode(NetdiskErrMsgConstant.LOGIN_IMG_CODE_ERR);
             return result;
         }
+        redisUtils.del(appConfiguration.getCaptchaPrefix() + uuid);
         return result;
     }
 
@@ -315,17 +319,15 @@ public class WeChatServiceImpl implements WeChatService {
             }
             PrivateKey privateKey = RSAUtil.getPrivateKey("private.key");
             String decryptedText = RSAUtil.decryptText(param.get_sign(), privateKey);
-            System.out.println("decryptedText：" + decryptedText);
             String sign = RSAUtil.makeSign(param, customConfiguration.getWechatAppID());
-            System.out.println("sign：" + sign);
             if (!decryptedText.equals(sign)) {
                 result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
                 result.setMsg("签名不一致");
                 return result;
             }
             String smsCode = null;
-            // smsCode = SmsSendUtil.regNetDisk(phone);
-            smsCode = "1234";
+            smsCode = SmsSendUtil.regNetDisk(phone);
+            // smsCode  = "1234";
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
                 result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);

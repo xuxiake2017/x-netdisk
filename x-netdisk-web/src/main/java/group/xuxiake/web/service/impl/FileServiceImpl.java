@@ -227,12 +227,13 @@ public class FileServiceImpl implements FileService {
 	 * @param parentId
 	 * @param md5Hex
 	 * @param lastModifiedDate
+	 * @param fileRealName
 	 * @param file
 	 * @return
 	 */
 	@Transactional
 	@Override
-	public Result fileUpload(Integer parentId, String md5Hex, Long lastModifiedDate, MultipartFile file) {
+	public Result fileUpload(Integer parentId, String md5Hex, Long lastModifiedDate, String fileRealName, MultipartFile file) {
 		// 消息提示
 		Result result = new Result();
         try {
@@ -244,8 +245,10 @@ public class FileServiceImpl implements FileService {
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.UPLOAD_FILE_IS_NULL));
 				return result;
 			}
-			// 得到上传的文件名称，
-			String fileRealName = file.getOriginalFilename();
+			if (StringUtils.isEmpty(fileRealName)) {
+				// 得到上传的文件名称，
+				fileRealName = file.getOriginalFilename();
+			}
 			// 得到上传文件的扩展名
 			String fileExtName = "";
 			if (fileRealName.contains(".")) {

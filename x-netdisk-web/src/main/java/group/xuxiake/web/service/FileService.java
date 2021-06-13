@@ -40,10 +40,11 @@ public interface FileService {
 	 * @param parentId
 	 * @param md5Hex
 	 * @param lastModifiedDate
+	 * @param fileRealName
 	 * @param file
 	 * @return
 	 */
-	Result fileUpload(Integer parentId, String md5Hex, Long lastModifiedDate, MultipartFile file);
+	Result fileUpload(Integer parentId, String md5Hex, Long lastModifiedDate, String fileRealName, MultipartFile file);
 
 	/**
 	 * 创建文件夹
