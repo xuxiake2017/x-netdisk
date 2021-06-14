@@ -390,9 +390,9 @@ public class FileServiceImpl implements FileService {
 			ByteArrayInputStream inputStream = null;
 			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath)) {
 				//如果图片大小超过100kb，对图片进行缩略，否则不缩略
-				if (fileOrigin.getFileSize() >= 100 * 1024 * 1024) {
+				if (fileOrigin.getFileSize() >= 100 * 1024) {
 					byteArrayOutputStream = new ByteArrayOutputStream();
-					Thumbnails.of(is).size(500, 500).toOutputStream(byteArrayOutputStream);
+					Thumbnails.of(is).size(1000, 1000).toOutputStream(byteArrayOutputStream);
 					byte[] bytes = byteArrayOutputStream.toByteArray();
 					inputStream = new ByteArrayInputStream(bytes);
 					previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileOrigin.getFileExtName());
@@ -400,6 +400,7 @@ public class FileServiceImpl implements FileService {
 					previewUrl = filePath;
 				}
 			} catch (Exception e) {
+				log.error(e.getMessage(), e);
 				previewUrl = filePath;
 			} finally {
 				try {
@@ -462,17 +463,42 @@ public class FileServiceImpl implements FileService {
 			}
 			String[] paths = {cachePathBefore,cachePathAfter};
 
+			ByteArrayOutputStream byteArrayOutputStream = null;
+			ByteArrayInputStream byteArrayInputStream = null;
+			String musicPoster = "";
 			try {
 				MP3Info mp3Info = MP3Utils.getMP3Info(paths[0]);
 				fileMedia.setMusicArtist(mp3Info.getArtist());
 				if (mp3Info.getAlbumImage() != null) {
-					ByteArrayInputStream inputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
-					String musicPoster = fastDFSClientWrapper.uploadFile(inputStream, mp3Info.getAlbumImage().length, "jpg");
-					musicPoster = fdfsNginxServer + "/" + musicPoster;
-					fileMedia.setMusicPoster(musicPoster);
+					if (mp3Info.getAlbumImage().length > 1024 * 100) { // 封面大于100KB要进行缩略
+						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
+						byteArrayOutputStream = new ByteArrayOutputStream();
+						Thumbnails.of(byteArrayInputStream).size(1000, 1000).toOutputStream(byteArrayOutputStream);
+						byte[] bytes = byteArrayOutputStream.toByteArray();
+						byteArrayInputStream = new ByteArrayInputStream(bytes);
+						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, bytes.length, "jpg");
+					} else {
+						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
+						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, mp3Info.getAlbumImage().length, "jpg");
+					}
+					if (!StringUtils.isEmpty(musicPoster)) {
+						musicPoster = fdfsNginxServer + "/" + musicPoster;
+						fileMedia.setMusicPoster(musicPoster);
+					}
 				}
 			} catch (Exception e) {
 				log.error(e.getMessage(), e);
+			} finally {
+				try {
+					if (byteArrayOutputStream != null) {
+						byteArrayOutputStream.close();
+					}
+					if (byteArrayInputStream != null) {
+						byteArrayInputStream.close();
+					}
+				} catch (Exception e) {
+					log.error(e.getMessage(), e);
+				}
 			}
 			//System.out.println("[音频开始降低码率]");
 			new Thread(new LowKbpsHandler(fileOriginMapper, fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer)).start();
