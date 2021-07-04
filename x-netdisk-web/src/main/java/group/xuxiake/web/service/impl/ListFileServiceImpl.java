@@ -37,7 +37,7 @@ public class ListFileServiceImpl implements ListFileService {
         param.setFileName(page.getFileRealName());
 
         PageHelper.startPage(page.getPageNum(), page.getPageSize());
-        List<FileShowInfo> list = userFileMapper.findAllFile(param, null);
+        List<FileShowInfo> list = userFileMapper.findAllFile(param, page.getOrderBy(), null);
         PageInfo<FileShowInfo> pageInfo = new PageInfo<>(list);
 
         Map<String, Object> map = new HashMap<String, Object>();
@@ -68,7 +68,7 @@ public class ListFileServiceImpl implements ListFileService {
         fileTypes.add(NetdiskConstant.FILE_TYPE_OF_EXCEL);
         fileTypes.add(NetdiskConstant.FILE_TYPE_OF_POWERPOINT);
         fileTypes.add(NetdiskConstant.FILE_TYPE_OF_PDF);
-        List<FileShowInfo> list = userFileMapper.findAllFile(param, fileTypes);
+        List<FileShowInfo> list = userFileMapper.findAllFile(param, page.getOrderBy(), fileTypes);
         PageInfo<FileShowInfo> pageInfo = new PageInfo<>(list);
         result.setData(pageInfo);
         return result;
@@ -84,7 +84,7 @@ public class ListFileServiceImpl implements ListFileService {
         param.setUserId(userNetdisk.getId());
         List<Integer> fileTypes = new ArrayList<>();
         fileTypes.add(NetdiskConstant.FILE_TYPE_OF_VIDEO);
-        List<FileShowInfo> list = userFileMapper.findAllFile(param, fileTypes);
+        List<FileShowInfo> list = userFileMapper.findAllFile(param, page.getOrderBy(), fileTypes);
         PageInfo<FileShowInfo> pageInfo = new PageInfo<>(list);
         result.setData(pageInfo);
         return result;
@@ -100,7 +100,7 @@ public class ListFileServiceImpl implements ListFileService {
         param.setUserId(user.getId());
         List<Integer> fileTypes = new ArrayList<>();
         fileTypes.add(NetdiskConstant.FILE_TYPE_OF_PIC);
-        List<FileShowInfo> list = userFileMapper.findAllFile(param, fileTypes);
+        List<FileShowInfo> list = userFileMapper.findAllFile(param, page.getOrderBy(), fileTypes);
         PageInfo<FileShowInfo> pageInfo = new PageInfo<>(list);
         result.setData(pageInfo);
         return result;
@@ -116,7 +116,7 @@ public class ListFileServiceImpl implements ListFileService {
         param.setUserId(user.getId());
         List<Integer> fileTypes = new ArrayList<>();
         fileTypes.add(NetdiskConstant.FILE_TYPE_OF_MUSIC);
-        List<FileShowInfo> list = userFileMapper.findAllFile(param, fileTypes);
+        List<FileShowInfo> list = userFileMapper.findAllFile(param, page.getOrderBy(), fileTypes);
         PageInfo<FileShowInfo> pageInfo = new PageInfo<>(list);
         result.setData(pageInfo);
         return result;

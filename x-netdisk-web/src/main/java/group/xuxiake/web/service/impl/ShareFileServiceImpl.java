@@ -491,7 +491,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 			param.setUserId(shareFile.getShareUserId());
 			param.setParentId(parentId);
 		}
-		List<FileShowInfo> files = userFileMapper.findAllFile(param, null);
+		List<FileShowInfo> files = userFileMapper.findAllFile(param, null, null);
 		Map<String, Object> map = new HashMap<>();
 		map.put("nginxServer", appConfiguration.getFdfsNginxServer());
 		map.put("files", files);
@@ -578,7 +578,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 			UserFile fileSearch = new UserFile();
 			fileSearch.setParentId(oldParentId);
 			fileSearch.setUserId(fileShare.getShareUserId());
-			List<FileShowInfo> files = userFileMapper.findAllFile(fileSearch, null);
+			List<FileShowInfo> files = userFileMapper.findAllFile(fileSearch, null, null);
 			if (files != null && files.size() > 0) {
 				for (FileShowInfo f : files) {
 					this.saveToCloudIteration(f.getId(), userFile.getId(), userId, fileShare);

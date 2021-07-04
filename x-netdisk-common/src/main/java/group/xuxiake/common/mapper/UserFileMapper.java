@@ -48,7 +48,7 @@ public interface UserFileMapper {
      * @param fileTypes
      * @return
      */
-    List<FileShowInfo> findAllFile(@Param("userFile") UserFile userFile, @Param("fileTypes") List<Integer> fileTypes);
+    List<FileShowInfo> findAllFile(@Param("userFile") UserFile userFile, @Param("orderBy") String orderBy, @Param("fileTypes") List<Integer> fileTypes);
 
     /**
      * 删除文件（假删除）

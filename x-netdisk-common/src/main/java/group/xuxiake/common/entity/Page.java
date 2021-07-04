@@ -19,10 +19,12 @@ public class Page implements Serializable {
 	private List list;
 	private Integer parentId;
 	private String fileRealName;
+	private String orderBy; // 排序方式 fileName: 文件名 uploadTime: 上传时间
 	public Page() {
 		this.pageNum = 1;
 		this.pageSize = 15;
 		this.parentId = -1;
+		this.orderBy = "fileName";
 	}
 	public Integer getPageNum() {
 		return pageNum;
@@ -78,5 +80,12 @@ public class Page implements Serializable {
 	public void setFileRealName(String fileRealName) {
 		this.fileRealName = fileRealName;
 	}
-	
+
+	public String getOrderBy() {
+		return orderBy;
+	}
+
+	public void setOrderBy(String orderBy) {
+		this.orderBy = orderBy;
+	}
 }

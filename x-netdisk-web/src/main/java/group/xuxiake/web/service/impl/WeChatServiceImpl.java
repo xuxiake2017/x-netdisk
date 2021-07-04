@@ -102,7 +102,16 @@ public class WeChatServiceImpl implements WeChatService {
         String openid = authCode2SessionRes.getOpenid();
         User userByPhone = userService.findByPhone(phone);
         WechatUser wechatUserByOpenid = wechatUserMapper.findByOpenid(openid);
-        if (wechatUserByOpenid != null && userByPhone != null) { // 已注册自动登录
+        if (wechatUserByOpenid != null && userByPhone != null) { // 已注册自动登录（该手机号在系统中有账号且在小程序登录过）
+
+            if (wechatUserMapper.findByUserId(userByPhone.getId()) != null) {
+                result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+                result.setMsg("该手机号已注册！");
+                return result;
+            }
+
+            wechatUserByOpenid.setUserId(userByPhone.getId());
+            wechatUserMapper.updateByPrimaryKey(wechatUserByOpenid);
             // 获取当前登录对象
             Subject currentUser = SecurityUtils.getSubject();
             // 判断是否登陆
@@ -121,7 +130,7 @@ public class WeChatServiceImpl implements WeChatService {
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
-        } else if (wechatUserByOpenid == null && userByPhone != null){
+        } else if (wechatUserByOpenid == null && userByPhone != null){ // 该手机号在系统中有账号但未在小程序登录过
             WechatUser wechatUser = new WechatUser(wechatUserInfo);
             wechatUser.setOpenid(authCode2SessionRes.getOpenid());
             wechatUser.setUserId(userByPhone.getId());
@@ -145,7 +154,7 @@ public class WeChatServiceImpl implements WeChatService {
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
-        } else {
+        } else { // 该手机号在系统中没有账号且未在小程序登录过
             // 获取微信用户头像并上传到服务器
             ResponseEntity<byte[]> entity = restTemplate.getForEntity(wechatUserInfo.getAvatarUrl(), byte[].class);
             byte[] bytes = entity.getBody();
@@ -348,6 +357,21 @@ public class WeChatServiceImpl implements WeChatService {
         }
         result.setMsg("短信验证码发送成功！");
         return result;
+    }
+
+    /**
+     * 登出（解除绑定）
+     * @return
+     */
+    @Override
+    public Result logout(HttpSession session) {
+
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
+        WechatUser wechatUser = wechatUserMapper.findByUserId(user.getId());
+        wechatUser.setUserId(null);
+        wechatUserMapper.updateByPrimaryKey(wechatUser);
+        session.invalidate();
+        return new Result();
     }
 
     private AuthCode2SessionRes jscode2session(String code) {

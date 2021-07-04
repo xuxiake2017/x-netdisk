@@ -152,7 +152,11 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/user/createImg/**", "anon");
         filterChainDefinitionMap.put("/share/**", "anon");
         filterChainDefinitionMap.put("/friendMessage/getServer", "anon");
-        filterChainDefinitionMap.put("/wechat/**", "anon");
+        filterChainDefinitionMap.put("/wechat/loginAndRegister", "anon");
+        filterChainDefinitionMap.put("/wechat/autoLogin", "anon");
+        filterChainDefinitionMap.put("/wechat/getCaptcha", "anon");
+        filterChainDefinitionMap.put("/wechat/verifyCaptcha", "anon");
+        filterChainDefinitionMap.put("/wechat/sendSMSCaptcha", "anon");
         filterChainDefinitionMap.put("/share/shareFile", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/findAll", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/delete/*", "VerifyUserFilter");

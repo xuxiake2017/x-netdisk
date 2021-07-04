@@ -186,11 +186,19 @@
     where id = #{id,jdbcType=INTEGER}
   </update>
 
-  <!-- 根据openid查找用户 -->
+  <!-- 根据openid查找微信用户 -->
   <select id="findByOpenid" parameterType="string" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />
     from x_wechat_user
     where openid = #{openid} AND status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
+  </select>
+
+  <!-- 根据系统userId查找微信用户 -->
+  <select id="findByUserId" parameterType="int" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from x_wechat_user
+    where user_id = #{userId} AND status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
   </select>
 </mapper>

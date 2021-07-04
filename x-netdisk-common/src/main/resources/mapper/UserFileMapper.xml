@@ -239,7 +239,12 @@
         file_origin.file_type = #{fileType}
       </foreach>
     </if>
-    order by user_file.is_dir, user_file.update_time desc
+    <if test="orderBy == 'fileName'">
+      order by user_file.is_dir, user_file.file_name desc
+    </if>
+    <if test="orderBy == 'uploadTime' or orderBy == null">
+      order by user_file.is_dir, user_file.update_time desc
+    </if>
   </select>
 
   <!--查找所有文件-->

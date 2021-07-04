@@ -4,6 +4,8 @@ import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.param.WechatSendSMSCaptchaParam;
 import group.xuxiake.common.entity.wechat.LoginAndRegisterParam;
 
+import javax.servlet.http.HttpSession;
+
 public interface WeChatService {
 
     /**
@@ -36,4 +38,10 @@ public interface WeChatService {
     Result verifyCaptcha(String uuid, String captcha);
 
     Result sendSMSCaptcha(WechatSendSMSCaptchaParam param);
+
+    /**
+     * 登出（解除绑定）
+     * @return
+     */
+    Result logout(HttpSession session);
 }

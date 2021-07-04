@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
 
 @RestController
 @RequestMapping("/wechat")
@@ -65,5 +66,14 @@ public class WeChatController {
     @RequestMapping("/sendSMSCaptcha")
     public Result sendSMSCaptcha (@RequestBody WechatSendSMSCaptchaParam param) {
         return this.weChatService.sendSMSCaptcha(param);
+    }
+
+    /**
+     * 登出（解除绑定）
+     * @return
+     */
+    @RequestMapping("/logout")
+    public Result logout(HttpSession session) {
+        return this.weChatService.logout(session);
     }
 }
