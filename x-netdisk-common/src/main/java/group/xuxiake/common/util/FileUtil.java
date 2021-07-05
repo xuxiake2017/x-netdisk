@@ -66,8 +66,6 @@ public class FileUtil {
 			return 4;
 		case "avi":
 			return 4;
-		case "rmvb":
-			return 4;
 		case "flv":
 			return 4;
 		// 压缩包

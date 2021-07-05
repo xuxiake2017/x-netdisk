@@ -392,7 +392,7 @@ public class FileServiceImpl implements FileService {
 				//如果图片大小超过100kb，对图片进行缩略，否则不缩略
 				if (fileOrigin.getFileSize() >= 100 * 1024) {
 					byteArrayOutputStream = new ByteArrayOutputStream();
-					Thumbnails.of(is).size(1000, 1000).toOutputStream(byteArrayOutputStream);
+					Thumbnails.of(is).scale(1.0D).outputQuality(0.25D).toOutputStream(byteArrayOutputStream);
 					byte[] bytes = byteArrayOutputStream.toByteArray();
 					inputStream = new ByteArrayInputStream(bytes);
 					previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileOrigin.getFileExtName());
@@ -451,7 +451,7 @@ public class FileServiceImpl implements FileService {
 
 			new Thread(new VideoTransformHandler(fileOriginMapper, fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer, fileMedia)).start();
 		}
-		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_MUSIC) {
+		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_MUSIC &&  "mp3".equals(fileOrigin.getFileExtName())) {
 			// lowKmps，降低mp3码率
 
 			String cachePathBefore = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
@@ -473,7 +473,7 @@ public class FileServiceImpl implements FileService {
 					if (mp3Info.getAlbumImage().length > 1024 * 100) { // 封面大于100KB要进行缩略
 						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
 						byteArrayOutputStream = new ByteArrayOutputStream();
-						Thumbnails.of(byteArrayInputStream).size(1000, 1000).toOutputStream(byteArrayOutputStream);
+						Thumbnails.of(byteArrayInputStream).scale(1.0D).outputQuality(0.25D).toOutputStream(byteArrayOutputStream);
 						byte[] bytes = byteArrayOutputStream.toByteArray();
 						byteArrayInputStream = new ByteArrayInputStream(bytes);
 						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, bytes.length, "jpg");
