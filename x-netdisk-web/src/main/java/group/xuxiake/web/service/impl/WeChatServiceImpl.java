@@ -19,6 +19,7 @@ import group.xuxiake.web.shiro.AutoLoginToken;
 import group.xuxiake.web.shiro.LoginType;
 import group.xuxiake.web.util.FastDFSClientWrapper;
 import group.xuxiake.web.util.ImgCodeUtil;
+import group.xuxiake.web.util.PasswordEncoder;
 import group.xuxiake.web.util.SmsSendUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
@@ -102,7 +103,7 @@ public class WeChatServiceImpl implements WeChatService {
         String openid = authCode2SessionRes.getOpenid();
         User userByPhone = userService.findByPhone(phone);
         WechatUser wechatUserByOpenid = wechatUserMapper.findByOpenid(openid);
-        if (wechatUserByOpenid != null && userByPhone != null) { // 已注册自动登录（该手机号在系统中有账号且在小程序登录过）
+        if (wechatUserByOpenid != null && userByPhone != null) { // 已注册，自动登录（该手机号在系统中有账号，该用户小程序登录过）
 
             if (wechatUserMapper.findByUserId(userByPhone.getId()) != null) {
                 result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
@@ -130,7 +131,7 @@ public class WeChatServiceImpl implements WeChatService {
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
-        } else if (wechatUserByOpenid == null && userByPhone != null){ // 该手机号在系统中有账号但未在小程序登录过
+        } else if (wechatUserByOpenid == null && userByPhone != null){ // 该手机号在系统中有账号，该用户在小程序未登录过
             WechatUser wechatUser = new WechatUser(wechatUserInfo);
             wechatUser.setOpenid(authCode2SessionRes.getOpenid());
             wechatUser.setUserId(userByPhone.getId());
@@ -154,7 +155,7 @@ public class WeChatServiceImpl implements WeChatService {
             result.setData(httpSession.getId());
             result.setMsg("登录成功！");
             return result;
-        } else { // 该手机号在系统中没有账号且未在小程序登录过
+        } else if (wechatUserByOpenid != null && userByPhone == null){ // 该手机号在系统中没有账号，但该用户在小程序登录过
             // 获取微信用户头像并上传到服务器
             ResponseEntity<byte[]> entity = restTemplate.getForEntity(wechatUserInfo.getAvatarUrl(), byte[].class);
             byte[] bytes = entity.getBody();
@@ -171,7 +172,58 @@ public class WeChatServiceImpl implements WeChatService {
 
             User user = new User();
             user.setUsername(phone);
-            user.setPassword("");
+            user.setPassword(PasswordEncoder.encode(phone.substring(5, 11), phone));
+            user.setSex(wechatUserInfo.getGender());
+            user.setRealName("");
+            user.setRegTime(new Date());
+            user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
+            user.setUsedMemory(0L);
+            user.setPhone(phone);
+            user.setEmail("");
+            user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
+            user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
+            user.setNickName(wechatUserInfo.getNickName());
+            userMapper.insertSelective(user);
+
+            wechatUserByOpenid.setUserId(user.getId());
+            wechatUserMapper.updateByPrimaryKey(wechatUserByOpenid);
+
+            // 获取当前登录对象
+            Subject currentUser = SecurityUtils.getSubject();
+            // 判断是否登陆
+            if(!currentUser.isAuthenticated()) {
+                AutoLoginToken autoLoginToken = new AutoLoginToken(openid, "", LoginType.NO_PASSWORD);
+                try {
+                    //进行登陆
+                    currentUser.login(autoLoginToken);
+                } catch (UnknownAccountException uae) { // 未知用户名
+                    result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+                    result.setMsg(uae.getMessage());
+                    return result;
+                }
+            }
+            redisUtils.del(CustomConfiguration.getTemplateCode() + uuid);
+            result.setData(httpSession.getId());
+            result.setMsg("登录成功！");
+            return result;
+        } else { // 该手机号在系统中没有账号，且该用户未在小程序登录过
+            // 获取微信用户头像并上传到服务器
+            ResponseEntity<byte[]> entity = restTemplate.getForEntity(wechatUserInfo.getAvatarUrl(), byte[].class);
+            byte[] bytes = entity.getBody();
+            assert bytes != null;
+            String path = "";
+            try(InputStream is = new ByteArrayInputStream(bytes)) {
+                path = fastDFSClientWrapper.uploadFile(is, bytes.length, "jpg");
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                result.setCode(NetdiskErrMsgConstant.EXCEPTION);
+                result.setMsg("头像上传失败");
+                return result;
+            }
+
+            User user = new User();
+            user.setUsername(phone);
+            user.setPassword(PasswordEncoder.encode(phone.substring(5, 11), phone));
             user.setSex(wechatUserInfo.getGender());
             user.setRealName("");
             user.setRegTime(new Date());
@@ -335,8 +387,8 @@ public class WeChatServiceImpl implements WeChatService {
                 return result;
             }
             String smsCode = null;
-            smsCode = SmsSendUtil.regNetDisk(phone);
-            // smsCode  = "1234";
+            // smsCode = SmsSendUtil.regNetDisk(phone);
+            smsCode  = "1234";
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
                 result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
