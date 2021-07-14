@@ -387,8 +387,8 @@ public class WeChatServiceImpl implements WeChatService {
                 return result;
             }
             String smsCode = null;
-            // smsCode = SmsSendUtil.regNetDisk(phone);
-            smsCode  = "1234";
+            smsCode = SmsSendUtil.regNetDisk(phone);
+            // smsCode  = "1234";
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
                 result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
