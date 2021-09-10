@@ -468,7 +468,11 @@ public class FileServiceImpl implements FileService {
 			String musicPoster = "";
 			try {
 				MP3Info mp3Info = MP3Utils.getMP3Info(paths[0]);
-				fileMedia.setMusicArtist(mp3Info.getArtist());
+				if (mp3Info.getArtist() != null) {
+					fileMedia.setMusicArtist(mp3Info.getArtist());
+				} else {
+					fileMedia.setMusicArtist("未知歌手");
+				}
 				if (mp3Info.getAlbumImage() != null) {
 					if (mp3Info.getAlbumImage().length > 1024 * 100) { // 封面大于100KB要进行缩略
 						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
