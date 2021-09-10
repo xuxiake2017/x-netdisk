@@ -1,0 +1,10 @@
+version: "1.0"
+services:
+  x-netdisk-web:
+    build: ./x-netdisk-web
+    container_name: x-netdisk-web
+    volumes:
+      - ./logs:/logs
+    ports:
+      - 8080:8080
+    restart: "always"
