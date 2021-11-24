@@ -373,7 +373,7 @@ public class WeChatServiceImpl implements WeChatService {
             String phone = param.getPhone();
             long current = new Date().getTime();
             long timestamp = Long.parseLong(param.get_timestamp());
-            if (timestamp > current || current - timestamp >= 20000) {
+            if (timestamp - current >= 20000 || current - timestamp >= 20000) {
                 result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
                 result.setMsg("时间戳校验失败");
                 return result;
