@@ -234,7 +234,7 @@ public class WeChatServiceImpl implements WeChatService {
             user.setEmail("");
             user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
             user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
-            user.setNickName(wechatUserInfo.getNickName());
+            user.setNickName(EmojiParser.parseToAliases(wechatUserInfo.getNickName()));
             userMapper.insertSelective(user);
 
             WechatUser wechatUser = new WechatUser(wechatUserInfo);
