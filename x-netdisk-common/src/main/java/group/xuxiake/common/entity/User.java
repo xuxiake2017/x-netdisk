@@ -1,5 +1,7 @@
 package group.xuxiake.common.entity;
 
+import com.vdurmont.emoji.EmojiParser;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -141,6 +143,6 @@ public class User implements Serializable {
     }
 
     public void setNickName(String nickName) {
-        this.nickName = nickName == null ? null : nickName.trim();
+        this.nickName = nickName == null ? null : EmojiParser.parseToUnicode(nickName.trim());
     }
 }

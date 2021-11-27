@@ -1,6 +1,7 @@
 package group.xuxiake.web.service.impl;
 
 import com.google.gson.Gson;
+import com.vdurmont.emoji.EmojiParser;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.WechatUser;
@@ -182,7 +183,7 @@ public class WeChatServiceImpl implements WeChatService {
             user.setEmail("");
             user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
             user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
-            user.setNickName(wechatUserInfo.getNickName());
+            user.setNickName(EmojiParser.parseToAliases(wechatUserInfo.getNickName()));
             userMapper.insertSelective(user);
 
             wechatUserByOpenid.setUserId(user.getId());
