@@ -183,7 +183,7 @@ public class WeChatServiceImpl implements WeChatService {
             user.setEmail("");
             user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
             user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
-            user.setNickName(EmojiParser.parseToAliases(wechatUserInfo.getNickName()));
+            user.setNickNameWithoutParse(EmojiParser.parseToAliases(wechatUserInfo.getNickName()));
             userMapper.insertSelective(user);
 
             wechatUserByOpenid.setUserId(user.getId());
@@ -234,7 +234,7 @@ public class WeChatServiceImpl implements WeChatService {
             user.setEmail("");
             user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
             user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
-            user.setNickName(EmojiParser.parseToAliases(wechatUserInfo.getNickName()));
+            user.setNickNameWithoutParse(EmojiParser.parseToAliases(wechatUserInfo.getNickName()));
             userMapper.insertSelective(user);
 
             WechatUser wechatUser = new WechatUser(wechatUserInfo);
@@ -408,7 +408,7 @@ public class WeChatServiceImpl implements WeChatService {
             result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED));
             return result;
         }
-        result.setMsg("短信验证码发送成功！");
+        result.setMsg("验证码发送成功");
         return result;
     }
 

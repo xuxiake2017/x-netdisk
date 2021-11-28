@@ -145,4 +145,8 @@ public class User implements Serializable {
     public void setNickName(String nickName) {
         this.nickName = nickName == null ? null : EmojiParser.parseToUnicode(nickName.trim());
     }
+
+    public void setNickNameWithoutParse(String nickName) {
+        this.nickName = nickName;
+    }
 }
