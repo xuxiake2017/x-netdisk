@@ -36,6 +36,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.vdurmont.emoji.EmojiParser;
+
 import javax.annotation.Resource;
 import javax.imageio.ImageIO;
 import javax.servlet.ServletOutputStream;
@@ -161,6 +163,7 @@ public class UserServiceImpl implements UserService {
 		Result result = new Result();
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 		user.setPassword(null);
+		user.setNickName(EmojiParser.parseToUnicode(user.getNickName()));
 		result.setData(user);
 		return result;
 	}
@@ -241,7 +244,7 @@ public class UserServiceImpl implements UserService {
 		UserNetdiskShowInfo userInfo = new UserNetdiskShowInfo();
 		userInfo.setId(user.getId());
 		userInfo.setAvatar(user.getAvatar());
-		userInfo.setName(user.getNickName());
+		userInfo.setName(EmojiParser.parseToUnicode(user.getNickName()));
 		userInfo.setTotalMemory(totalMemory);
 		userInfo.setUsedMemory(usedMemory);
 		userInfo.setAvailableMemory(availableMemory);
