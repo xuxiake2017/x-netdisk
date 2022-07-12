@@ -40,9 +40,25 @@
         </encoder>
     </appender>
 
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http class="com.github.loki4j.logback.ApacheHttpSender">
+            <url>http://192.168.0.10:3100/loki/api/v1/push</url>
+        </http>
+        <format>
+            <label>
+                <pattern>job=x-netdisk-web,host=${HOSTNAME},level=%level</pattern>
+            </label>
+            <message>
+                <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
+            </message>
+            <sortByTime>true</sortByTime>
+        </format>
+    </appender>
+
     <!-- 控制台输出日志级别 -->
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="x-netdisk-web"/>
+        <appender-ref ref="LOKI"/>
     </root>
 </configuration>
