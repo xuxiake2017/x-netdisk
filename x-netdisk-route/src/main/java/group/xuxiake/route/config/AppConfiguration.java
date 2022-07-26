@@ -25,6 +25,8 @@ public class AppConfiguration {
     private String quartzRoot;
     @Value("${application.zookeeper.IBLA}")
     private String IBLA;
+    @Value("${application.zookeeper.hostname}")
+    private String hostname;
     @Value("${application.route.chat.chatRoutePrefix}")
     private String chatRoutePrefix;
     @Value("${application.route.chat.sendMsgPath}")

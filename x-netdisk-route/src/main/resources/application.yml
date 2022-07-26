@@ -7,6 +7,7 @@ application:
     quartzRoot: /quartzRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
+    hostname: localhost
   route:
     chat:
       chatRoutePrefix: 'CHAT_ROUTE:'

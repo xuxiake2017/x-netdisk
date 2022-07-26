@@ -9,6 +9,7 @@ application:
     quartzRoot: /quartzRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
+    hostname: localhost
 spring:
   datasource:
     name: db

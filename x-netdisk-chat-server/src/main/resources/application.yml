@@ -6,10 +6,11 @@ application:
     routeRoot: /routeRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
+    hostname: localhost
   socketIo:
     port: 9527
-    # 注册到zookeeper的socketIp，生产环境需要填写公网，LOCAL表示注册本地IP
-    ip: LOCAL
+    # 注册到zookeeper的socketIp，生产环境需要填写公网
+    ip: localhost
     # 设置最大每帧处理数据的长度，防止他人利用大数据来攻击服务器
     maxFramePayloadLength: 1048576
     # 设置http交互最大内容长度

@@ -24,7 +24,7 @@ public class AppPostConstruct {
     public void start() {
         chatSocketIOHandler.start();
         // 注册到zookeeper
-        registerZK.register(appConfiguration.getSocketIoIp(), appConfiguration.getSocketIoPort().toString(), appConfiguration.getHttpPort());
+        registerZK.register(appConfiguration.getHostname(), appConfiguration.getSocketIoIp(), appConfiguration.getSocketIoPort().toString(), appConfiguration.getHttpPort());
         // 订阅事件（route server变动）
         subscribeZK.subscribeEvent();
     }

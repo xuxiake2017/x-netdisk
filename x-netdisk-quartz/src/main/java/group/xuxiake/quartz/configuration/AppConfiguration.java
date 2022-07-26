@@ -16,6 +16,8 @@ public class AppConfiguration {
     private String quartzRoot;
     @Value("${application.zookeeper.IBLA}")
     private String IBLA;
+    @Value("${application.zookeeper.hostname}")
+    private String hostname;
 
     @Value("${server.port}")
     private String httpPort;

@@ -19,7 +19,7 @@ public class AppPostConstruct {
     @PostConstruct
     public void start() {
         // 注册到zookeeper
-        registerZK.register(appConfiguration.getHttpPort());
+        registerZK.register(appConfiguration.getHostname(), appConfiguration.getHttpPort());
         // 订阅事件（chat server变动）
         subscribeZK.subscribeEvent();
     }

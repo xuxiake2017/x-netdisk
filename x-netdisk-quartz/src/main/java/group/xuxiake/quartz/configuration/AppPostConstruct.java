@@ -17,7 +17,7 @@ public class AppPostConstruct {
     @PostConstruct
     public void start() {
         // 注册到zookeeper
-        registerZK.register(appConfiguration.getHttpPort());
+        registerZK.register(appConfiguration.getHostname(), appConfiguration.getHttpPort());
     }
 
     @PreDestroy
