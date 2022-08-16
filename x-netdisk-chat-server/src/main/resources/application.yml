@@ -1,12 +1,12 @@
 application:
   zookeeper:
-    zkServer: 192.168.0.10:2181
+    zkServer: zookeeper:2181
     connectTimeout: 15000
     chatRoot: /chatRoot
     routeRoot: /routeRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
-    hostname: localhost
+    hostname: chat-server
   socketIo:
     port: 9527
     # 注册到zookeeper的socketIp，生产环境需要填写公网
@@ -38,7 +38,7 @@ server:
 spring:
   datasource:
     name: db
-    url: jdbc:mysql://192.168.0.10:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    url: jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
     username: root
     password: 123456
 
@@ -63,7 +63,7 @@ spring:
   # redis
   redis:
     database: 0
-    host: 192.168.0.10
+    host: redis
     port: 6379
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml  #注意：一定要对应mapper映射xml文件的所在路径

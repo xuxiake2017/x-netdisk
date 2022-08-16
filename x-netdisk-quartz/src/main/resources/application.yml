@@ -4,16 +4,16 @@ server:
     context-path: /quartz
 application:
   zookeeper:
-    zkServer: 192.168.0.10:2181
+    zkServer: zookeeper:2181
     connectTimeout: 15000
     quartzRoot: /quartzRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
-    hostname: localhost
+    hostname: quartz
 spring:
   datasource:
     name: db
-    url: jdbc:mysql://192.168.0.10:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    url: jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
     username: root
     password: 123456
 
@@ -38,7 +38,7 @@ spring:
   # redis
   redis:
     database: 0
-    host: 192.168.0.10
+    host: redis
     port: 6379
   # 文件上传大小
   servlet:

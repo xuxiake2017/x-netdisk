@@ -15,14 +15,14 @@
     <!-- RollingFileAppender：滚动记录文件，先将日志记录到指定文件，当符合某个条件时，将日志记录到其他文件 -->
     <!-- 以下的大概意思是：1.先按日期存日志，日期变了，将前一天的日志文件名重命名为XXX%日期%索引，新的日志仍然是demo.log -->
     <!--             2.如果日期没有发生变化，但是当前日志的文件大小超过1KB时，对当前日志进行分割 重命名-->
-    <appender name="x-netdisk-web" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <File>./logs/x-netdisk-web.log</File>
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>./logs/x-netdisk-route.log</File>
         <!-- rollingPolicy:当发生滚动时，决定 RollingFileAppender 的行为，涉及文件移动和重命名。 -->
         <!-- TimeBasedRollingPolicy： 最常用的滚动策略，它根据时间来制定滚动策略，既负责滚动也负责出发滚动 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 活动文件的名字会根据fileNamePattern的值，每隔一段时间改变一次 -->
             <!-- 文件名：log/demo.2018-06-23.0.log -->
-            <fileNamePattern>./logs/%d/x-netdisk-web.%d.%i.log</fileNamePattern>
+            <fileNamePattern>./logs/%d/x-netdisk-route.%d.%i.log</fileNamePattern>
             <!-- 每产生一个日志文件，该日志文件的保存期限为3天 -->
             <maxHistory>30</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
@@ -46,7 +46,7 @@
         </http>
         <format>
             <label>
-                <pattern>job=x-netdisk-web,host=${HOSTNAME},level=%level</pattern>
+                <pattern>job=x-netdisk-route,host=${HOSTNAME},level=%level</pattern>
             </label>
             <message>
                 <pattern>l=%level h=${HOSTNAME} c=%logger{20} t=%thread | %msg %ex</pattern>
@@ -58,7 +58,7 @@
     <!-- 控制台输出日志级别 -->
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="x-netdisk-web"/>
+        <appender-ref ref="file"/>
         <!-- <appender-ref ref="LOKI"/> -->
     </root>
 </configuration>

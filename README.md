@@ -6,13 +6,37 @@
 - 整体框架使用springboot，父子模块，前后端分离
 - 使用zookeeper做服务注册与发现中心
 - 使用shiro做登录认证
-- 前端需配合[netdisk-app](https://github.com/xuxiake2017/netdisk-app)使用
+- 前端需配合[netdisk-app](https://github.com/xuxiake2017/netdisk-app)、[netdisk-web(待完善)](https://github.com/xuxiake2017/x-netdisk-react-preview)、[netdisk-miniapp](https://github.com/xuxiake2017/netdisk-mp-preview)使用
 - 需要nginx做代理
 - 需要redis
 - 储蓄文件使用了分布式文件服务器FastDFS
 - 数据库mysql
 - 网盘文件树实现使用了mysql的储存过程
 - 确保电脑上安装了mvn，而且加进了系统path中，运行`x-netdisk-web\src\main\resources\lib\install.cmd`，安装`jave-1.0.2.jar`这个lib
+- docker部署在windows上遇到`world-writable config file '/etc/mysql/my.cnf' is ignored docker`的问题，把`my.cnf`设置成只读
+- 不建议在windows上使用docker，会卡死（自测是这样）
+- 记得修改`x-netdisk-web\src\main\resources\application.yml`中的`fdfs-nginx-server`，根据自己的配置来
+
+#### 使用docker部署
+
+1. 安装依赖以及打包
+    ```shell
+    $ mvn install
+    $ mvn package
+    ```
+
+2. 构建自定义docker镜像
+    ```shell
+    $ cd libreoffice_ffmpeg
+    $ ./build.sh
+    ```
+
+3. 启动
+    ```shell
+    $ docker-compose up
+    # 或者是
+    $ docker compose up
+    ```
 #### 框架介绍
 - chat简易流程图
 ![chat简易流程图](https://raw.githubusercontent.com/xuxiake2017/x-netdisk/master/pic/chat%E7%AE%80%E6%98%93%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg)
@@ -27,7 +51,7 @@
 - 保存、获取用户聊天的路由
 - 分发请求
 - 可以部署多个（无状态）
-##### `x-netdisk-chat-server`
+##### `x-netdisk-chat-server`(非必须)
 - web im 的服务端，可以部署多个
 ##### `x-netdisk-quartz`
 - 使用quartz处理回收站，定时清理用户回收站
@@ -65,5 +89,8 @@
 ##### 2021-07-04
 - 增加小程序登出
 - 文件列表增加排序方式查询条件
+
+##### 2022-07-29
+- 重大更新，增加docker部署
 
 ##### 持续更新中，如果我的项目能给您带来帮助，请star一下😁

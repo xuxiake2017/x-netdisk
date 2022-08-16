@@ -10,7 +10,7 @@ application:
     # 超时时间5分钟
     timeout: 300000
   zookeeper:
-    zkServer: 192.168.0.10:2181
+    zkServer: zookeeper:2181
     connectTimeout: 15000
     routeRoot: /routeRoot
     # 负载均衡算法
@@ -25,7 +25,7 @@ application:
 spring:
   datasource:
     name: db
-    url: jdbc:mysql://192.168.0.10:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    url: jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
     username: root
     password: 123456
 
@@ -50,7 +50,7 @@ spring:
   # redis
   redis:
     database: 0
-    host: 192.168.0.10
+    host: redis
     port: 6379
   # 文件上传大小
   servlet:
@@ -80,14 +80,14 @@ fdfs:
     height: 150
   #TrackerList参数,支持多个
   tracker-list:
-    192.168.0.10:22122
-  fdfs-nginx-server: http://192.168.0.10:8181
+    fastdfs_tracker:22122
+  fdfs-nginx-server: http://192.168.81.30:8888
 logging:
   level:
     root: INFO
 jodconverter:
   local:
     # 设置LibreOffice主目录
-    officeHome: /opt/libreoffice6.3
+    officeHome: /opt/libreoffice7.2
     # 开启多个LibreOffice进程，每个端口对应一个进程
     portNumbers: 2002, 2003, 2004

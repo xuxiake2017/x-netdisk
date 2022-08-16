@@ -1,5 +1,5 @@
 # 指定镜像
-FROM xu/libreoffice
+FROM centos:libreoffice_ffmpeg
 # 申明要挂载的目录
 VOLUME /logs
 # 复制jar包到容器中

@@ -392,6 +392,70 @@ CREATE TABLE `x_wechat_user`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------
+-- Procedure structure for pro_cre_pathlist
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `pro_cre_pathlist`;
+delimiter ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_pathlist`(IN nid INT,IN delimit VARCHAR(10),
+INOUT pathstr VARCHAR(1000))
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE parentid INT DEFAULT 0;
+    DECLARE cur1 CURSOR FOR 
+    SELECT t.parent_id,CONCAT(CAST(t.parent_id AS CHAR),delimit,pathstr) 
+        from x_user_file AS t WHERE t.id = nid;
+    -- 下面这行表示若没有数据返回，程序继续，并将变量done设为1
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    -- mysql中可以利用系统参数 max_sp_recursion_depth 来控制递归调用的层数上限。
+    SET max_sp_recursion_depth=12;
+
+    OPEN cur1;
+    -- 游标向下走一步
+    FETCH cur1 INTO parentid,pathstr;
+    WHILE done=0 DO
+        CALL pro_cre_pathlist(parentid,delimit,pathstr);
+        -- 游标向下走一步
+        FETCH cur1 INTO parentid,pathstr;
+    END WHILE;
+
+    CLOSE cur1;
+END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for pro_cre_pnlist
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `pro_cre_pnlist`;
+delimiter ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_pnlist`(IN nid INT,IN delimit VARCHAR(10),
+INOUT pathstr VARCHAR(1000))
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE parentid INT DEFAULT 0;
+    DECLARE cur1 CURSOR FOR 
+    SELECT t.parent_id,CONCAT(t.file_name,delimit,pathstr) 
+        from x_user_file AS t WHERE t.id = nid;
+    -- 下面这行表示若没有数据返回，程序继续，并将变量done设为1
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+    -- mysql中可以利用系统参数 max_sp_recursion_depth 来控制递归调用的层数上限。
+    SET max_sp_recursion_depth=12;
+
+    OPEN cur1;
+    -- 游标向下走一步
+    FETCH cur1 INTO parentid,pathstr;
+    WHILE done=0 DO
+        CALL pro_cre_pnlist(parentid,delimit,pathstr);
+        -- 游标向下走一步
+        FETCH cur1 INTO parentid,pathstr;
+    END WHILE;
+
+    CLOSE cur1;
+END
+;;
+delimiter ;
+
+-- ----------------------------
 -- Function structure for fn_tree_path
 -- ----------------------------
 DROP FUNCTION IF EXISTS `fn_tree_path`;
@@ -583,70 +647,6 @@ BEGIN
 			(SELECT tmpList.id FROM tmpList ORDER BY tmpList.sno)
 			AND x_user_file.origin_id = x_file_origin.id
 			AND x_user_file.`status` = 2;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Procedure structure for pro_cre_pathlist
--- ----------------------------
-DROP PROCEDURE IF EXISTS `pro_cre_pathlist`;
-delimiter ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_pathlist`(IN nid INT,IN delimit VARCHAR(10),
-INOUT pathstr VARCHAR(1000))
-BEGIN
-    DECLARE done INT DEFAULT 0;
-    DECLARE parentid INT DEFAULT 0;
-    DECLARE cur1 CURSOR FOR 
-    SELECT t.parent_id,CONCAT(CAST(t.parent_id AS CHAR),delimit,pathstr) 
-        from x_user_file AS t WHERE t.id = nid;
-    -- 下面这行表示若没有数据返回，程序继续，并将变量done设为1
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    -- mysql中可以利用系统参数 max_sp_recursion_depth 来控制递归调用的层数上限。
-    SET max_sp_recursion_depth=12;
-
-    OPEN cur1;
-    -- 游标向下走一步
-    FETCH cur1 INTO parentid,pathstr;
-    WHILE done=0 DO
-        CALL pro_cre_pathlist(parentid,delimit,pathstr);
-        -- 游标向下走一步
-        FETCH cur1 INTO parentid,pathstr;
-    END WHILE;
-
-    CLOSE cur1;
-END
-;;
-delimiter ;
-
--- ----------------------------
--- Procedure structure for pro_cre_pnlist
--- ----------------------------
-DROP PROCEDURE IF EXISTS `pro_cre_pnlist`;
-delimiter ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_pnlist`(IN nid INT,IN delimit VARCHAR(10),
-INOUT pathstr VARCHAR(1000))
-BEGIN
-    DECLARE done INT DEFAULT 0;
-    DECLARE parentid INT DEFAULT 0;
-    DECLARE cur1 CURSOR FOR 
-    SELECT t.parent_id,CONCAT(t.file_name,delimit,pathstr) 
-        from x_user_file AS t WHERE t.id = nid;
-    -- 下面这行表示若没有数据返回，程序继续，并将变量done设为1
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    -- mysql中可以利用系统参数 max_sp_recursion_depth 来控制递归调用的层数上限。
-    SET max_sp_recursion_depth=12;
-
-    OPEN cur1;
-    -- 游标向下走一步
-    FETCH cur1 INTO parentid,pathstr;
-    WHILE done=0 DO
-        CALL pro_cre_pnlist(parentid,delimit,pathstr);
-        -- 游标向下走一步
-        FETCH cur1 INTO parentid,pathstr;
-    END WHILE;
-
-    CLOSE cur1;
 END
 ;;
 delimiter ;

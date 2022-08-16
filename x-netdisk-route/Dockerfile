@@ -2,8 +2,6 @@
 FROM openjdk:8-jdk-alpine
 # 修改apk中央仓库地址
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-# 安装依赖包（为了生成验证码）
-RUN apk add --update ttf-dejavu fontconfig
 # 修改时区
 RUN apk add --update tzdata
 ENV TZ=Asia/Shanghai
@@ -12,8 +10,8 @@ RUN rm -rf /var/cache/apk/*
 # 申明要挂载的目录
 VOLUME /logs
 # 复制jar包到容器中
-ADD ./target/x-netdisk-web.jar /x-netdisk-web.jar
+ADD ./target/x-netdisk-route.jar /x-netdisk-route.jar
 # 申明要暴露的端口
-EXPOSE 8080
+EXPOSE 9000
 # 执行命令
-ENTRYPOINT ["java","-jar","/x-netdisk-web.jar"]
+ENTRYPOINT ["java","-jar","/x-netdisk-route.jar"]
