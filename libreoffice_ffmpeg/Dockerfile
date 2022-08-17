@@ -21,7 +21,7 @@ RUN cd /home/ \
 	&& tar zxvf LibreOffice_7.2.7_Linux_x86-64_rpm.tar.gz \
 	&& cd /usr/ \
 	&& wget http://mirrors.cloud.tencent.com/libreoffice/libreoffice/stable/7.2.7/rpm/x86_64/LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
-	&& tar zxvf LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz
+	&& tar zxvf LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
 	&& cd /usr/share/fonts/ \
 	&& wget https://read-1252195440.cos.ap-guangzhou.myqcloud.com/chinese.tar.gz \
 	&& tar zxvf chinese.tar.gz
