@@ -46,8 +46,8 @@ RUN cd /home/LibreOffice_7.2.7.2_Linux_x86-64_rpm/RPMS/ \
 	&& mkfontscale \
 	&& yum install fontconfig -y \
 	&& mkfontdir \
-	&& fc-cache -fv
-	&& rm -rf /usr/share/fonts/chinese.tar.gz \
+	&& fc-cache -fv \
+	&& rm -rf /usr/share/fonts/chinese.tar.gz
 	 
 # 安装java
 RUN yum install -y java-1.8.0-openjdk-devel.x86_64
