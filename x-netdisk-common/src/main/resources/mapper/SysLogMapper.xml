@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.SysLogMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.SysLog" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="host" property="host" jdbcType="VARCHAR" />
+    <result column="client_ip" property="clientIp" jdbcType="VARCHAR" />
+    <result column="client_type" property="clientType" jdbcType="INTEGER" />
+    <result column="opt_user" property="optUser" jdbcType="VARCHAR" />
+    <result column="opt_nickname" property="optNickname" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="VARCHAR" />
+    <result column="request_header" property="requestHeader" jdbcType="VARCHAR" />
+    <result column="result" property="result" jdbcType="VARCHAR" />
+    <result column="log_type" property="logType" jdbcType="INTEGER" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, host, client_ip, client_type, opt_user, opt_nickname, content, request_header, 
+    result, log_type, create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_sys_log
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_sys_log
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.SysLog" >
+    insert into x_sys_log (id, host, client_ip, 
+      client_type, opt_user, opt_nickname, 
+      content, request_header, result, 
+      log_type, create_time, update_time
+      )
+    values (#{id,jdbcType=INTEGER}, #{host,jdbcType=VARCHAR}, #{clientIp,jdbcType=VARCHAR}, 
+      #{clientType,jdbcType=INTEGER}, #{optUser,jdbcType=VARCHAR}, #{optNickname,jdbcType=VARCHAR}, 
+      #{content,jdbcType=VARCHAR}, #{requestHeader,jdbcType=VARCHAR}, #{result,jdbcType=VARCHAR}, 
+      #{logType,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.SysLog" >
+    insert into x_sys_log
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="host != null" >
+        host,
+      </if>
+      <if test="clientIp != null" >
+        client_ip,
+      </if>
+      <if test="clientType != null" >
+        client_type,
+      </if>
+      <if test="optUser != null" >
+        opt_user,
+      </if>
+      <if test="optNickname != null" >
+        opt_nickname,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+      <if test="requestHeader != null" >
+        request_header,
+      </if>
+      <if test="result != null" >
+        result,
+      </if>
+      <if test="logType != null" >
+        log_type,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="host != null" >
+        #{host,jdbcType=VARCHAR},
+      </if>
+      <if test="clientIp != null" >
+        #{clientIp,jdbcType=VARCHAR},
+      </if>
+      <if test="clientType != null" >
+        #{clientType,jdbcType=INTEGER},
+      </if>
+      <if test="optUser != null" >
+        #{optUser,jdbcType=VARCHAR},
+      </if>
+      <if test="optNickname != null" >
+        #{optNickname,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="requestHeader != null" >
+        #{requestHeader,jdbcType=VARCHAR},
+      </if>
+      <if test="result != null" >
+        #{result,jdbcType=VARCHAR},
+      </if>
+      <if test="logType != null" >
+        #{logType,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.SysLog" >
+    update x_sys_log
+    <set >
+      <if test="host != null" >
+        host = #{host,jdbcType=VARCHAR},
+      </if>
+      <if test="clientIp != null" >
+        client_ip = #{clientIp,jdbcType=VARCHAR},
+      </if>
+      <if test="clientType != null" >
+        client_type = #{clientType,jdbcType=INTEGER},
+      </if>
+      <if test="optUser != null" >
+        opt_user = #{optUser,jdbcType=VARCHAR},
+      </if>
+      <if test="optNickname != null" >
+        opt_nickname = #{optNickname,jdbcType=VARCHAR},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="requestHeader != null" >
+        request_header = #{requestHeader,jdbcType=VARCHAR},
+      </if>
+      <if test="result != null" >
+        result = #{result,jdbcType=VARCHAR},
+      </if>
+      <if test="logType != null" >
+        log_type = #{logType,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.SysLog" >
+    update x_sys_log
+    set host = #{host,jdbcType=VARCHAR},
+      client_ip = #{clientIp,jdbcType=VARCHAR},
+      client_type = #{clientType,jdbcType=INTEGER},
+      opt_user = #{optUser,jdbcType=VARCHAR},
+      opt_nickname = #{optNickname,jdbcType=VARCHAR},
+      content = #{content,jdbcType=VARCHAR},
+      request_header = #{requestHeader,jdbcType=VARCHAR},
+      result = #{result,jdbcType=VARCHAR},
+      log_type = #{logType,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

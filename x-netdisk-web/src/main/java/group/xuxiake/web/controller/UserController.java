@@ -6,7 +6,9 @@ import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
+import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
+import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.SmsSendUtil;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -101,6 +103,7 @@ public class UserController {
 	 * @return
 	 */
 	@RequestMapping("/logout")
+	@SysLogRecord(logType = LogType.LOGOUT, recordContent = false)
 	public Result logout(HttpSession session) {
 		session.invalidate();
 		return new Result();

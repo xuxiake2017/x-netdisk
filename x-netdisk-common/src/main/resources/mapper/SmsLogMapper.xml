@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="group.xuxiake.common.mapper.SmsLogMapper" >
+  <resultMap id="BaseResultMap" type="group.xuxiake.common.entity.SmsLog" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="biz_id" property="bizId" jdbcType="VARCHAR" />
+    <result column="send_time" property="sendTime" jdbcType="TIMESTAMP" />
+    <result column="report_time" property="reportTime" jdbcType="TIMESTAMP" />
+    <result column="success" property="success" jdbcType="INTEGER" />
+    <result column="err_msg" property="errMsg" jdbcType="VARCHAR" />
+    <result column="err_code" property="errCode" jdbcType="VARCHAR" />
+    <result column="phone_number" property="phoneNumber" jdbcType="VARCHAR" />
+    <result column="msg_content" property="msgContent" jdbcType="VARCHAR" />
+    <result column="code" property="code" jdbcType="VARCHAR" />
+    <result column="mns_message_body" property="mnsMessageBody" jdbcType="VARCHAR" />
+    <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+    <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, biz_id, send_time, report_time, success, err_msg, err_code, phone_number, msg_content, 
+    code, mns_message_body, create_time, update_time
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from x_sms_log
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from x_sms_log
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="group.xuxiake.common.entity.SmsLog" >
+    insert into x_sms_log (id, biz_id, send_time, 
+      report_time, success, err_msg, 
+      err_code, phone_number, msg_content, 
+      code, mns_message_body, create_time, 
+      update_time)
+    values (#{id,jdbcType=INTEGER}, #{bizId,jdbcType=VARCHAR}, #{sendTime,jdbcType=TIMESTAMP}, 
+      #{reportTime,jdbcType=TIMESTAMP}, #{success,jdbcType=INTEGER}, #{errMsg,jdbcType=VARCHAR}, 
+      #{errCode,jdbcType=VARCHAR}, #{phoneNumber,jdbcType=VARCHAR}, #{msgContent,jdbcType=VARCHAR}, 
+      #{code,jdbcType=VARCHAR}, #{mnsMessageBody,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
+  <insert id="insertSelective" parameterType="group.xuxiake.common.entity.SmsLog" >
+    insert into x_sms_log
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="bizId != null" >
+        biz_id,
+      </if>
+      <if test="sendTime != null" >
+        send_time,
+      </if>
+      <if test="reportTime != null" >
+        report_time,
+      </if>
+      <if test="success != null" >
+        success,
+      </if>
+      <if test="errMsg != null" >
+        err_msg,
+      </if>
+      <if test="errCode != null" >
+        err_code,
+      </if>
+      <if test="phoneNumber != null" >
+        phone_number,
+      </if>
+      <if test="msgContent != null" >
+        msg_content,
+      </if>
+      <if test="code != null" >
+        code,
+      </if>
+      <if test="mnsMessageBody != null" >
+        mns_message_body,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="updateTime != null" >
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="bizId != null" >
+        #{bizId,jdbcType=VARCHAR},
+      </if>
+      <if test="sendTime != null" >
+        #{sendTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="reportTime != null" >
+        #{reportTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="success != null" >
+        #{success,jdbcType=INTEGER},
+      </if>
+      <if test="errMsg != null" >
+        #{errMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="errCode != null" >
+        #{errCode,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneNumber != null" >
+        #{phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="msgContent != null" >
+        #{msgContent,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="mnsMessageBody != null" >
+        #{mnsMessageBody,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="group.xuxiake.common.entity.SmsLog" >
+    update x_sms_log
+    <set >
+      <if test="bizId != null" >
+        biz_id = #{bizId,jdbcType=VARCHAR},
+      </if>
+      <if test="sendTime != null" >
+        send_time = #{sendTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="reportTime != null" >
+        report_time = #{reportTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="success != null" >
+        success = #{success,jdbcType=INTEGER},
+      </if>
+      <if test="errMsg != null" >
+        err_msg = #{errMsg,jdbcType=VARCHAR},
+      </if>
+      <if test="errCode != null" >
+        err_code = #{errCode,jdbcType=VARCHAR},
+      </if>
+      <if test="phoneNumber != null" >
+        phone_number = #{phoneNumber,jdbcType=VARCHAR},
+      </if>
+      <if test="msgContent != null" >
+        msg_content = #{msgContent,jdbcType=VARCHAR},
+      </if>
+      <if test="code != null" >
+        code = #{code,jdbcType=VARCHAR},
+      </if>
+      <if test="mnsMessageBody != null" >
+        mns_message_body = #{mnsMessageBody,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null" >
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="group.xuxiake.common.entity.SmsLog" >
+    update x_sms_log
+    set biz_id = #{bizId,jdbcType=VARCHAR},
+      send_time = #{sendTime,jdbcType=TIMESTAMP},
+      report_time = #{reportTime,jdbcType=TIMESTAMP},
+      success = #{success,jdbcType=INTEGER},
+      err_msg = #{errMsg,jdbcType=VARCHAR},
+      err_code = #{errCode,jdbcType=VARCHAR},
+      phone_number = #{phoneNumber,jdbcType=VARCHAR},
+      msg_content = #{msgContent,jdbcType=VARCHAR},
+      code = #{code,jdbcType=VARCHAR},
+      mns_message_body = #{mnsMessageBody,jdbcType=VARCHAR},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

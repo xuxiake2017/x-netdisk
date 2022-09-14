@@ -8,9 +8,12 @@ import group.xuxiake.common.entity.param.WechatSendSMSCaptchaParam;
 import group.xuxiake.common.entity.wechat.AuthCode2SessionRes;
 import group.xuxiake.common.entity.wechat.LoginAndRegisterParam;
 import group.xuxiake.common.entity.wechat.WechatUserInfo;
+import group.xuxiake.common.enums.ClientType;
+import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.mapper.WechatUserMapper;
 import group.xuxiake.common.util.*;
+import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.configuration.CustomConfiguration;
 import group.xuxiake.web.service.UserService;
@@ -71,6 +74,7 @@ public class WeChatServiceImpl implements WeChatService {
      * @param param
      * @return
      */
+    @SysLogRecord(logType = LogType.REGISTER, clientType = ClientType.MINI_APP)
     @Override
     @Transactional
     public Result loginAndRegister(LoginAndRegisterParam param) {
@@ -268,9 +272,9 @@ public class WeChatServiceImpl implements WeChatService {
      * @param code
      * @return
      */
+    @SysLogRecord(logType = LogType.LOGIN, clientType = ClientType.MINI_APP)
     @Override
     public Result autoLogin(String code) {
-
         Result result = new Result();
         AuthCode2SessionRes authCode2SessionRes = this.jscode2session(code);
         if (authCode2SessionRes.getErrcode() != 0) {
@@ -415,6 +419,7 @@ public class WeChatServiceImpl implements WeChatService {
      * 登出（解除绑定）
      * @return
      */
+    @SysLogRecord(logType = LogType.LOGOUT, clientType = ClientType.MINI_APP)
     @Override
     public Result logout(HttpSession session) {
 

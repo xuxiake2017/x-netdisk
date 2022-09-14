@@ -5,12 +5,15 @@ import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
+import group.xuxiake.common.enums.ClientType;
+import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.util.RandomName;
 import group.xuxiake.common.util.RedisUtils;
+import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.show.UserFriendListShow;
@@ -89,6 +92,7 @@ public class UserServiceImpl implements UserService {
 		return userMapper.findByLoginInfo(user);
 	}
 
+	@SysLogRecord(logType = LogType.REGISTER)
 	@Transactional
 	@Override
 	public Result register(UserRegisteParam param) {
@@ -257,6 +261,7 @@ public class UserServiceImpl implements UserService {
 		return result;
 	}
 
+	@SysLogRecord(logType = LogType.LOGIN)
 	@Override
 	public Result login(UserLoginParam param) {
 		Result result = new Result();
@@ -316,6 +321,7 @@ public class UserServiceImpl implements UserService {
 	 * @param param
 	 * @return
 	 */
+	@SysLogRecord(logType = LogType.REGISTER, clientType = ClientType.H5)
 	@Transactional
 	@Override
 	public Result registerApp(UserAppRegisteParam param) {
