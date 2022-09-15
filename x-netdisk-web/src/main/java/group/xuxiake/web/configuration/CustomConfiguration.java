@@ -1,14 +1,8 @@
 package group.xuxiake.web.configuration;
 
-import group.xuxiake.common.entity.SmsTemplate;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Author by xuxiake, Date on 2020/3/2 13:27.
@@ -43,7 +37,6 @@ public class CustomConfiguration {
     private static String signName;
     private static String templateCode;
     private static String queueName;
-    private static List<SmsTemplate> templateCodeList;
 
     @Value("${app.config.tuling.tuling_apiKey}")
     private String tulingApiKey;
@@ -161,26 +154,5 @@ public class CustomConfiguration {
     @Value("${app.config.sms.queueName}")
     public void setQueueName(String queueName) {
         CustomConfiguration.queueName = queueName;
-    }
-
-    public static List<SmsTemplate> getTemplateCodeList() {
-        return templateCodeList;
-    }
-
-    @Value("${app.config.sms.templateCodeList}")
-    public void setTemplateCodeList(List<SmsTemplate> templateCodeList) {
-        CustomConfiguration.templateCodeList = templateCodeList;
-    }
-
-    public static String getTemplateContent(String templateCode) {
-        if (templateCodeList == null || templateCodeList.size() == 0) {
-            return "";
-        } else {
-            List<SmsTemplate> result = templateCodeList.stream().filter(smsTemplate -> smsTemplate.getTemplateCode().equals(templateCode)).collect(Collectors.toList());
-            if (result.size() > 0) {
-                return result.get(0).getTemplateContent();
-            }
-        }
-        return "";
     }
 }

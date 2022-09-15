@@ -15,6 +15,7 @@ import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.configuration.CustomConfiguration;
+import group.xuxiake.web.configuration.SmsConfiguration;
 import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.VerifyService;
 import group.xuxiake.web.util.*;
@@ -45,6 +46,8 @@ public class VerifyServiceImpl implements VerifyService {
     private RouteService routeService;
     @Resource
     private SmsLogMapper smsLogMapper;
+    @Resource
+    private SmsConfiguration smsConfiguration;
 
     /**
      * 验证邮箱
@@ -115,7 +118,7 @@ public class VerifyServiceImpl implements VerifyService {
             smsLog.setPhoneNumber(phone);
             smsLog.setSendTime(new Date());
             smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
-            smsLog.setMsgContent(CustomConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
             smsLog.setBizId(smsSendResult.getResponse().getBizId());
             smsLog.setCode(smsCode);
             smsLog.setErrCode(smsSendResult.getResponse().getCode());

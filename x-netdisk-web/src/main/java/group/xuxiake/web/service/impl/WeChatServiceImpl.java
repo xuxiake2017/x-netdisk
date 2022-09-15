@@ -19,6 +19,7 @@ import group.xuxiake.common.util.*;
 import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.configuration.CustomConfiguration;
+import group.xuxiake.web.configuration.SmsConfiguration;
 import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.service.WeChatService;
 import group.xuxiake.web.shiro.AutoLoginToken;
@@ -74,6 +75,8 @@ public class WeChatServiceImpl implements WeChatService {
     private RedisUtils redisUtils;
     @Resource
     private SmsLogMapper smsLogMapper;
+    @Resource
+    private SmsConfiguration smsConfiguration;
     /**
      * 小程序登录、注册
      * @param param
@@ -404,7 +407,7 @@ public class WeChatServiceImpl implements WeChatService {
             smsLog.setPhoneNumber(phone);
             smsLog.setSendTime(new Date());
             smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
-            smsLog.setMsgContent(CustomConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
             smsLog.setBizId(smsSendResult.getResponse().getBizId());
             smsLog.setCode(smsCode);
             smsLog.setErrCode(smsSendResult.getResponse().getCode());
