@@ -440,7 +440,7 @@ public class WeChatServiceImpl implements WeChatService {
      * 登出（解除绑定）
      * @return
      */
-    @SysLogRecord(logType = LogType.LOGOUT, clientType = ClientType.MINI_APP)
+    @SysLogRecord(logType = LogType.LOGOUT, clientType = ClientType.MINI_APP, recordContent = false)
     @Override
     public Result logout(HttpSession session) {
 
