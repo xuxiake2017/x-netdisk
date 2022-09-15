@@ -5,6 +5,10 @@ import java.util.Date;
 public class SmsLog {
     private Integer id;
 
+    private String clientIp;
+
+    private Integer clientType;
+
     private String bizId;
 
     private Date sendTime;
@@ -35,6 +39,22 @@ public class SmsLog {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getClientIp() {
+        return clientIp;
+    }
+
+    public void setClientIp(String clientIp) {
+        this.clientIp = clientIp == null ? null : clientIp.trim();
+    }
+
+    public Integer getClientType() {
+        return clientType;
+    }
+
+    public void setClientType(Integer clientType) {
+        this.clientType = clientType;
     }
 
     public String getBizId() {

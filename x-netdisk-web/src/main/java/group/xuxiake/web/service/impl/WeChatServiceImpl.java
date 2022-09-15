@@ -20,6 +20,7 @@ import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.configuration.CustomConfiguration;
 import group.xuxiake.web.configuration.SmsConfiguration;
+import group.xuxiake.web.service.SmsLogService;
 import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.service.WeChatService;
 import group.xuxiake.web.shiro.AutoLoginToken;
@@ -74,7 +75,7 @@ public class WeChatServiceImpl implements WeChatService {
     @Resource
     private RedisUtils redisUtils;
     @Resource
-    private SmsLogMapper smsLogMapper;
+    private SmsLogService smsLogService;
     @Resource
     private SmsConfiguration smsConfiguration;
     /**
@@ -412,12 +413,13 @@ public class WeChatServiceImpl implements WeChatService {
             smsLog.setCode(smsCode);
             smsLog.setErrCode(smsSendResult.getResponse().getCode());
             smsLog.setErrMsg(smsSendResult.getResponse().getMessage());
+            smsLog.setClientType(ClientType.MINI_APP.getValue());
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
                 result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
                 result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL));
                 smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
-                smsLogMapper.insertSelective(smsLog);
+                smsLogService.addLog(smsLog);
                 return result;
             }
             if (smsCode.length() == 4) {
@@ -425,7 +427,7 @@ public class WeChatServiceImpl implements WeChatService {
                 redisUtils.set(CustomConfiguration.getTemplateCode() + uuid, smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
                 result.setData(uuid);
             }
-            smsLogMapper.insertSelective(smsLog);
+            smsLogService.addLog(smsLog);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED);
