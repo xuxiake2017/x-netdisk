@@ -10,6 +10,7 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import group.xuxiake.web.configuration.CustomConfiguration;
+import lombok.Data;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -109,12 +110,22 @@ public class SmsSendUtil {
 		}
 		return response.getCode();
 	}
-	public static String regNetDisk(String phone) throws ClientException{
+	public static SmsSendResult regNetDisk(String phone) throws ClientException{
 		String code = RandomCodeUtil.getRandomCode();
 		SendSmsResponse response = sendSms(code, phone);
+		SmsSendResult smsSendResult = new SmsSendResult();
+		smsSendResult.setResponse(response);
 		if("OK".equals(response.getCode()) && "OK".equals(response.getMessage())){
-			return code;
+			smsSendResult.setCode(code);
+			return smsSendResult;
 		}
-		return response.getCode();
+		smsSendResult.setCode(response.getCode());
+		return smsSendResult;
+	}
+
+	@Data
+	public static class SmsSendResult {
+		private String code;
+		private SendSmsResponse response;
 	}
 }

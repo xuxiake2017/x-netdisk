@@ -11,9 +11,12 @@ public class AppPostConstruct {
 
     @Resource
     private SubscribeZK subscribeZK;
+    @Resource
+    private AlicomMnsReceiveHandler alicomMnsReceiveHandler;
     @PostConstruct
     public void start() {
         // 订阅事件（route server变动）
         subscribeZK.subscribeEvent();
+        alicomMnsReceiveHandler.start();
     }
 }

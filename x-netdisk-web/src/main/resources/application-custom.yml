@@ -24,6 +24,10 @@ app:
       accessKeySecret: xxx
       signName: xxx
       templateCode: xxx
+      queueName: xxx
+      templateCodeList:
+        - templateCode: xxx
+          templateContent: xxx
     # 图灵机器人
     tuling:
       tuling_apiKey: xxx

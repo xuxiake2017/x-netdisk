@@ -1,16 +1,20 @@
 package group.xuxiake.web.service.impl;
 
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.SmsLog;
 import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.chat.ChatMessageBase;
 import group.xuxiake.common.entity.route.RouteOfSendMsgPojo;
+import group.xuxiake.common.enums.SmsLogSuccess;
+import group.xuxiake.common.mapper.SmsLogMapper;
 import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.web.configuration.AppConfiguration;
+import group.xuxiake.web.configuration.CustomConfiguration;
 import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.VerifyService;
 import group.xuxiake.web.util.*;
@@ -39,6 +43,8 @@ public class VerifyServiceImpl implements VerifyService {
     private RedisUtils redisUtils;
     @Resource
     private RouteService routeService;
+    @Resource
+    private SmsLogMapper smsLogMapper;
 
     /**
      * 验证邮箱
@@ -102,16 +108,29 @@ public class VerifyServiceImpl implements VerifyService {
         Result result = new Result();
         String smsCode = null;
         try {
-            smsCode = SmsSendUtil.regNetDisk(phone);
+            SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);
+            smsCode = smsSendResult.getCode();
 //			smsCode = "1234";
+            SmsLog smsLog = new SmsLog();
+            smsLog.setPhoneNumber(phone);
+            smsLog.setSendTime(new Date());
+            smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
+            smsLog.setMsgContent(CustomConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            smsLog.setBizId(smsSendResult.getResponse().getBizId());
+            smsLog.setCode(smsCode);
+            smsLog.setErrCode(smsSendResult.getResponse().getCode());
+            smsLog.setErrMsg(smsSendResult.getResponse().getMessage());
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
                 result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
                 result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL));
+                smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
+                smsLogMapper.insertSelective(smsLog);
                 return result;
             }
             if (smsCode.length() == 4) {
                 redisUtils.set("SMS_CODE:" + session.getId(), smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
+                smsLogMapper.insertSelective(smsLog);
                 return result;
             }
         } catch (Exception e) {

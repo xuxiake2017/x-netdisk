@@ -14,4 +14,6 @@ public interface SmsLogMapper {
     int updateByPrimaryKeySelective(SmsLog record);
 
     int updateByPrimaryKey(SmsLog record);
+
+    SmsLog selectByBizId(String bizId);
 }

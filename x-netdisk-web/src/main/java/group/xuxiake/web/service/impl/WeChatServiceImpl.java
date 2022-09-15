@@ -2,6 +2,7 @@ package group.xuxiake.web.service.impl;
 
 import com.google.gson.Gson;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.SmsLog;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.WechatUser;
 import group.xuxiake.common.entity.param.WechatSendSMSCaptchaParam;
@@ -10,6 +11,8 @@ import group.xuxiake.common.entity.wechat.LoginAndRegisterParam;
 import group.xuxiake.common.entity.wechat.WechatUserInfo;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.enums.LogType;
+import group.xuxiake.common.enums.SmsLogSuccess;
+import group.xuxiake.common.mapper.SmsLogMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.mapper.WechatUserMapper;
 import group.xuxiake.common.util.*;
@@ -69,6 +72,8 @@ public class WeChatServiceImpl implements WeChatService {
     private HttpSession httpSession;
     @Resource
     private RedisUtils redisUtils;
+    @Resource
+    private SmsLogMapper smsLogMapper;
     /**
      * 小程序登录、注册
      * @param param
@@ -391,12 +396,25 @@ public class WeChatServiceImpl implements WeChatService {
                 return result;
             }
             String smsCode = null;
-            smsCode = SmsSendUtil.regNetDisk(phone);
+            SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);
+            smsCode = smsSendResult.getCode();
             // smsCode  = "1234";
+
+            SmsLog smsLog = new SmsLog();
+            smsLog.setPhoneNumber(phone);
+            smsLog.setSendTime(new Date());
+            smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
+            smsLog.setMsgContent(CustomConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            smsLog.setBizId(smsSendResult.getResponse().getBizId());
+            smsLog.setCode(smsCode);
+            smsLog.setErrCode(smsSendResult.getResponse().getCode());
+            smsLog.setErrMsg(smsSendResult.getResponse().getMessage());
             //业务限流
             if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
                 result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
                 result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL));
+                smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
+                smsLogMapper.insertSelective(smsLog);
                 return result;
             }
             if (smsCode.length() == 4) {
@@ -404,7 +422,7 @@ public class WeChatServiceImpl implements WeChatService {
                 redisUtils.set(CustomConfiguration.getTemplateCode() + uuid, smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
                 result.setData(uuid);
             }
-
+            smsLogMapper.insertSelective(smsLog);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED);
