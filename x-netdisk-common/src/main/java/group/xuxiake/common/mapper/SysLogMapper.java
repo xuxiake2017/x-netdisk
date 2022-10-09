@@ -1,6 +1,10 @@
 package group.xuxiake.common.mapper;
 
 import group.xuxiake.common.entity.SysLog;
+import group.xuxiake.common.entity.param.SysLogQueryParams;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface SysLogMapper {
     int deleteByPrimaryKey(Integer id);
@@ -14,4 +18,6 @@ public interface SysLogMapper {
     int updateByPrimaryKeySelective(SysLog record);
 
     int updateByPrimaryKey(SysLog record);
+
+    List<SysLog> getSysLog(@Param("params") SysLogQueryParams params);
 }

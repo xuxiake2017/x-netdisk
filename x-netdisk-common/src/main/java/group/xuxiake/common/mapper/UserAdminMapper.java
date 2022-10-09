@@ -14,4 +14,6 @@ public interface UserAdminMapper {
     int updateByPrimaryKeySelective(UserAdmin record);
 
     int updateByPrimaryKey(UserAdmin record);
+
+    UserAdmin selectByUsername(String username);
 }

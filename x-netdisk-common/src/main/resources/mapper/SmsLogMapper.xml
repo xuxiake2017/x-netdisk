@@ -216,4 +216,24 @@
     from x_sms_log
     where biz_id = #{bizId,jdbcType=VARCHAR}
   </select>
+
+  <select id="getSmsLog" resultMap="BaseResultMap" >
+    select
+    <include refid="Base_Column_List" />
+    from x_sms_log
+    <where>
+      <if test="params.searchText != null and params.searchText != ''">
+        AND (client_ip LIKE #{params.searchText} OR phone_number LIKE #{params.searchText})
+      </if>
+      <if test="params.clientType != null">
+        AND client_type = #{params.clientType}
+      </if>
+      <if test="params.success != null">
+        AND client_type = #{params.success}
+      </if>
+      <if test="params.startTime != null and params.endTime != null">
+        AND (create_time &lt;= #{params.endTime} AND create_time &gt;= #{params.startTime})
+      </if>
+    </where>
+  </select>
 </mapper>

@@ -13,6 +13,7 @@ public class NetdiskErrMsgConstant {
 		errMessage.put(NetdiskErrMsgConstant.UN_AUTHENTICATED, "未授权");
 		errMessage.put(NetdiskErrMsgConstant.PARAM_IS_NULL, "参数为空或错误");
 		errMessage.put(NetdiskErrMsgConstant.USER_IS_NOT_VERIFY, "账户未验证激活");
+		errMessage.put(NetdiskErrMsgConstant.FORBIDDEN, "禁止访问");
 
 		errMessage.put(NetdiskErrMsgConstant.LOGIN_IMG_CODE_ERR, "验证码错误");
 		errMessage.put(NetdiskErrMsgConstant.LOGIN_ACCOUNT_ERR, "账号不存在");
@@ -106,6 +107,8 @@ public class NetdiskErrMsgConstant {
 	public static final int UN_AUTHENTICATED = 41000;
 	/*账户未验证*/
 	public static final int USER_IS_NOT_VERIFY = 42000;
+	/*访问受限，授权过期*/
+	public static final int FORBIDDEN = 43000;
 	
 	/*登录-验证码错误*/
 	public static final int LOGIN_IMG_CODE_ERR = 20010;

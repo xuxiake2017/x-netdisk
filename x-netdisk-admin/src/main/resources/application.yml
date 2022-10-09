@@ -1,0 +1,62 @@
+server:
+  port: 8300
+  servlet:
+    context-path: /admin
+spring:
+  datasource:
+    name: db
+    url: jdbc:mysql://mysql:3306/netdisk1?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+
+    # 使用druid数据源
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    druid:
+      filters: stat
+      max-active: 20
+      initial-size: 1
+      max-wait: 60000
+      min-idle: 1
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 30000
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      pool-prepared-statements: true
+      max-open-prepared-statements: 20
+      async-init: true
+      validation-query: select 1
+  # redis
+  redis:
+    database: 0
+    host: redis
+    port: 6379
+  # 配置jackson 时间返回格式
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true
+    time-zone: GMT+8
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
+  type-aliases-package: group.xuxiake.common.entity  # 注意：对应实体类的路径
+  configuration:
+    call-setters-on-nulls: true
+logging:
+  level:
+    root: DEBUG
+# token配置
+token:
+  # 令牌自定义标识
+  header: Authorization
+  # 令牌密钥
+  secret: abcdefghijklmnopqrstuvwxyz
+  # 令牌有效期（默认300分钟）
+  expireTime: 18000000
+# 用户配置
+user:
+  password:
+    # 密码最大错误次数
+    maxRetryCount: 5
+    # 密码锁定时间（默认10分钟）
+    lockTime: 600000
