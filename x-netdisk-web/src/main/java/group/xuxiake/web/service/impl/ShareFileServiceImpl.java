@@ -437,7 +437,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 		result.setMsg("文件已成功保存到\"我的资源\"文件夹！");
 
 		// 更新用户信息
-		userService.updatePrincipal();
+		// userService.updatePrincipal();
 		// 增加保存次数
 		this.addSaveTimes(fileShare.getId());
 		return result;

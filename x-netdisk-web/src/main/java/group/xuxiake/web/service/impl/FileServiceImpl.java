@@ -106,9 +106,10 @@ public class FileServiceImpl implements FileService {
 	public Result uploadMD5(FileUploadParamByMD5 param) {
 
 		Result result = new Result();
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 
-        CustomConfiguration customConfiguration = appConfiguration.getCustomConfiguration();
+		CustomConfiguration customConfiguration = appConfiguration.getCustomConfiguration();
 
         // 检查文件大小
 		try {
@@ -164,7 +165,7 @@ public class FileServiceImpl implements FileService {
 			userFile.setUpdateTime(new Date());
 			userFileMapper.insertSelective(userFile);
 
-			userService.updatePrincipal();
+			// userService.updatePrincipal();
 			return result;
 		} catch (Exception e) {
 			log.error("检查md5失败", e);
@@ -201,7 +202,6 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public Result reName(UserFile param) {
 		Result result = new Result();
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
 
 		if (param.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			if (param.getFileName().equals(
@@ -238,7 +238,8 @@ public class FileServiceImpl implements FileService {
 		Result result = new Result();
         try {
 
-			User user = (User) SecurityUtils.getSubject().getPrincipal();
+			User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+			User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 
 			if (file.isEmpty()) {
 				result.setCode(NetdiskErrMsgConstant.UPLOAD_FILE_IS_NULL);
@@ -324,7 +325,7 @@ public class FileServiceImpl implements FileService {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			return result;
 		}
-		userService.updatePrincipal();
+		// userService.updatePrincipal();
 
 		return result;
 	}
@@ -563,7 +564,8 @@ public class FileServiceImpl implements FileService {
 
 		UserFile userFile = userFileMapper.findFileByKey(fileKey);
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 
 		long usedMemory = user.getUsedMemory();
 		/** 	fileStatus
@@ -576,6 +578,9 @@ public class FileServiceImpl implements FileService {
 			//如果是文件
 			long fileSize = fileOrigin.getFileSize();
 			usedMemory = usedMemory - fileSize;
+			if (usedMemory < 0) {
+				throw new RuntimeException("未知异常，请重试");
+			}
 			user.setUsedMemory(usedMemory);
 		}else if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			//如果是文件夹，还要删除文件夹里面的子文件及子文件夹
@@ -586,6 +591,9 @@ public class FileServiceImpl implements FileService {
 			if(map.get("sumsize") != null) {
 				Long sumSize = new Long((Integer) map.get("sumsize"));
 				usedMemory = usedMemory - sumSize;
+				if (usedMemory < 0) {
+					throw new RuntimeException("未知异常，请重试");
+				}
 				user.setUsedMemory(usedMemory);
 			}
 			userFileMapper.deleteDir(userFile.getId());
@@ -606,7 +614,7 @@ public class FileServiceImpl implements FileService {
 		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_DEL);
 		Integer tag3 = fileRecycleMapper.insertSelective(recycle);
 
-		userService.updatePrincipal();
+		// userService.updatePrincipal();
 
 		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelFilePath(), recycle, Result.class);
 

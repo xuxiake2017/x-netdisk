@@ -165,7 +165,8 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Result detail() {
 		Result result = new Result();
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 		user.setPassword(null);
 		user.setNickName(EmojiParser.parseToUnicode(user.getNickName()));
 		result.setData(user);
@@ -184,7 +185,7 @@ public class UserServiceImpl implements UserService {
 		user.setUserStatus(null);
 		user.setRegTime(null);
 		userMapper.updateByPrimaryKeySelective(user);
-		this.updatePrincipal();
+		// this.updatePrincipal();
 		return result;
 	}
 
@@ -233,7 +234,8 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Result getInfo() {
 		Result result = new Result();
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 		if (user == null) {
 			result.setCode(NetdiskErrMsgConstant.GET_INFO_SESSION_TIME_OUT);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_INFO_SESSION_TIME_OUT));

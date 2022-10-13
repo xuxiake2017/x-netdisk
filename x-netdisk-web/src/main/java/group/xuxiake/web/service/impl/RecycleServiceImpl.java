@@ -91,7 +91,9 @@ public class RecycleServiceImpl implements RecycleService {
 
 		Result result = new Result();
 		UserFile userFile = userFileMapper.findFileBySaveNameForReback(fileKey);
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
+
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 
 		// 检查剩余空间
@@ -195,7 +197,7 @@ public class RecycleServiceImpl implements RecycleService {
 		//更新回收站
 		recycleMapper.updateByPrimaryKeySelective(recycle);
 
-		userService.updatePrincipal();
+		// userService.updatePrincipal();
 
 		// 删除定时任务
 		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelJobPath(), recycle, Result.class);
