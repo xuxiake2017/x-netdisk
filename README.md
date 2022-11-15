@@ -27,6 +27,7 @@
 
 2. 构建自定义docker镜像
     ```shell
+    # LibreOffice的镜像源可能会失效，请自行替换
     $ cd libreoffice_ffmpeg
     $ ./build.sh
     ```
