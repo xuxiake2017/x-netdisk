@@ -117,3 +117,15 @@ services:
       - redis
       - zookeeper
       - mysql
+  admin:
+    build: ./x-netdisk-admin
+    volumes:
+      - ./logs:/logs
+    ports:
+      - 8300:8300
+    restart: "always"
+    networks:
+      - netdisk
+    depends_on:
+      - redis
+      - mysql
