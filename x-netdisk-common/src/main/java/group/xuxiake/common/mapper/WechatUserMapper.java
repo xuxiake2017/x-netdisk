@@ -1,6 +1,10 @@
 package group.xuxiake.common.mapper;
 
 import group.xuxiake.common.entity.WechatUser;
+import group.xuxiake.common.entity.param.WeChatUserListQueryParams;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 public interface WechatUserMapper {
     int deleteByPrimaryKey(Integer id);
@@ -28,4 +32,11 @@ public interface WechatUserMapper {
      * @return
      */
     WechatUser findByUserId(Integer userId);
+
+    /**
+     * 查询微信用户列表
+     * @param params
+     * @return
+     */
+    List<WechatUser> getWeChatUserList(@Param("params") WeChatUserListQueryParams params);
 }

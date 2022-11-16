@@ -252,4 +252,26 @@
       AND wechat_user.user_id = USER.id
       AND wechat_user.openid = #{openid}
   </select>
+
+  <!-- 获取用户列表 -->
+  <select id="getUserList" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from x_user
+    <where>
+      <if test="params.searchText != null and params.searchText != ''">
+        AND (username LIKE CONCAT('%', #{params.searchText}, '%') OR real_name LIKE CONCAT('%', #{params.searchText}, '%') OR phone LIKE CONCAT('%', #{params.searchText}, '%') OR email LIKE CONCAT('%', #{params.searchText}, '%') OR nick_name LIKE CONCAT('%', #{params.searchText}, '%'))
+      </if>
+      <if test="params.userStatus != null">
+        AND user_status = #{params.userStatus}
+      </if>
+      <if test="params.sex != null">
+        AND sex = #{params.sex}
+      </if>
+      <if test="params.startTime != null and params.endTime != null">
+        AND (reg_time &lt;= #{params.endTime} AND reg_time &gt;= #{params.startTime})
+      </if>
+    </where>
+    ORDER BY reg_time DESC
+  </select>
 </mapper>

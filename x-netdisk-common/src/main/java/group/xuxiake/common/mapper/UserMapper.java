@@ -1,6 +1,7 @@
 package group.xuxiake.common.mapper;
 
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.param.UserListQueryParams;
 import group.xuxiake.common.entity.show.UserShowSimple;
 import org.apache.ibatis.annotations.Param;
 
@@ -35,4 +36,11 @@ public interface UserMapper {
      * @return
      */
     User findByOpenid(String openid);
+
+    /**
+     * 获取用户列表
+     * @param params
+     * @return
+     */
+    List<User> getUserList(@Param("params") UserListQueryParams params);
 }

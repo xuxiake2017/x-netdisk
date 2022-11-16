@@ -201,4 +201,50 @@
     from x_wechat_user
     where user_id = #{userId} AND status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS}
   </select>
+
+  <resultMap id="UserResultMap" type="group.xuxiake.common.entity.User" >
+    <id column="user_id" property="id" jdbcType="INTEGER" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="sex" property="sex" jdbcType="INTEGER" />
+    <result column="real_name" property="realName" jdbcType="VARCHAR" />
+    <result column="reg_time" property="regTime" jdbcType="TIMESTAMP" />
+    <result column="total_memory" property="totalMemory" jdbcType="BIGINT" />
+    <result column="used_memory" property="usedMemory" jdbcType="BIGINT" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="email" property="email" jdbcType="VARCHAR" />
+    <result column="user_status" property="userStatus" jdbcType="INTEGER" />
+    <result column="avatar" property="avatar" jdbcType="VARCHAR" />
+    <result column="signature" property="signature" jdbcType="VARCHAR" />
+    <result column="user_nick_name" property="nickName" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="WeChatUserListResultMap" type="group.xuxiake.common.entity.show.WeChatUserWidthUserInfo" extends="BaseResultMap" >
+    <association property="user" resultMap="UserResultMap" />
+  </resultMap>
+
+  <select id="getWeChatUserList" resultMap="WeChatUserListResultMap" >
+    select
+    wechat_user.id, wechat_user.avatar_url, wechat_user.city, wechat_user.country, wechat_user.gender, wechat_user.language, wechat_user.nick_name, wechat_user.province, wechat_user.openid, wechat_user.user_id,
+    wechat_user.status, wechat_user.create_time, wechat_user.update_time,
+    x_user.username, x_user.password, x_user.sex, x_user.real_name, x_user.reg_time, x_user.total_memory, x_user.used_memory, x_user.phone,
+    x_user.email, x_user.user_status, x_user.avatar, x_user.signature, x_user.nick_name AS user_nick_name
+    from x_wechat_user wechat_user
+    LEFT JOIN x_user x_user ON x_user.id = wechat_user.user_id
+    <where>
+      <if test="params.searchText != null and params.searchText != ''">
+        AND (wechat_user.city LIKE CONCAT('%', #{params.searchText}, '%') OR wechat_user.country LIKE CONCAT('%', #{params.searchText}, '%') OR wechat_user.province LIKE CONCAT('%', #{params.searchText}, '%') OR wechat_user.nick_name LIKE CONCAT('%', #{params.searchText}, '%'))
+      </if>
+      <if test="params.gender != null">
+        AND wechat_user.gender = #{params.gender}
+      </if>
+      <if test="params.status != null">
+        AND wechat_user.status = #{params.status}
+      </if>
+      <if test="params.startTime != null and params.endTime != null">
+        AND (wechat_user.create_time &lt;= #{params.endTime} AND wechat_user.create_time &gt;= #{params.startTime})
+      </if>
+    </where>
+    ORDER BY wechat_user.create_time DESC
+  </select>
 </mapper>

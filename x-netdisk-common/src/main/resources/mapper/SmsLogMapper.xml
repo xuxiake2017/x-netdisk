@@ -223,7 +223,7 @@
     from x_sms_log
     <where>
       <if test="params.searchText != null and params.searchText != ''">
-        AND (client_ip LIKE #{params.searchText} OR phone_number LIKE #{params.searchText})
+        AND (client_ip LIKE CONCAT('%', #{params.searchText}, '%') OR phone_number LIKE CONCAT('%', #{params.searchText}, '%'))
       </if>
       <if test="params.clientType != null">
         AND client_type = #{params.clientType}
@@ -235,5 +235,6 @@
         AND (create_time &lt;= #{params.endTime} AND create_time &gt;= #{params.startTime})
       </if>
     </where>
+    ORDER BY create_time DESC
   </select>
 </mapper>

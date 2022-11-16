@@ -181,7 +181,7 @@
     from x_sys_log
     <where>
       <if test="params.searchText != null and params.searchText != ''">
-        AND (host LIKE #{params.searchText} OR client_ip LIKE #{params.searchText} OR opt_user LIKE #{params.searchText} OR opt_nickname LIKE #{params.searchText})
+        AND (host LIKE #{params.searchText} OR client_ip LIKE CONCAT('%', #{params.searchText}, '%') OR opt_user LIKE CONCAT('%', #{params.searchText}, '%') OR opt_nickname LIKE CONCAT('%', #{params.searchText}, '%'))
       </if>
       <if test="params.clientType != null">
         AND client_type = #{params.clientType}
@@ -193,5 +193,6 @@
         AND (create_time &lt;= #{params.endTime} AND create_time &gt;= #{params.startTime})
       </if>
     </where>
+    ORDER BY create_time DESC
   </select>
 </mapper>

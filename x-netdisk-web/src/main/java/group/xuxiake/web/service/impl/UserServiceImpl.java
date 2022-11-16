@@ -417,7 +417,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void createImg(HttpServletRequest request, HttpServletResponse response) {
 
-		Object[] objs = ImgCodeUtil.createImage();
+		Object[] objs = group.xuxiake.common.util.ImgCodeUtil.createImage();
 		String imgCode = objs[1].toString();
 		HttpSession session = request.getSession();
 		redisUtils.set(appConfiguration.getCaptchaPrefix() + session.getId(), imgCode, appConfiguration.getCaptchaTimeout());
