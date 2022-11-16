@@ -13,29 +13,29 @@ RUN yum install -y glibc-common wget tar \
 # ADD chinese.tar.gz /usr/share/fonts/
 	 
 # 将下载好的包解压到相应文件下
-# COPY LibreOffice_7.2.7_Linux_x86-64_rpm.tar.gz /home/
-# COPY LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz /usr/
+# COPY LibreOffice_7.3.7_Linux_x86-64_rpm.tar.gz /home/
+# COPY LibreOffice_7.3.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz /usr/
 
 RUN cd /home/ \
-	&& wget http://mirrors.cloud.tencent.com/libreoffice/libreoffice/stable/7.2.7/rpm/x86_64/LibreOffice_7.2.7_Linux_x86-64_rpm.tar.gz \
-	&& tar zxvf LibreOffice_7.2.7_Linux_x86-64_rpm.tar.gz \
+	&& wget https://mirrors.aliyun.com/tdf/libreoffice/stable/7.3.7/rpm/x86_64/LibreOffice_7.3.7_Linux_x86-64_rpm.tar.gz \
+	&& tar zxvf LibreOffice_7.3.7_Linux_x86-64_rpm.tar.gz \
 	&& cd /usr/ \
-	&& wget http://mirrors.cloud.tencent.com/libreoffice/libreoffice/stable/7.2.7/rpm/x86_64/LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
-	&& tar zxvf LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
+	&& wget https://mirrors.aliyun.com/tdf/libreoffice/stable/7.3.7/rpm/x86_64/LibreOffice_7.3.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
+	&& tar zxvf LibreOffice_7.3.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
 	&& mkdir -p /usr/share/fonts/ \
 	&& cd /usr/share/fonts/ \
 	&& wget https://read-1252195440.cos.ap-guangzhou.myqcloud.com/chinese.tar.gz \
 	&& tar zxvf chinese.tar.gz
 	 
 # 执行安装
-RUN cd /home/LibreOffice_7.2.7.2_Linux_x86-64_rpm/RPMS/ \
+RUN cd /home/LibreOffice_7.3.7.2_Linux_x86-64_rpm/RPMS/ \
 	&& yum localinstall *.rpm -y \
-	&& cd /usr/LibreOffice_7.2.7.2_Linux_x86-64_rpm_langpack_zh-CN/RPMS/   \
+	&& cd /usr/LibreOffice_7.3.7.2_Linux_x86-64_rpm_langpack_zh-CN/RPMS/   \
 	&& yum localinstall *.rpm -y \
-	&& rm -rf /home/LibreOffice_7.2.7_Linux_x86-64_rpm.tar.gz \
-	&& rm -rf /usr/LibreOffice_7.2.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
-	&& rm -rf /home/LibreOffice_7.2.7.2_Linux_x86-64_rpm \
-	&& rm -rf /usr/LibreOffice_7.2.7.2_Linux_x86-64_rpm_langpack_zh-CN \
+	&& rm -rf /home/LibreOffice_7.3.7_Linux_x86-64_rpm.tar.gz \
+	&& rm -rf /usr/LibreOffice_7.3.7_Linux_x86-64_rpm_langpack_zh-CN.tar.gz \
+	&& rm -rf /home/LibreOffice_7.3.7.2_Linux_x86-64_rpm \
+	&& rm -rf /usr/LibreOffice_7.3.7.2_Linux_x86-64_rpm_langpack_zh-CN \
 	 
 	# 安装依赖
 	&& yum install ibus -y \
