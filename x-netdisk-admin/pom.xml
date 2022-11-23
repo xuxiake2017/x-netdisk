@@ -74,6 +74,12 @@
             <artifactId>loki-logback-appender-jdk8</artifactId>
             <version>1.3.2</version>
         </dependency>
+        <!-- httpclient（loki需要） -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
         <!-- Token生成与解析-->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
@@ -89,6 +95,7 @@
     </dependencies>
 
     <build>
+        <finalName>x-netdisk-admin</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
