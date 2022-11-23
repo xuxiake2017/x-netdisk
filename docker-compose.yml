@@ -4,6 +4,7 @@ networks:
 volumes:
   tracker_data:
   storage_data:
+  mysql_data:
 services:
   redis:
     image: "redis:4.0.9"
@@ -35,6 +36,7 @@ services:
       - ./conf:/etc/mysql/conf.d
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./sql:/opt/sql
+      - mysql_data:/var/lib/mysql
     restart: "always"
     networks:
       - netdisk
