@@ -229,7 +229,7 @@
         AND client_type = #{params.clientType}
       </if>
       <if test="params.success != null">
-        AND client_type = #{params.success}
+        AND success = #{params.success}
       </if>
       <if test="params.startTime != null and params.endTime != null">
         AND (create_time &lt;= #{params.endTime} AND create_time &gt;= #{params.startTime})
