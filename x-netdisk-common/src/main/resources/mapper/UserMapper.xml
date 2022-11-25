@@ -274,4 +274,38 @@
     </where>
     ORDER BY reg_time DESC
   </select>
+
+  <resultMap id="StatisticsDataItemResultMap" type="group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem" >
+    <result column="label" property="label" jdbcType="VARCHAR" />
+    <result column="count" property="count" jdbcType="INTEGER" />
+  </resultMap>
+
+  <select id="getTimePeriodStatisticsData" resultMap="StatisticsDataItemResultMap">
+    SELECT
+    <if test="groupType eq 'month'">
+      DATE_FORMAT(reg_time, '%Y-%m' ) AS label,
+    </if>
+    <if test="groupType eq 'day'">
+      DATE_FORMAT(reg_time, '%Y-%m-%d' ) AS label,
+    </if>
+    <if test="groupType eq 'hour'">
+      DATE_FORMAT(reg_time, '%m-%d %H:00' ) AS label,
+    </if>
+    count(id) AS count
+    FROM
+    x_user
+    WHERE
+    reg_time &gt;= #{startTime}
+    AND reg_time &lt;= #{endTime}
+    GROUP BY
+    label
+  </select>
+
+  <select id="getTimePeriodUserNum" resultType="int">
+    SELECT COUNT(id)
+    FROM x_user
+    WHERE reg_time &lt;= #{endTime}
+    AND reg_time &gt;= #{startTime}
+    AND (user_status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS} OR user_status = ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_VIP})
+  </select>
 </mapper>

@@ -1,10 +1,12 @@
 package group.xuxiake.common.mapper;
 
 import group.xuxiake.common.entity.UserFile;
+import group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem;
 import group.xuxiake.common.entity.show.FileShowInfo;
 import group.xuxiake.common.entity.show.FileShowMedia;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -133,4 +135,21 @@ public interface UserFileMapper {
      * @param list
      */
     void updateBatch(List<UserFile> list);
+
+    /**
+     * 获取时间内上传统计数据
+     * @param startTime
+     * @param endTime
+     * @param groupType month day hour
+     * @return
+     */
+    List<StatisticsDataItem> getTimePeriodStatisticsData(@Param("startTime") Date startTime, @Param("endTime") Date endTime, @Param("groupType") String groupType);
+
+    /**
+     * 获取时间段内上传数量
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    Integer getTimePeriodUploadNum(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }

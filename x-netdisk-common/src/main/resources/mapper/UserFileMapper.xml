@@ -412,4 +412,42 @@
       id = #{i.id}
     </foreach>
   </update>
+
+  <resultMap id="StatisticsDataItemResultMap" type="group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem" >
+    <result column="label" property="label" jdbcType="VARCHAR" />
+    <result column="count" property="count" jdbcType="INTEGER" />
+  </resultMap>
+
+  <select id="getTimePeriodStatisticsData" resultMap="StatisticsDataItemResultMap">
+    SELECT
+    <if test="groupType eq 'month'">
+      DATE_FORMAT(create_time, '%Y-%m' ) AS label,
+    </if>
+    <if test="groupType eq 'day'">
+      DATE_FORMAT(create_time, '%Y-%m-%d' ) AS label,
+    </if>
+    <if test="groupType eq 'hour'">
+      DATE_FORMAT(create_time, '%m-%d %H:00' ) AS label,
+    </if>
+    count(id) AS count
+    FROM
+    x_user_file
+    WHERE
+    status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    AND create_time &gt;= #{startTime}
+    AND create_time &lt;= #{endTime}
+    GROUP BY
+    label
+  </select>
+
+  <select id="getTimePeriodUploadNum" resultType="int">
+    SELECT
+      count(id)
+    FROM
+      x_user_file
+    WHERE
+      status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      AND create_time &gt;= #{startTime}
+      AND create_time &lt;= #{endTime}
+  </select>
 </mapper>
