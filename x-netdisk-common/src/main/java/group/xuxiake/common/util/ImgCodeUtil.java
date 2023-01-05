@@ -1,4 +1,4 @@
-package group.xuxiake.web.util;
+package group.xuxiake.common.util;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;

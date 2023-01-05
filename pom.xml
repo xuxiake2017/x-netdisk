@@ -20,6 +20,7 @@
         <module>x-netdisk-common</module>
         <module>x-netdisk-route</module>
         <module>x-netdisk-quartz</module>
+        <module>x-netdisk-admin</module>
     </modules>
 
     <properties>

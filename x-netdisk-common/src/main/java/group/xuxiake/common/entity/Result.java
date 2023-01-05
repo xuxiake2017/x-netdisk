@@ -28,6 +28,10 @@ public class Result {
 	public Result() {
 		this.code = NetdiskErrMsgConstant.REQUEST_SUCCESS;
 	}
+	public Result(Object data) {
+		this.code = NetdiskErrMsgConstant.REQUEST_SUCCESS;
+		this.data = data;
+	}
 
 	public static Result paramIsNull(Result result) {
 		result.setCode(NetdiskErrMsgConstant.PARAM_IS_NULL);

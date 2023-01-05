@@ -174,4 +174,61 @@
       update_time = #{updateTime,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="getSysLog" resultMap="BaseResultMap" >
+    select
+    <include refid="Base_Column_List" />
+    from x_sys_log
+    <where>
+      <if test="params.searchText != null and params.searchText != ''">
+        AND (host LIKE #{params.searchText} OR client_ip LIKE CONCAT('%', #{params.searchText}, '%') OR opt_user LIKE CONCAT('%', #{params.searchText}, '%') OR opt_nickname LIKE CONCAT('%', #{params.searchText}, '%'))
+      </if>
+      <if test="params.clientType != null">
+        AND client_type = #{params.clientType}
+      </if>
+      <if test="params.logType != null">
+        AND log_type = #{params.logType}
+      </if>
+      <if test="params.startTime != null and params.endTime != null">
+        AND (create_time &lt;= #{params.endTime} AND create_time &gt;= #{params.startTime})
+      </if>
+    </where>
+    ORDER BY create_time DESC
+  </select>
+
+  <resultMap id="StatisticsDataItemResultMap" type="group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem" >
+    <result column="label" property="label" jdbcType="VARCHAR" />
+    <result column="count" property="count" jdbcType="INTEGER" />
+  </resultMap>
+
+  <select id="getTimePeriodStatisticsData" resultMap="StatisticsDataItemResultMap">
+    SELECT
+        <if test="groupType eq 'month'">
+          DATE_FORMAT(create_time, '%Y-%m' ) AS label,
+        </if>
+        <if test="groupType eq 'day'">
+            DATE_FORMAT(create_time, '%Y-%m-%d' ) AS label,
+        </if>
+        <if test="groupType eq 'hour'">
+          DATE_FORMAT(create_time, '%m-%d %H:00' ) AS label,
+        </if>
+        count(id) AS count
+    FROM
+        x_sys_log
+    WHERE
+        create_time &gt;= #{startTime}
+        AND create_time &lt;= #{endTime}
+    GROUP BY
+        label
+  </select>
+
+  <select id="getTimePeriodPVNum" resultType="int">
+    SELECT
+    count(id)
+    FROM
+    x_sys_log
+    WHERE
+    create_time &gt;= #{startTime}
+    AND create_time &lt;= #{endTime}
+  </select>
 </mapper>

@@ -9,10 +9,7 @@ import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.common.mapper.UserMapper;
-import group.xuxiake.common.util.NetdiskConstant;
-import group.xuxiake.common.util.NetdiskErrMsgConstant;
-import group.xuxiake.common.util.RandomName;
-import group.xuxiake.common.util.RedisUtils;
+import group.xuxiake.common.util.*;
 import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
@@ -422,7 +419,7 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public void createImg(HttpServletRequest request, HttpServletResponse response) {
 
-		Object[] objs = ImgCodeUtil.createImage();
+		Object[] objs = group.xuxiake.common.util.ImgCodeUtil.createImage();
 		String imgCode = objs[1].toString();
 		HttpSession session = request.getSession();
 		redisUtils.set(appConfiguration.getCaptchaPrefix() + session.getId(), imgCode, appConfiguration.getCaptchaTimeout());

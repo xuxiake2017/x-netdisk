@@ -252,4 +252,60 @@
       AND wechat_user.user_id = USER.id
       AND wechat_user.openid = #{openid}
   </select>
+
+  <!-- 获取用户列表 -->
+  <select id="getUserList" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from x_user
+    <where>
+      <if test="params.searchText != null and params.searchText != ''">
+        AND (username LIKE CONCAT('%', #{params.searchText}, '%') OR real_name LIKE CONCAT('%', #{params.searchText}, '%') OR phone LIKE CONCAT('%', #{params.searchText}, '%') OR email LIKE CONCAT('%', #{params.searchText}, '%') OR nick_name LIKE CONCAT('%', #{params.searchText}, '%'))
+      </if>
+      <if test="params.userStatus != null">
+        AND user_status = #{params.userStatus}
+      </if>
+      <if test="params.sex != null">
+        AND sex = #{params.sex}
+      </if>
+      <if test="params.startTime != null and params.endTime != null">
+        AND (reg_time &lt;= #{params.endTime} AND reg_time &gt;= #{params.startTime})
+      </if>
+    </where>
+    ORDER BY reg_time DESC
+  </select>
+
+  <resultMap id="StatisticsDataItemResultMap" type="group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem" >
+    <result column="label" property="label" jdbcType="VARCHAR" />
+    <result column="count" property="count" jdbcType="INTEGER" />
+  </resultMap>
+
+  <select id="getTimePeriodStatisticsData" resultMap="StatisticsDataItemResultMap">
+    SELECT
+    <if test="groupType eq 'month'">
+      DATE_FORMAT(reg_time, '%Y-%m' ) AS label,
+    </if>
+    <if test="groupType eq 'day'">
+      DATE_FORMAT(reg_time, '%Y-%m-%d' ) AS label,
+    </if>
+    <if test="groupType eq 'hour'">
+      DATE_FORMAT(reg_time, '%m-%d %H:00' ) AS label,
+    </if>
+    count(id) AS count
+    FROM
+    x_user
+    WHERE
+    reg_time &gt;= #{startTime}
+    AND reg_time &lt;= #{endTime}
+    GROUP BY
+    label
+  </select>
+
+  <select id="getTimePeriodUserNum" resultType="int">
+    SELECT COUNT(id)
+    FROM x_user
+    WHERE reg_time &lt;= #{endTime}
+    AND reg_time &gt;= #{startTime}
+    AND (user_status = ${@group.xuxiake.common.util.NetdiskConstant@DATA_NORMAL_STATUS} OR user_status = ${@group.xuxiake.common.util.NetdiskConstant@USER_STATUS_VIP})
+  </select>
 </mapper>

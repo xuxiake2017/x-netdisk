@@ -1,9 +1,12 @@
 package group.xuxiake.common.mapper;
 
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem;
+import group.xuxiake.common.entity.param.UserListQueryParams;
 import group.xuxiake.common.entity.show.UserShowSimple;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 public interface UserMapper {
@@ -35,4 +38,28 @@ public interface UserMapper {
      * @return
      */
     User findByOpenid(String openid);
+
+    /**
+     * 获取用户列表
+     * @param params
+     * @return
+     */
+    List<User> getUserList(@Param("params") UserListQueryParams params);
+
+    /**
+     * 获取时间内新增用户数据统计
+     * @param startTime
+     * @param endTime
+     * @param groupType month day hour
+     * @return
+     */
+    List<StatisticsDataItem> getTimePeriodStatisticsData(@Param("startTime") Date startTime, @Param("endTime") Date endTime, @Param("groupType") String groupType);
+
+    /**
+     * 获取时间段用户数量
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    Integer getTimePeriodUserNum(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
 }

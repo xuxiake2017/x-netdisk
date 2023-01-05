@@ -216,4 +216,61 @@
     from x_sms_log
     where biz_id = #{bizId,jdbcType=VARCHAR}
   </select>
+
+  <select id="getSmsLog" resultMap="BaseResultMap" >
+    select
+    <include refid="Base_Column_List" />
+    from x_sms_log
+    <where>
+      <if test="params.searchText != null and params.searchText != ''">
+        AND (client_ip LIKE CONCAT('%', #{params.searchText}, '%') OR phone_number LIKE CONCAT('%', #{params.searchText}, '%'))
+      </if>
+      <if test="params.clientType != null">
+        AND client_type = #{params.clientType}
+      </if>
+      <if test="params.success != null">
+        AND success = #{params.success}
+      </if>
+      <if test="params.startTime != null and params.endTime != null">
+        AND (create_time &lt;= #{params.endTime} AND create_time &gt;= #{params.startTime})
+      </if>
+    </where>
+    ORDER BY create_time DESC
+  </select>
+
+  <resultMap id="StatisticsDataItemResultMap" type="group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem" >
+    <result column="label" property="label" jdbcType="VARCHAR" />
+    <result column="count" property="count" jdbcType="INTEGER" />
+  </resultMap>
+
+  <select id="getTimePeriodStatisticsData" resultMap="StatisticsDataItemResultMap">
+    SELECT
+    <if test="groupType eq 'month'">
+      DATE_FORMAT(create_time, '%Y-%m' ) AS label,
+    </if>
+    <if test="groupType eq 'day'">
+      DATE_FORMAT(create_time, '%Y-%m-%d' ) AS label,
+    </if>
+    <if test="groupType eq 'hour'">
+      DATE_FORMAT(create_time, '%m-%d %H:00' ) AS label,
+    </if>
+    count(id) AS count
+    FROM
+    x_sms_log
+    WHERE
+    create_time &gt;= #{startTime}
+    AND create_time &lt;= #{endTime}
+    GROUP BY
+    label
+  </select>
+
+  <select id="getTimePeriodSendNum" resultType="int">
+    SELECT
+      count(id)
+    FROM
+      x_sms_log
+    WHERE
+      create_time &gt;= #{startTime}
+      AND create_time &lt;= #{endTime}
+  </select>
 </mapper>
