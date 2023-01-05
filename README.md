@@ -59,6 +59,8 @@
 - 可以部署多个，quartz自带集群方案
 ##### `x-netdisk-common`
 - 公用mapper、entity、utils，被其他模块所依赖
+##### `x-netdisk-admin`
+- admin模块，admin后台管理的代码
 #### 鸣谢
 - [整体框架参考 crossoverJie/cim](https://github.com/crossoverJie/cim)
 - [shiro session 共享实现 alexxiyang/shiro-redis](https://github.com/alexxiyang/shiro-redis)
