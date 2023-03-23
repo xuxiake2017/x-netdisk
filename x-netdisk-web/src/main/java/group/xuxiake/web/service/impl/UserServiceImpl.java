@@ -1,12 +1,15 @@
 package group.xuxiake.web.service.impl;
 
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.SmsLog;
 import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.enums.LogType;
+import group.xuxiake.common.enums.SmsLogSuccess;
 import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.*;
@@ -15,6 +18,7 @@ import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.show.UserFriendListShow;
 import group.xuxiake.common.entity.show.UserNetdiskShowInfo;
+import group.xuxiake.web.configuration.CustomConfiguration;
 import group.xuxiake.web.exception.UserRepeatLoginException;
 import group.xuxiake.common.mapper.UserFriendListMapper;
 import group.xuxiake.web.service.UserService;
@@ -47,6 +51,7 @@ import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.util.*;
 
 @Slf4j
@@ -67,6 +72,8 @@ public class UserServiceImpl implements UserService {
 	private AppConfiguration appConfiguration;
 	@Resource
 	private RedisUtils redisUtils;
+	@Resource
+	private CustomConfiguration customConfiguration;
 
 	@Override
 	public User findByName(String userName) {
@@ -441,5 +448,43 @@ public class UserServiceImpl implements UserService {
 				log.error(e.getMessage(), e);
 			}
 		}
+	}
+
+	@Transactional
+	@Override
+	public Result updatePassword(UpdatePasswordParam param) {
+		Result result = new Result();
+		try {
+			String newPasswordEncoded = param.getNewPassword();
+			String repeatPasswordEncoded = param.getRepeatPassword();
+			if (StringUtils.isAnyEmpty(newPasswordEncoded, repeatPasswordEncoded)) {
+				result.setCode(NetdiskErrMsgConstant.PARAM_IS_NULL);
+				return result;
+			}
+
+			PrivateKey privateKey = RSAUtil.getPrivateKey("private.key");
+			String newPassword = RSAUtil.decryptText(newPasswordEncoded, privateKey);
+			String repeatPassword = RSAUtil.decryptText(repeatPasswordEncoded, privateKey);
+			if (newPassword == null || repeatPassword == null) {
+				result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+				result.setMsg("密码修改失败");
+				return result;
+			}
+			if (!newPassword.equals(repeatPassword)) {
+				result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+				result.setMsg("两次输入密码不一致");
+				return result;
+			}
+			User user = (User) SecurityUtils.getSubject().getPrincipal();
+			user.setPassword(PasswordEncoder.encode(newPassword, user.getUsername()));
+			userMapper.updateByPrimaryKeySelective(user);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("密码修改失败");
+			return result;
+		}
+		result.setMsg("密码修改成功");
+		return result;
 	}
 }

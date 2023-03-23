@@ -424,6 +424,10 @@ public class WeChatServiceImpl implements WeChatService {
                 String uuid = UUID.randomUUID().toString();
                 redisUtils.set(CustomConfiguration.getTemplateCode() + uuid, smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
                 result.setData(uuid);
+            } else {
+                result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED);
+                result.setMsg("短信发送失败，错误代码：" + smsCode);
+                return result;
             }
             smsLogService.addLog(smsLog);
         } catch (Exception e) {

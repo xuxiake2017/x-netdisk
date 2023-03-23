@@ -26,7 +26,8 @@ public class VerifyController {
 	@RequestMapping(value = "/sendCodeToPhone")
 	@ResponseBody
 	public Result sendCodeToPhone(String phone) {
-		return verifyService.sendCodeToPhone(phone);
+//		return verifyService.sendCodeToPhone(phone);
+		return null;
 	}
 
 	@RequestMapping("verifyEmail")

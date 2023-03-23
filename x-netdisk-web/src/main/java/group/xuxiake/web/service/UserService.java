@@ -1,6 +1,7 @@
 package group.xuxiake.web.service;
 
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.param.UserLoginParam;
@@ -86,4 +87,11 @@ public interface UserService {
     Result checkImgCode(String imgCode, HttpSession session);
 
 	void createImg(HttpServletRequest request, HttpServletResponse response);
+
+	/**
+	 * 更新密码
+	 * @param param
+	 * @return
+	 */
+	Result updatePassword(UpdatePasswordParam param);
 }

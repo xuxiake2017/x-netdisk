@@ -3,6 +3,7 @@ package group.xuxiake.web.controller;
 import com.aliyuncs.exceptions.ClientException;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
@@ -193,6 +194,16 @@ public class UserController {
 	public void createImg(HttpServletRequest request, HttpServletResponse response) {
 
 		userService.createImg(request, response);
+	}
+
+	/**
+	 * 更新密码
+	 * @param param
+	 */
+	@RequestMapping("/updatePassword")
+	public Result updatePassword(UpdatePasswordParam param) {
+
+		return userService.updatePassword(param);
 	}
 	
 }
