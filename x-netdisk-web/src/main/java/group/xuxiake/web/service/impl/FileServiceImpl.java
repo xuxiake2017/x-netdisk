@@ -25,7 +25,6 @@ import it.sauronsoftware.jave.MultimediaInfo;
 import it.sauronsoftware.jave.VideoInfo;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -42,7 +41,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.util.*;
 
 @Slf4j
@@ -733,6 +731,10 @@ public class FileServiceImpl implements FileService {
 			response.setHeader("content-disposition", "attachment;filename=" + fileName);
 			// 设置文件大小
 			response.addHeader("Content-Length", fileOrigin.getFileSize().toString());
+			String mimeType = FileUtil.getMimeType(fileOrigin.getFileExtName());
+			if (mimeType != null) {
+				response.addHeader("Content-Type", mimeType);
+			}
 			out = response.getOutputStream();
 			byte buffer[] = new byte[1024];
 			int len = -1;

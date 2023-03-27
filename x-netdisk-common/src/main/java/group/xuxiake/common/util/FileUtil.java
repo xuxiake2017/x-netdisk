@@ -1,17 +1,18 @@
 package group.xuxiake.common.util;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.mozilla.universalchardet.UniversalDetector;
+import org.springframework.core.io.ClassPathResource;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 文件工具类
@@ -20,6 +21,24 @@ import java.util.UUID;
  */
 @Slf4j
 public class FileUtil {
+
+	@Data
+	static class MimeType {
+		private String mimeType;
+		private String extension;
+	}
+
+	public static Map<String, String> mimeTypes = null;
+
+	static {
+		mimeTypes  = new HashMap<>();
+		List<MimeType> mimeTypesList = getMimeTypes("mime.types.json");
+		if (mimeTypesList != null) {
+			mimeTypesList.forEach(mimeType -> {
+				mimeTypes.put(mimeType.getExtension(), mimeType.getMimeType());
+			});
+		}
+	}
 
 	/**
 	 * 判断文件类型，将数字储存到数据库
@@ -236,5 +255,31 @@ public class FileUtil {
 			log.error(e.getMessage(), e);
 		}
 		return convertedBytes;
+	}
+
+	public static List<MimeType> getMimeTypes(String filename) {
+		ClassPathResource classPathResource = new ClassPathResource(filename);
+		Gson gson = new Gson();
+		try(InputStream inputStream = classPathResource.getInputStream()) {
+			BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
+			StringBuilder sb = new StringBuilder();
+			String readLine = null;
+			while ((readLine = br.readLine()) != null) {
+				sb.append(readLine);
+			}
+			Type type = new TypeToken<List<MimeType>>() {
+			}.getType();
+			return gson.fromJson(sb.toString(), type);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public static String getMimeType(String extension) {
+		if (mimeTypes == null) {
+			return null;
+		}
+		return mimeTypes.get(extension);
 	}
 }
