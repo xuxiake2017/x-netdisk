@@ -703,12 +703,23 @@ public class FileServiceImpl implements FileService {
 	/**
 	 * 文件下载
 	 * @param fileKey
+	 * @param fileId
 	 */
 	@Override
-	public void downLoad(String fileKey) {
-
-		UserFile userFile = userFileMapper.findFileByKey(fileKey);
-		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
+	public void downLoad(String fileKey, Integer fileId) {
+		UserFile userFile = null;
+		FileOrigin fileOrigin = null;
+		if (fileKey == null && fileId == null) {
+			return;
+		}
+		if (fileKey != null) {
+			userFile = userFileMapper.findFileByKey(fileKey);
+			fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
+		}
+		if (fileId != null) {
+			userFile = userFileMapper.selectByPrimaryKey(fileId);
+			fileOrigin = fileOriginMapper.findByUserFileId(fileId);
+		}
 		// 得到文件的真实名字
 		String fileRealName = userFile.getFileName();
 		String filePath = fileOrigin.getFilePath();

@@ -70,8 +70,9 @@ public interface FileService {
 	/**
 	 * 文件下载
 	 * @param fileKey
+	 * @param fileId
 	 */
-	void downLoad(String fileKey);
+	void downLoad(String fileKey, Integer fileId);
 
 	/**
 	 * 查找文件路径

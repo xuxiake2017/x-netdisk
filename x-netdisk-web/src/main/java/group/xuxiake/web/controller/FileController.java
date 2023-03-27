@@ -50,9 +50,9 @@ public class FileController {
 	 * 下载文件
 	 */
 	@RequestMapping("/downLoad")
-	public void downloadFile(String fileKey) {
+	public void downloadFile(String fileKey, Integer fileId) {
 
-		fileService.downLoad(fileKey);
+		fileService.downLoad(fileKey, fileId);
 	}
 
 	/**
