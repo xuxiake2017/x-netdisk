@@ -35,4 +35,10 @@ public class ImageController {
 	public Result getGalleryList() {
 		return imageService.getGalleryList();
 	}
+
+	@RequestMapping("/getGalleryNum")
+	@ResponseBody
+	public Result getGalleryNum() {
+		return imageService.getGalleryNum();
+	}
 }

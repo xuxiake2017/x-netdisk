@@ -4,6 +4,7 @@ import group.xuxiake.common.entity.UserFile;
 import group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem;
 import group.xuxiake.common.entity.show.FileShowInfo;
 import group.xuxiake.common.entity.show.FileShowMedia;
+import group.xuxiake.common.entity.show.GalleryNum;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
@@ -159,4 +160,11 @@ public interface UserFileMapper {
      * @return
      */
     List<FileShowMedia> getGalleryList(Integer userId);
+
+    /**
+     * 获取相册统计
+     * @param userId
+     * @return
+     */
+    List<GalleryNum> getGalleryNum(Integer userId);
 }

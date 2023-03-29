@@ -488,4 +488,26 @@
     ORDER BY
     T1.parent_id DESC
   </select>
+
+  <resultMap id="GetGalleryNumResultMap" type="group.xuxiake.common.entity.show.GalleryNum" >
+    <result column="num" property="num" jdbcType="INTEGER" />
+    <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+  </resultMap>
+
+  <select id="getGalleryNum" resultMap="GetGalleryNumResultMap">
+    SELECT
+      COUNT(1) AS num,
+      user_file.parent_id
+    FROM
+      x_user_file user_file,
+      x_file_origin file_origin
+    WHERE
+      user_file.user_id = #{userId}
+      AND user_file.`status` = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      AND user_file.origin_id = file_origin.id
+      AND file_origin.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
+      AND user_file.parent_id != -1
+    GROUP BY
+      user_file.parent_id
+  </select>
 </mapper>

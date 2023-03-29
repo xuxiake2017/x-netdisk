@@ -4,6 +4,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.show.FileShowMedia;
+import group.xuxiake.common.entity.show.GalleryNum;
 import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.Page;
@@ -93,6 +94,15 @@ public class ImageServiceImpl implements ImageService {
         User user = (User) SecurityUtils.getSubject().getPrincipal();
         List<FileShowMedia> galleryList = userFileMapper.getGalleryList(user.getId());
         result.setData(galleryList);
+        return result;
+    }
+
+    @Override
+    public Result getGalleryNum() {
+        Result result = new Result();
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
+        List<GalleryNum> galleryNum = userFileMapper.getGalleryNum(user.getId());
+        result.setData(galleryNum);
         return result;
     }
 }

@@ -8,4 +8,6 @@ public interface ImageService {
     Result toImgList(Page page);
 
     Result getGalleryList();
+
+    Result getGalleryNum();
 }
