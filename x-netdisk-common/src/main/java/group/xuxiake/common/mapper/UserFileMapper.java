@@ -152,4 +152,11 @@ public interface UserFileMapper {
      * @return
      */
     Integer getTimePeriodUploadNum(@Param("startTime") Date startTime, @Param("endTime") Date endTime);
+
+    /**
+     * 获取相册列表
+     * @param userId
+     * @return
+     */
+    List<FileShowMedia> getGalleryList(Integer userId);
 }

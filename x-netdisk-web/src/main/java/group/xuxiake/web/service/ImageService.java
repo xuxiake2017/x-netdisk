@@ -6,4 +6,6 @@ import group.xuxiake.common.entity.Result;
 public interface ImageService {
 
     Result toImgList(Page page);
+
+    Result getGalleryList();
 }

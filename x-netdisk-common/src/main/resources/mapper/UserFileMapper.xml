@@ -450,4 +450,42 @@
       AND create_time &gt;= #{startTime}
       AND create_time &lt;= #{endTime}
   </select>
+
+  <select id="getGalleryList" resultMap="FindAllImgResultMap">
+    SELECT
+    T1.*, file_media.thumbnail_url
+    FROM
+    (
+    SELECT
+    user_file1.*
+    FROM
+    x_user_file user_file1,
+    x_file_origin file_origin1
+    WHERE
+    (
+    SELECT
+    COUNT(1)
+    FROM
+    x_user_file user_file2,
+    x_file_origin file_origin2
+    WHERE
+    user_file2.parent_id = user_file1.parent_id
+    AND user_file2.id &gt;= user_file1.id
+    AND user_file2.user_id =  #{userId}
+    AND user_file2.`status` = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    AND user_file2.origin_id = file_origin2.id
+    AND file_origin2.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
+    ) &lt;= 4
+    AND user_file1.user_id =  #{userId}
+    AND user_file1.`status` = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    AND user_file1.origin_id = file_origin1.id
+    AND file_origin1.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
+    AND user_file1.parent_id != -1
+    ) AS T1,
+    x_file_media file_media
+    WHERE
+    T1.origin_id = file_media.origin_id
+    ORDER BY
+    T1.parent_id DESC
+  </select>
 </mapper>

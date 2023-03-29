@@ -86,4 +86,13 @@ public class ImageServiceImpl implements ImageService {
         result.setData(map);
         return result;
     }
+
+    @Override
+    public Result getGalleryList() {
+        Result result = new Result();
+        User user = (User) SecurityUtils.getSubject().getPrincipal();
+        List<FileShowMedia> galleryList = userFileMapper.getGalleryList(user.getId());
+        result.setData(galleryList);
+        return result;
+    }
 }

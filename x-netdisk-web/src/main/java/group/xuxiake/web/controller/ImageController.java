@@ -29,4 +29,10 @@ public class ImageController {
 	public Result toImgList(Page page) {
 		return imageService.toImgList(page);
 	}
+
+	@RequestMapping("/getGalleryList")
+	@ResponseBody
+	public Result getGalleryList() {
+		return imageService.getGalleryList();
+	}
 }
