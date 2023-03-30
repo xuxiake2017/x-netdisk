@@ -480,7 +480,6 @@
     AND user_file1.`status` = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
     AND user_file1.origin_id = file_origin1.id
     AND file_origin1.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
-    AND user_file1.parent_id != -1
     ) AS T1,
     x_file_media file_media
     WHERE
@@ -506,7 +505,6 @@
       AND user_file.`status` = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
       AND user_file.origin_id = file_origin.id
       AND file_origin.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
-      AND user_file.parent_id != -1
     GROUP BY
       user_file.parent_id
   </select>
