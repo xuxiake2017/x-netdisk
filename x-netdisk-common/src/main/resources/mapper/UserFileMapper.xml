@@ -327,7 +327,9 @@
       AND file_media.origin_id = file_origin.id
       AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
       AND user_file.user_id = #{userId}
-  	  AND user_file.parent_id = #{parentId}
+  	  <if test="parentId != -1">
+        AND user_file.parent_id = #{parentId}
+      </if>
       AND file_origin.file_type = ${@group.xuxiake.common.util.NetdiskConstant@FILE_TYPE_OF_PIC}
   	  order by file_media.shoot_time desc
   </select>
