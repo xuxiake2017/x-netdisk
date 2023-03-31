@@ -96,7 +96,7 @@ public interface UserFileMapper {
      * @param userId
      * @return
      */
-    List<FileShowMedia> findAllImg(Integer userId);
+    List<FileShowMedia> findAllImg(@Param("userId") Integer userId, @Param("parentId") Integer parentId);
 
     /**
      * 查询文件路径（文件名）

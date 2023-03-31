@@ -77,7 +77,7 @@ public class ImageServiceImpl implements ImageService {
     public Result toImgList(Page page) {
         User userNetdisk = (User) SecurityUtils.getSubject().getPrincipal();
         PageHelper.startPage(page.getPageNum(), page.getPageSize());
-        List<FileShowMedia> list = userFileMapper.findAllImg(userNetdisk.getId());
+        List<FileShowMedia> list = userFileMapper.findAllImg(userNetdisk.getId(), page.getParentId());
         PageInfo<FileShowMedia> pageInfo = new PageInfo<>(list);
         Map<String, Object> map = new HashMap<>();
         map.put("pageInfo", pageInfo);
