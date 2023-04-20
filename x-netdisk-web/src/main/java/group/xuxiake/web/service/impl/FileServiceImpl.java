@@ -202,18 +202,29 @@ public class FileServiceImpl implements FileService {
 		Result result = new Result();
 
 		if (param.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
-			if (param.getFileName().equals(
-					userFileMapper.findFileByKey(
-							param.getKey()).getFileName())) {
+			UserFile userFile = userFileMapper.findFileByKey(param.getKey());
+			if (param.getFileName().equals(userFile.getFileName())) {
 				return result;
 			}
 			//是文件夹，要判断当前目录下是否有同名文件夹
-			UserFile userFile = userFileMapper.findFileByRealName(param);
-			if (userFile != null) {
+			UserFile userFileByRealName = userFileMapper.findFileByRealName(param);
+			if (userFileByRealName != null) {
 				//该目录下有同名文件夹
 				result.setCode(NetdiskErrMsgConstant.RENAME_FILE_NAME_EXIST);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.RENAME_FILE_NAME_EXIST));
 				return result;
+			}
+			// 更新filePath
+			List<Integer> childIds = userFileMapper.findChildIds(userFile.getId());
+			if (childIds.size() > 0) {
+				List<UserFile> childFiles = userFileMapper.finFiledByIds(childIds);
+				for (UserFile file : childFiles) {
+					String filePath = file.getFilePath().replaceFirst(userFile.getFileName(), param.getFileName());
+					file.setFilePath(filePath);
+				}
+				if (childFiles.size() > 0) {
+					userFileMapper.updateBatch(childFiles);
+				}
 			}
 		}
 		userFileMapper.updateByKeySelective(param);
