@@ -1,5 +1,7 @@
 package group.xuxiake.web.service.impl;
 
+import com.aliyun.sdk.service.dypnsapi20170525.models.SendSmsVerifyCodeResponse;
+import com.aliyun.sdk.service.dypnsapi20170525.models.SendSmsVerifyCodeResponseBody;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.SmsLog;
 import group.xuxiake.common.entity.SysMessage;
@@ -114,31 +116,32 @@ public class VerifyServiceImpl implements VerifyService {
         String smsCode = null;
         try {
             SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);
+            SendSmsVerifyCodeResponse response = smsSendResult.getResponse();
             smsCode = smsSendResult.getCode();
 //			smsCode = "1234";
             SmsLog smsLog = new SmsLog();
             smsLog.setPhoneNumber(phone);
             smsLog.setSendTime(new Date());
-            smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
-            smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
-            smsLog.setBizId(smsSendResult.getResponse().getBizId());
             smsLog.setCode(smsCode);
-            smsLog.setErrCode(smsSendResult.getResponse().getCode());
-            smsLog.setErrMsg(smsSendResult.getResponse().getMessage());
-            smsLog.setClientType(ClientType.UNSET.getValue());
-            //业务限流
-            if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
-                result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
-                result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL));
+            smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            if (response != null) {
+                SendSmsVerifyCodeResponseBody body = response.getBody();
+                SendSmsVerifyCodeResponseBody.Model model = body.getModel();
+                smsLog.setBizId(model.getBizId());
+                smsLog.setErrCode(body.getCode());
+                smsLog.setErrMsg(body.getMessage());
+                if (body.getSuccess()) {
+                    smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
+                } else {
+                    smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
+                }
+            } else {
                 smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
-                smsLogService.addLog(smsLog);
-                return result;
             }
-            if (smsCode.length() == 4) {
-                redisUtils.set("SMS_CODE:" + session.getId(), smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
-                smsLogService.addLog(smsLog);
-                return result;
-            }
+            smsLog.setClientType(ClientType.UNSET.getValue());
+            redisUtils.set("SMS_CODE:" + session.getId(), smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
+            smsLogService.addLog(smsLog);
+            return result;
         } catch (Exception e) {
             log.error("短信验证码发送失败", e);
         }
