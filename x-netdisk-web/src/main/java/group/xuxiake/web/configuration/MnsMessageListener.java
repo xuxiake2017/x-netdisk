@@ -26,6 +26,7 @@ public class MnsMessageListener implements MessageListener {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String messageBody = message.getMessageBodyAsString();
         try {
+            log.info(messageBody);
             Map<String, Object> contentMap = gson.fromJson(messageBody, HashMap.class);
             String bizId = (String) contentMap.get("biz_id");
             String sendTime = (String) contentMap.get("send_time");
@@ -39,7 +40,7 @@ public class MnsMessageListener implements MessageListener {
                 smsLog = new SmsLog();
                 smsLog.setBizId(bizId);
                 smsLog.setSendTime(format.parse(sendTime));
-                smsLog.setReportTime(format.parse(reportTime));
+                smsLog.setReportTime(new Date(Long.valueOf(reportTime)));
                 smsLog.setSuccess(success ? SmsLogSuccess.SUCCESS.getValue() : SmsLogSuccess.FAILED.getValue());
                 smsLog.setErrCode(errCode);
                 smsLog.setErrMsg(errMsg);
@@ -48,7 +49,7 @@ public class MnsMessageListener implements MessageListener {
                 smsLogMapper.insertSelective(smsLog);
             } else {
                 smsLog.setSendTime(format.parse(sendTime));
-                smsLog.setReportTime(format.parse(reportTime));
+                smsLog.setReportTime(new Date(Long.valueOf(reportTime)));
                 smsLog.setSuccess(success ? SmsLogSuccess.SUCCESS.getValue() : SmsLogSuccess.FAILED.getValue());
                 smsLog.setErrCode(errCode);
                 smsLog.setErrMsg(errMsg);
@@ -60,6 +61,7 @@ public class MnsMessageListener implements MessageListener {
             // 理论上不会出现格式错误的情况，所以遇见格式错误的消息，只能先delete,否则重新推送也会一直报错
             return true;
         } catch (Throwable e) {
+            log.error(e.getMessage());
             // 您自己的代码部分导致的异常，应该return false,这样消息不会被delete掉，而会根据策略进行重推
             return false;
         }
