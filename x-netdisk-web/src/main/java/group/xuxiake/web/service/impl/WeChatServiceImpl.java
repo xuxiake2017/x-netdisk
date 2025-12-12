@@ -1,5 +1,7 @@
 package group.xuxiake.web.service.impl;
 
+import com.aliyun.sdk.service.dypnsapi20170525.models.SendSmsVerifyCodeResponse;
+import com.aliyun.sdk.service.dypnsapi20170525.models.SendSmsVerifyCodeResponseBody;
 import com.google.gson.Gson;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.SmsLog;
@@ -397,38 +399,33 @@ public class WeChatServiceImpl implements WeChatService {
                 result.setMsg("签名不一致");
                 return result;
             }
-            String smsCode = null;
             SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);
-            smsCode = smsSendResult.getCode();
-            // smsCode  = "1234";
-
+            SendSmsVerifyCodeResponse response = smsSendResult.getResponse();
+            String smsCode = smsSendResult.getCode();
+//			smsCode = "1234";
             SmsLog smsLog = new SmsLog();
             smsLog.setPhoneNumber(phone);
             smsLog.setSendTime(new Date());
-            smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
-            smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
-            smsLog.setBizId(smsSendResult.getResponse().getBizId());
             smsLog.setCode(smsCode);
-            smsLog.setErrCode(smsSendResult.getResponse().getCode());
-            smsLog.setErrMsg(smsSendResult.getResponse().getMessage());
-            smsLog.setClientType(ClientType.MINI_APP.getValue());
-            //业务限流
-            if ("isv.BUSINESS_LIMIT_CONTROL".equals(smsCode)) {
-                result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
-                result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL));
-                smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
-                smsLogService.addLog(smsLog);
-                return result;
-            }
-            if (smsCode.length() == 4) {
-                String uuid = UUID.randomUUID().toString();
-                redisUtils.set(CustomConfiguration.getTemplateCode() + uuid, smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
-                result.setData(uuid);
+            smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            if (response != null) {
+                SendSmsVerifyCodeResponseBody body = response.getBody();
+                SendSmsVerifyCodeResponseBody.Model model = body.getModel();
+                smsLog.setBizId(model.getBizId());
+                smsLog.setErrCode(body.getCode());
+                smsLog.setErrMsg(body.getMessage());
+                if (body.getSuccess()) {
+                    smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
+                } else {
+                    smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
+                }
             } else {
-                result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED);
-                result.setMsg("短信发送失败，错误代码：" + smsCode);
-                return result;
+                smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
             }
+            smsLog.setClientType(ClientType.UNSET.getValue());
+            String uuid = UUID.randomUUID().toString();
+            result.setData(uuid);
+            redisUtils.set(CustomConfiguration.getTemplateCode() + uuid, smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
             smsLogService.addLog(smsLog);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
