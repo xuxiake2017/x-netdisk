@@ -62,7 +62,7 @@ public class AlicomMnsReceiveHandler {
              * 5.融合通信呼叫记录消息：ArtcCdrReport
              * 6.融合通信呼叫中间状态：ArtcTempStatusReport
              */
-            String messageType = "SmsReport";//此处应该替换成相应产品的消息类型
+            String messageType = "DypnsSmsVerifyReport";//此处应该替换成相应产品的消息类型
             String queueName = CustomConfiguration.getQueueName(); // 在云通信页面开通相应业务消息后，就能在页面上获得对应的queueName,格式类似Alicom-Queue-xxxxxx-SmsReport
 
             puller.startReceiveMsg(accessKeyId,accessKeySecret, messageType, queueName, messageListener);

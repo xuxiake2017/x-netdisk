@@ -42,11 +42,11 @@ public class UserController {
 		return userService.login(param);
 	}
 
-	@RequestMapping(value="/test")
-	public Result test() throws ClientException {
-		SmsSendUtil.sendSms("1234", "13155834135");
-		return new Result();
-	}
+	// @RequestMapping(value="/test")
+	// public Result test() throws ClientException {
+	// 	SmsSendUtil.SmsSendResult result = SmsSendUtil.regNetDisk("13155834135");
+	// 	return new Result(result);
+	// }
 
 	@RequestMapping("/getInfo")
 	@ResponseBody

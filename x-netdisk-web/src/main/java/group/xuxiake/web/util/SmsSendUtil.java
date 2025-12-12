@@ -1,5 +1,6 @@
 package group.xuxiake.web.util;
 
+import com.aliyun.sdk.service.dypnsapi20170525.models.SendSmsVerifyCodeResponse;
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.dysmsapi.model.v20170525.QuerySendDetailsRequest;
@@ -112,20 +113,17 @@ public class SmsSendUtil {
 	}
 	public static SmsSendResult regNetDisk(String phone) throws ClientException{
 		String code = RandomCodeUtil.getRandomCode();
-		SendSmsResponse response = sendSms(code, phone);
+		SendSmsVerifyCodeResponse response = SendSmsVerifyCode.sendSmsVerifyCode(phone, code);
+//		SendSmsResponse response = sendSms(code, phone);
 		SmsSendResult smsSendResult = new SmsSendResult();
 		smsSendResult.setResponse(response);
-		if("OK".equals(response.getCode()) && "OK".equals(response.getMessage())){
-			smsSendResult.setCode(code);
-			return smsSendResult;
-		}
-		smsSendResult.setCode(response.getCode());
+		smsSendResult.setCode(code);
 		return smsSendResult;
 	}
 
 	@Data
 	public static class SmsSendResult {
 		private String code;
-		private SendSmsResponse response;
+		private SendSmsVerifyCodeResponse response;
 	}
 }
