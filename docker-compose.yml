@@ -43,7 +43,6 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./sql:/opt/sql
       - mysql_data:/var/lib/mysql
-    restart: "always"
     networks:
       - netdisk
   fastdfs_tracker:
