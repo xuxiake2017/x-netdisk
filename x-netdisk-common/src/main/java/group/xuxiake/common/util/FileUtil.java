@@ -1,13 +1,13 @@
 package group.xuxiake.common.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.mozilla.universalchardet.UniversalDetector;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -211,30 +211,17 @@ public class FileUtil {
      */
 	public static byte[] textEncodingConvert(byte[] fileBytes) {
 
-		byte[] convertedBytes = null;
-		try {
-			String encoding = FileUtil.getTextEncoding(fileBytes);
-			if (!encoding.equals("UTF-8")) {
-				if ("UTF-8_BOM".equals(encoding)) { // UTF-8带BOM
-					convertedBytes = new byte[fileBytes.length - 3];
-					System.arraycopy(fileBytes, 3 , convertedBytes, 0, fileBytes.length - 3); // 去掉BOM
-				} else {
-					// 转换编码
-					String payload = IOUtils.toString(fileBytes, encoding);
-					try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-						IOUtils.write(payload, out, "UTF-8");
-						convertedBytes = out.toByteArray();
-					} catch (IOException e) {
-						log.error(e.getMessage(), e);
-					}
-				}
-			} else { // UTF-8不带BOM
-				convertedBytes = fileBytes;
-			}
-
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
+		String encoding = FileUtil.getTextEncoding(fileBytes);
+		if ("UTF-8".equals(encoding)) { // UTF-8不带BOM
+			return fileBytes;
 		}
-		return convertedBytes;
+		if ("UTF-8_BOM".equals(encoding)) { // UTF-8带BOM
+			byte[] convertedBytes = new byte[fileBytes.length - 3];
+			System.arraycopy(fileBytes, 3, convertedBytes, 0, convertedBytes.length);
+			return convertedBytes;
+		}
+
+		String payload = new String(fileBytes, Charset.forName(encoding));
+		return payload.getBytes(StandardCharsets.UTF_8);
 	}
 }
