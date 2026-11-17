@@ -21,17 +21,19 @@ public class RegisterZK {
      */
     public void register(String ...args) {
 
-        StringBuffer stringBuffer = new StringBuffer();
-        stringBuffer.append(zkRoot + "/ip-" + args[0]);
+        StringBuilder stringBuffer = new StringBuilder();
+        stringBuffer.append(zkRoot).append("/ip-").append(args[0]);
         for (int i = 1; i < args.length; i++) {
-            stringBuffer.append(":" + args[i]);
+            stringBuffer.append(":").append(args[i]);
         }
         String path = stringBuffer.toString();
-        new Thread(() -> {
-            //创建父节点
-            zkRegistryUtils.createRootNode(zkRoot);
-            zkRegistryUtils.createNode(path);
-            log.info("注册 zookeeper 成功，msg=[{}]", path);
-        }).start();
+        // 同步完成首次注册；失败时让应用启动失败，由容器重启策略再次拉起，避免服务未注册却仍在运行。
+        zkRegistryUtils.createRootNode(zkRoot);
+        zkRegistryUtils.createNode(path);
+        log.info("注册 ZooKeeper 成功，path=[{}]", path);
+    }
+
+    public void close() {
+        zkRegistryUtils.close();
     }
 }

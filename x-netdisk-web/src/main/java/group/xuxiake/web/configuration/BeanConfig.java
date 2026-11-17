@@ -2,10 +2,11 @@ package group.xuxiake.web.configuration;
 
 import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
 import group.xuxiake.common.util.RedisUtils;
+import group.xuxiake.common.zookeeper.CuratorClientFactory;
 import group.xuxiake.common.zookeeper.SubscribeZK;
 import group.xuxiake.common.zookeeper.ZkCacheManager;
 import group.xuxiake.common.zookeeper.balancer.Balancer;
-import org.I0Itec.zkclient.ZkClient;
+import org.apache.curator.framework.CuratorFramework;
 import org.jodconverter.spring.JodConverterBean;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -54,10 +55,10 @@ public class BeanConfig {
         return new RestTemplate();
     }
 
-    @Bean
-    public ZkClient zkClient() {
-        ZkClient zkClient = new ZkClient(appConfiguration.getZkServer(), appConfiguration.getConnectTimeout());
-        return zkClient;
+    @Bean(destroyMethod = "close")
+    public CuratorFramework curatorFramework() {
+        return CuratorClientFactory.create(appConfiguration.getZkServer(),
+                appConfiguration.getSessionTimeout(), appConfiguration.getConnectTimeout());
     }
 
     @Bean
@@ -73,10 +74,10 @@ public class BeanConfig {
         return zkCacheManager;
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public SubscribeZK subscribeZK() {
         SubscribeZK subscribeZK = new SubscribeZK();
-        subscribeZK.setZkClient(this.zkClient());
+        subscribeZK.setCuratorFramework(this.curatorFramework());
         // 订阅routeRoot
         List<String> roots = new ArrayList<>();
         roots.add(appConfiguration.getRouteRoot());

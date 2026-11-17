@@ -12,6 +12,8 @@ public class AppConfiguration {
     private String zkServer;
     @Value("${application.zookeeper.connectTimeout}")
     private Integer connectTimeout;
+    @Value("${application.zookeeper.sessionTimeout}")
+    private Integer sessionTimeout;
     @Value("${application.zookeeper.quartzRoot}")
     private String quartzRoot;
     @Value("${application.zookeeper.IBLA}")

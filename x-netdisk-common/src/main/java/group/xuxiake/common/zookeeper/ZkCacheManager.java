@@ -23,11 +23,11 @@ public class ZkCacheManager {
      * @param currentChilds
      */
     public void updateCache(String zkRoot, List<String> currentChilds) {
-        cache.remove(zkRoot);
         List<String> serverList = new ArrayList<>();
         for (String currentChild : currentChilds) {
-            String server = currentChild.split("-")[1];
-            serverList.add(server);
+            if (currentChild.startsWith("ip-") && currentChild.length() > 3) {
+                serverList.add(currentChild.substring(3));
+            }
         }
         cache.put(zkRoot, serverList);
     }

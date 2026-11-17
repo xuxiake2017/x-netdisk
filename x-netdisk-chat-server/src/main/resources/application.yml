@@ -2,6 +2,7 @@ application:
   zookeeper:
     zkServer: zookeeper:2181
     connectTimeout: 15000
+    sessionTimeout: 30000
     chatRoot: /chatRoot
     routeRoot: /routeRoot
     # 负载均衡算法

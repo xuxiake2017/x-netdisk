@@ -28,6 +28,8 @@ public class AppConfiguration {
     private String zkServer;
     @Value("${application.zookeeper.connectTimeout}")
     private Integer connectTimeout;
+    @Value("${application.zookeeper.sessionTimeout}")
+    private Integer sessionTimeout;
     @Value("${application.zookeeper.routeRoot}")
     private String routeRoot;
     @Value("${application.zookeeper.IBLA}")

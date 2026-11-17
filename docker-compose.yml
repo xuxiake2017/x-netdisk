@@ -1,4 +1,4 @@
-version: "3"
+version: "2.4"
 networks:
   netdisk:
 volumes:
@@ -20,6 +20,12 @@ services:
     ports:
       - 2181:2181
     restart: "always"
+    healthcheck:
+      test: ["CMD-SHELL", "zkServer.sh status"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
     networks:
       - netdisk
   mysql:
@@ -75,11 +81,16 @@ services:
     networks:
       - netdisk
     depends_on:
-      - redis
-      - zookeeper
-      - mysql
-      - fastdfs_tracker
-      - fastdfs_storage
+      redis:
+        condition: service_started
+      zookeeper:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+      fastdfs_tracker:
+        condition: service_started
+      fastdfs_storage:
+        condition: service_started
   route:
     build: ./x-netdisk-route
     volumes:
@@ -90,8 +101,10 @@ services:
     networks:
       - netdisk
     depends_on:
-      - redis
-      - zookeeper
+      redis:
+        condition: service_started
+      zookeeper:
+        condition: service_healthy
   quartz:
     build: ./x-netdisk-quartz
     volumes:
@@ -102,9 +115,12 @@ services:
     networks:
       - netdisk
     depends_on:
-      - redis
-      - zookeeper
-      - mysql
+      redis:
+        condition: service_started
+      zookeeper:
+        condition: service_healthy
+      mysql:
+        condition: service_started
   chat-server:
     build: ./x-netdisk-chat-server
     volumes:
@@ -116,9 +132,12 @@ services:
     networks:
       - netdisk
     depends_on:
-      - redis
-      - zookeeper
-      - mysql
+      redis:
+        condition: service_started
+      zookeeper:
+        condition: service_healthy
+      mysql:
+        condition: service_started
   admin:
     build: ./x-netdisk-admin
     volumes:

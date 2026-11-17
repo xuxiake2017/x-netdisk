@@ -4,12 +4,13 @@ import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
 import com.corundumstudio.socketio.SocketConfig;
 import com.corundumstudio.socketio.SocketIOServer;
 import group.xuxiake.common.util.RedisUtils;
+import group.xuxiake.common.zookeeper.CuratorClientFactory;
 import group.xuxiake.common.zookeeper.RegisterZK;
 import group.xuxiake.common.zookeeper.SubscribeZK;
 import group.xuxiake.common.zookeeper.ZkCacheManager;
 import group.xuxiake.common.zookeeper.ZkRegisterUtils;
 import group.xuxiake.common.zookeeper.balancer.Balancer;
-import org.I0Itec.zkclient.ZkClient;
+import org.apache.curator.framework.CuratorFramework;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -37,10 +38,10 @@ public class BeanConfig {
         return new RestTemplate();
     }
 
-    @Bean
-    public ZkClient zkClient() {
-        ZkClient zkClient = new ZkClient(appConfiguration.getZkServer(), appConfiguration.getConnectTimeout());
-        return zkClient;
+    @Bean(destroyMethod = "close")
+    public CuratorFramework curatorFramework() {
+        return CuratorClientFactory.create(appConfiguration.getZkServer(),
+                appConfiguration.getSessionTimeout(), appConfiguration.getConnectTimeout());
     }
 
     @Bean
@@ -86,11 +87,12 @@ public class BeanConfig {
     @Bean
     public ZkRegisterUtils zkRegisterUtils() {
         ZkRegisterUtils zkRegisterUtils = new ZkRegisterUtils();
-        zkRegisterUtils.setZkClient(this.zkClient());
+        zkRegisterUtils.setCuratorFramework(this.curatorFramework());
+        zkRegisterUtils.setConnectTimeout(appConfiguration.getConnectTimeout());
         return zkRegisterUtils;
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public RegisterZK registerZK() {
         RegisterZK registerZK = new RegisterZK();
         // 注册chatRoot
@@ -105,10 +107,10 @@ public class BeanConfig {
         return zkCacheManager;
     }
 
-    @Bean
+    @Bean(destroyMethod = "close")
     public SubscribeZK subscribeZK() {
         SubscribeZK subscribeZK = new SubscribeZK();
-        subscribeZK.setZkClient(this.zkClient());
+        subscribeZK.setCuratorFramework(this.curatorFramework());
         // 订阅routeRoot
         List<String> roots = new ArrayList<>();
         roots.add(appConfiguration.getRouteRoot());
