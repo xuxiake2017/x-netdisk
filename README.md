@@ -25,19 +25,14 @@
     $ mvn package
     ```
 
-2. 构建自定义docker镜像
+2. 构建并启动
     ```shell
-    # LibreOffice的镜像源可能会失效，请自行替换
-    $ cd libreoffice_ffmpeg
-    $ ./build.sh
+    $ docker-compose up --build
+    # 或者是
+    $ docker compose up --build
     ```
 
-3. 启动
-    ```shell
-    $ docker-compose up
-    # 或者是
-    $ docker compose up
-    ```
+   `web` 镜像会自动安装 LibreOffice、中文字体和 FFmpeg，无需提前构建本地基础镜像。
 #### 框架介绍
 - chat简易流程图
 ![chat简易流程图](https://raw.githubusercontent.com/xuxiake2017/x-netdisk/master/pic/chat%E7%AE%80%E6%98%93%E6%B5%81%E7%A8%8B%E5%9B%BE.jpg)
