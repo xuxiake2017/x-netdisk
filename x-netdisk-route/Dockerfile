@@ -1,17 +1,17 @@
-# 指定镜像
-FROM openjdk:8-jdk-alpine
-# 修改apk中央仓库地址
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
-# 修改时区
-RUN apk add --update tzdata
+# Java 8 运行时
+FROM eclipse-temurin:8-jre-jammy
+
+ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
-# 删除apk安装依赖包的缓存
-RUN rm -rf /var/cache/apk/*
-# 申明要挂载的目录
-VOLUME /logs
-# 复制jar包到容器中
-ADD ./target/x-netdisk-route.jar /x-netdisk-route.jar
-# 申明要暴露的端口
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends tzdata \
+    && ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo "${TZ}" > /etc/timezone \
+    && java -version \
+    && rm -rf /var/lib/apt/lists/*
+
+VOLUME ["/logs"]
+COPY target/x-netdisk-route.jar /x-netdisk-route.jar
 EXPOSE 9000
-# 执行命令
-ENTRYPOINT ["java","-jar","/x-netdisk-route.jar"]
+ENTRYPOINT ["java", "-jar", "/x-netdisk-route.jar"]
