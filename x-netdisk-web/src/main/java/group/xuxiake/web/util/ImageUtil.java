@@ -7,7 +7,7 @@ import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifDirectoryBase;
 import com.drew.metadata.exif.ExifIFD0Directory;
-import com.drew.metadata.file.FileMetadataDirectory;
+import com.drew.metadata.file.FileSystemDirectory;
 import com.drew.metadata.gif.GifHeaderDirectory;
 import com.drew.metadata.jpeg.JpegDirectory;
 import com.drew.metadata.png.PngDirectory;
@@ -32,8 +32,8 @@ public class ImageUtil {
 		Iterable<Directory> directories = metadata.getDirectories();
 		for (Directory directory : directories) {
 			//获取图片最后修改时间
-			if (directory instanceof FileMetadataDirectory) {
-				fileModifiedDate = directory.getDate(FileMetadataDirectory.TAG_FILE_MODIFIED_DATE);
+			if (directory instanceof FileSystemDirectory) {
+				fileModifiedDate = directory.getDate(FileSystemDirectory.TAG_FILE_MODIFIED_DATE);
 			}
 			//获取图片的Exif拍摄时间
 			if (directory instanceof ExifIFD0Directory) {
