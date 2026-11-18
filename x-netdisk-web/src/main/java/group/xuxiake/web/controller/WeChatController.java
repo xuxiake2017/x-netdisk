@@ -44,7 +44,7 @@ public class WeChatController {
      * @param uuid
      * @return
      */
-    @RequestMapping(value = "/getCaptcha", method = RequestMethod.GET)
+    @RequestMapping(value = "/getCaptcha", method = RequestMethod.POST)
     public Result getCaptcha (String uuid) {
         return this.weChatService.getCaptcha(uuid);
     }

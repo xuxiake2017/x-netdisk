@@ -27,7 +27,7 @@ public class DirController {
 	 * @param parentId
 	 * @return
 	 */
-	@RequestMapping(value="/listAllDir", method = RequestMethod.GET)
+	@RequestMapping(value="/listAllDir", method = RequestMethod.POST)
 	@ResponseBody
 	public Result listAllDir(Integer parentId) {
 		return fileService.listAllDir(parentId);
@@ -38,7 +38,7 @@ public class DirController {
 	 * @param param
 	 * @return
 	 */
-	@RequestMapping(value="/moveFile", method = RequestMethod.PUT)
+	@RequestMapping(value="/moveFile", method = RequestMethod.POST)
 	@ResponseBody
 	public Result moveFile(UserFile param) {
 		return fileService.moveFile(param);

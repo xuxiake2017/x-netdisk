@@ -21,7 +21,7 @@ public class ListFileController {
 	@Resource
 	private ListFileService listFileService;
 
-	@RequestMapping(value = "/listFile", method = RequestMethod.GET)
+	@RequestMapping(value = "/listFile", method = RequestMethod.POST)
 	public Result listFile(Page page) {
 		return listFileService.listFile(page);
 	}
@@ -31,7 +31,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping(value = "getDocumentList", method = RequestMethod.GET)
+	@RequestMapping(value = "getDocumentList", method = RequestMethod.POST)
 	public Result getDocumentList(Page page) {
 		return listFileService.getDocumentList(page);
 	}
@@ -41,7 +41,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping(value = "getVideoList", method = RequestMethod.GET)
+	@RequestMapping(value = "getVideoList", method = RequestMethod.POST)
 	public Result getVideoList(Page page) {
 		return listFileService.getVideoList(page);
 	}
@@ -51,7 +51,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping(value = "getPicList", method = RequestMethod.GET)
+	@RequestMapping(value = "getPicList", method = RequestMethod.POST)
 	public Result getPicList(Page page) {
 		return listFileService.getPicList(page);
 	}
@@ -61,7 +61,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping(value = "getAudioList", method = RequestMethod.GET)
+	@RequestMapping(value = "getAudioList", method = RequestMethod.POST)
 	public Result getAudioList(Page page) {
 		return listFileService.getAudioList(page);
 	}

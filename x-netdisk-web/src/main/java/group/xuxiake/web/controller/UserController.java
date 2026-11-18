@@ -3,6 +3,7 @@ package group.xuxiake.web.controller;
 import com.aliyuncs.exceptions.ClientException;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
@@ -49,7 +50,7 @@ public class UserController {
 	// 	return new Result(result);
 	// }
 
-	@RequestMapping(value = "/getInfo", method = RequestMethod.GET)
+	@RequestMapping(value = "/getInfo", method = RequestMethod.POST)
 	@ResponseBody
 	public Result getInfo() {
 		return userService.getInfo();
@@ -59,7 +60,7 @@ public class UserController {
 	 * 用户详情
 	 * @return
 	 */
-	@RequestMapping(value = "/detail", method = RequestMethod.GET)
+	@RequestMapping(value = "/detail", method = RequestMethod.POST)
 	@ResponseBody
 	public Result detail() {
 		return userService.detail();
@@ -70,7 +71,7 @@ public class UserController {
 	 * @param user
 	 * @return
 	 */
-	@RequestMapping(value = "/update", method = RequestMethod.PUT)
+	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	@ResponseBody
 	public Result update(@RequestBody User user) {
 		return userService.update(user);
@@ -194,6 +195,16 @@ public class UserController {
 	public void createImg(HttpServletRequest request, HttpServletResponse response) {
 
 		userService.createImg(request, response);
+	}
+
+	/**
+	 * 更新密码
+	 * @param param 密码参数
+	 * @return 更新结果
+	 */
+	@RequestMapping(value = "/updatePassword", method = RequestMethod.POST)
+	public Result updatePassword(UpdatePasswordParam param) {
+		return userService.updatePassword(param);
 	}
 	
 }

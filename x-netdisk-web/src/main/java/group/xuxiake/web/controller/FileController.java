@@ -41,7 +41,7 @@ public class FileController {
 	/*
 	 * 删除文件
 	 */
-	@RequestMapping(value="/deleteFile", method = RequestMethod.DELETE)
+	@RequestMapping(value="/deleteFile", method = RequestMethod.POST)
 	@ResponseBody
 	public Result deleteFile(String fileKey) {
 		return fileService.deleteFile(fileKey);
@@ -61,7 +61,7 @@ public class FileController {
 	 * @param userFile
 	 * @return
 	 */
-	@RequestMapping(value="/reName", method = RequestMethod.PUT)
+	@RequestMapping(value="/reName", method = RequestMethod.POST)
 	@ResponseBody
 	public Result reName(UserFile userFile) {
 		return fileService.reName(userFile);
@@ -95,7 +95,7 @@ public class FileController {
 	 * @param fileId
 	 * @return
 	 */
-	@RequestMapping(value = "getPathStore", method = RequestMethod.GET)
+	@RequestMapping(value = "getPathStore", method = RequestMethod.POST)
 	@ResponseBody
 	public Result getPathStore(Integer fileId) {
 		return fileService.getPathStore(fileId);
@@ -106,7 +106,7 @@ public class FileController {
 	 * @param id
 	 * @return
 	 */
-	@RequestMapping(value = "findById", method = RequestMethod.GET)
+	@RequestMapping(value = "findById", method = RequestMethod.POST)
 	@ResponseBody
 	public Result findById(Integer id) {
 		return fileService.findById(id);
@@ -117,7 +117,7 @@ public class FileController {
 	 * @param fileKey
 	 * @return
 	 */
-	@RequestMapping(value = "/getFileMediaInfo", method = RequestMethod.GET)
+	@RequestMapping(value = "/getFileMediaInfo", method = RequestMethod.POST)
 	@ResponseBody
 	public Result getFileMediaInfo(String fileKey) {
 		return fileService.getFileMediaInfo(fileKey);

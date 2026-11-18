@@ -25,7 +25,7 @@ public class ImageController {
 	/*
 	 * 得到图片列表
 	 */
-	@RequestMapping(value = "/toImgList", method = RequestMethod.GET)
+	@RequestMapping(value = "/toImgList", method = RequestMethod.POST)
 	@ResponseBody
 	public Result toImgList(Page page) {
 		return imageService.toImgList(page);

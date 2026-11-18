@@ -26,7 +26,7 @@ public class CheckMd5Controller {
 	/*
 	 * 检查文件的md5值
 	 */
-	@RequestMapping(value = "/checkMd5", method = RequestMethod.GET)
+	@RequestMapping(value = "/checkMd5", method = RequestMethod.POST)
 	@ResponseBody
 	public Result checkMd5(String md5Hex) {
 		

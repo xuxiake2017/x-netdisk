@@ -3,6 +3,7 @@ package group.xuxiake.web.service.impl;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
 import group.xuxiake.common.entity.param.UserRegisteParam;
 import group.xuxiake.common.enums.ClientType;
@@ -50,6 +51,7 @@ import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.security.PrivateKey;
 import java.util.*;
 
 @Slf4j
@@ -486,5 +488,43 @@ public class UserServiceImpl implements UserService {
 				log.error(e.getMessage(), e);
 			}
 		}
+	}
+
+	@Transactional
+	@Override
+	public Result updatePassword(UpdatePasswordParam param) {
+		Result result = new Result();
+		try {
+			if (param == null || StringUtils.isAnyEmpty(param.getNewPassword(), param.getRepeatPassword())) {
+				result.setCode(NetdiskErrMsgConstant.PARAM_IS_NULL);
+				return result;
+			}
+
+			PrivateKey privateKey = RSAUtil.getPrivateKey("private.key");
+			String newPassword = RSAUtil.decryptText(param.getNewPassword(), privateKey);
+			String repeatPassword = RSAUtil.decryptText(param.getRepeatPassword(), privateKey);
+			if (newPassword == null || repeatPassword == null || !newPassword.equals(repeatPassword)) {
+				result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+				result.setMsg("两次输入密码不一致");
+				return result;
+			}
+
+			User principal = (User) SecurityUtils.getSubject().getPrincipal();
+			if (principal == null) {
+				result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+				return result;
+			}
+			User passwordUpdate = new User();
+			passwordUpdate.setId(principal.getId());
+			passwordUpdate.setPassword(PasswordEncoder.encode(newPassword, principal.getUsername()));
+			userMapper.updateByPrimaryKeySelective(passwordUpdate);
+		} catch (Exception e) {
+			log.error("密码修改失败", e);
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("密码修改失败");
+			return result;
+		}
+		result.setMsg("密码修改成功");
+		return result;
 	}
 }
