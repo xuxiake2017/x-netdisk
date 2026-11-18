@@ -29,22 +29,25 @@ public class ConvertVideoUtil {
 	private static String FFPROBE_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\ffprobe";
 	private static String QT_FASTSTART_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\qt-faststart";
 	private static final long PROCESS_TIMEOUT_MINUTES = 30;
+	static final int PROCESS_OUTPUT_MAX_CHARS = 64 * 1024;
 
-	private static void executeCommand(List<String> command, String operation) {
+	private static String executeCommand(List<String> command, String operation) {
 		Process process = null;
 		try {
-			process = new ProcessBuilder(command).start();
-			Thread errorReader = new PrintStream(process.getErrorStream());
-			Thread outputReader = new PrintStream(process.getInputStream());
-			errorReader.start();
-			outputReader.start();
+			process = new ProcessBuilder(command).redirectErrorStream(true).start();
+			ProcessOutputCollector outputCollector = new ProcessOutputCollector(process.getInputStream());
+			outputCollector.start();
 			if (!process.waitFor(PROCESS_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
 				process.destroyForcibly();
-				throw new IllegalStateException(operation + "超时");
+				outputCollector.join(5000L);
+				throw new IllegalStateException(operation + "超时，输出：" + outputCollector.getOutput());
 			}
+			outputCollector.join();
 			if (process.exitValue() != 0) {
-				throw new IllegalStateException(operation + "失败，退出码：" + process.exitValue());
+				throw new IllegalStateException(operation + "失败，退出码：" + process.exitValue()
+						+ "，输出：" + outputCollector.getOutput());
 			}
+			return outputCollector.getOutput();
 		} catch (IOException e) {
 			throw new IllegalStateException(operation + "启动失败", e);
 		} catch (InterruptedException e) {
@@ -89,7 +92,7 @@ public class ConvertVideoUtil {
 		command.add("default=noprint_wrappers=1");
 		command.add(videoFile.getAbsolutePath());
 
-		applyVideoInfo(executeCommandWithOutput(command, "视频信息读取"), fileMedia);
+		applyVideoInfo(executeCommand(command, "视频信息读取"), fileMedia);
 	}
 
 	static void applyVideoInfo(String output, FileMedia fileMedia) {
@@ -121,38 +124,6 @@ public class ConvertVideoUtil {
 		fileMedia.setVideoWidth(width);
 		fileMedia.setVideoHeight(height);
 		fileMedia.setVideoDuration((int) Math.round(durationSeconds * 1000D));
-	}
-
-	private static String executeCommandWithOutput(List<String> command, String operation) {
-		Process process = null;
-		try {
-			process = new ProcessBuilder(command).redirectErrorStream(true).start();
-			if (!process.waitFor(PROCESS_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
-				process.destroyForcibly();
-				throw new IllegalStateException(operation + "超时");
-			}
-			StringBuilder output = new StringBuilder();
-			try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-					process.getInputStream(), StandardCharsets.UTF_8))) {
-				String line;
-				while ((line = reader.readLine()) != null) {
-					output.append(line).append('\n');
-				}
-			}
-			if (process.exitValue() != 0) {
-				throw new IllegalStateException(operation + "失败，退出码：" + process.exitValue()
-						+ "，输出：" + output);
-			}
-			return output.toString();
-		} catch (IOException e) {
-			throw new IllegalStateException(operation + "启动失败", e);
-		} catch (InterruptedException e) {
-			Thread.currentThread().interrupt();
-			if (process != null) {
-				process.destroyForcibly();
-			}
-			throw new IllegalStateException(operation + "被中断", e);
-		}
 	}
 
 	// ffmpeg能解析的格式：（asx，asf，mpg，wmv，3gp，mp4，mov，avi，flv等）
@@ -254,6 +225,8 @@ public class ConvertVideoUtil {
 		command.add("-f");
 		command.add("image2");
 		command.add("-y");
+		command.add("-frames:v");
+		command.add("1");
 		command.add(thumbnailPath);
 
 		executeCommand(command, "视频缩略图生成");
@@ -262,26 +235,32 @@ public class ConvertVideoUtil {
 }
 
 //判断转码以及mp4格式文件转码后处理是否完成，没完成之前线程会一直被阻塞
-class PrintStream extends Thread {
+class ProcessOutputCollector extends Thread {
 
-	java.io.InputStream __is = null;
+	private final java.io.InputStream inputStream;
+	private final StringBuilder output = new StringBuilder();
 
-	public PrintStream(java.io.InputStream is) {
-		__is = is;
+	ProcessOutputCollector(java.io.InputStream inputStream) {
+		this.inputStream = inputStream;
 	}
 
+	@Override
 	public void run() {
-		try {
-			while (this != null) {
-				int _ch = __is.read();
-				if (_ch != -1) {
-					System.out.print((char) _ch);
-				}else {
-					break;
+		try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+			char[] buffer = new char[1024];
+			int length;
+			while ((length = reader.read(buffer)) != -1) {
+				int remaining = ConvertVideoUtil.PROCESS_OUTPUT_MAX_CHARS - output.length();
+				if (remaining > 0) {
+					output.append(buffer, 0, Math.min(length, remaining));
 				}
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IOException ignored) {
+			// 进程被强制终止时输出流可能关闭，调用方会报告进程超时或退出码。
 		}
+	}
+
+	String getOutput() {
+		return output.toString();
 	}
 }
