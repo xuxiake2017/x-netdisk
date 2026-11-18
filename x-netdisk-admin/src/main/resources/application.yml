@@ -1,13 +1,13 @@
 server:
-  port: 8300
+  port: ${ADMIN_SERVER_PORT:8300}
   servlet:
     context-path: /netdisk-admin
 spring:
   datasource:
     name: db
-    url: jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
-    username: root
-    password: 123456
+    url: ${DB_URL:jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
 
     # 使用druid数据源
     type: com.alibaba.druid.pool.DruidDataSource
@@ -29,9 +29,9 @@ spring:
       validation-query: select 1
   # redis
   redis:
-    database: 0
-    host: redis
-    port: 6379
+    database: ${REDIS_DATABASE:0}
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
   # 配置jackson 时间返回格式
   jackson:
     serialization:
@@ -50,7 +50,7 @@ token:
   # 令牌自定义标识
   header: Authorization
   # 令牌密钥
-  secret: abcdefghijklmnopqrstuvwxyz
+  secret: ${TOKEN_SECRET}
   # 令牌有效期（默认300分钟）
   expireTime: 18000000
 # 用户配置

@@ -27,6 +27,9 @@ target/
 /.nb-gradle/
 build/
 logs/
+.env
+.env.*
+!.env.example
 **/src/test/**
 
 ### VS Code ###

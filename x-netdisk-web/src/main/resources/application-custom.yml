@@ -1,37 +1,37 @@
 app:
   config:
     # 用户容量
-    totalMemory: 104857600
-    fileSizeMax: 52428800
-    vipFileSizeMax: 524288000
+    totalMemory: ${USER_TOTAL_MEMORY:104857600}
+    fileSizeMax: ${FILE_SIZE_MAX:52428800}
+    vipFileSizeMax: ${VIP_FILE_SIZE_MAX:524288000}
     # 部署前端代码的公网地址（包含邮件链接中的logo以及默认头像）
-    server_host: http://127.0.0.1:8181
+    server_host: ${PUBLIC_SERVER_HOST:http://127.0.0.1:8181}
     # 回收站超时时间(测试1小时)
-    recycleDelayTime: 3600000
+    recycleDelayTime: ${RECYCLE_DELAY_TIME:3600000}
     email:
       # 邮件验证超时时间(一天、毫秒)
-      verifyEmailExpire: 86400000
+      verifyEmailExpire: ${EMAIL_VERIFY_EXPIRE:86400000}
       #发送邮件
-      emailAccount: xxx
-      emailPassword: xxx
-      emailSMTPHost: smtp.aliyun.com
-      smtpPort: 465
+      emailAccount: ${EMAIL_ACCOUNT:xxx}
+      emailPassword: ${EMAIL_PASSWORD:}
+      emailSMTPHost: ${EMAIL_SMTP_HOST:smtp.aliyun.com}
+      smtpPort: ${EMAIL_SMTP_PORT:465}
     # 发送短信
     sms:
       # 短信验证超时时间(5分钟)
-      verifySmsExpire: 300000
-      accessKeyId: xxx
-      accessKeySecret: xxx
-      signName: xxx
-      templateCode: xxx
-      queueName: xxx
+      verifySmsExpire: ${SMS_VERIFY_EXPIRE:300000}
+      accessKeyId: ${SMS_ACCESS_KEY_ID:}
+      accessKeySecret: ${SMS_ACCESS_KEY_SECRET:}
+      signName: ${SMS_SIGN_NAME:xxx}
+      templateCode: ${SMS_TEMPLATE_CODE:xxx}
+      queueName: ${SMS_QUEUE_NAME:xxx}
       templateCodeList:
-        - templateCode: xxx
-          templateContent: xxx
+        - templateCode: ${SMS_TEMPLATE_CODE:xxx}
+          templateContent: ${SMS_TEMPLATE_CONTENT:xxx}
     # 图灵机器人
     tuling:
-      tuling_apiKey: xxx
-      tuling_apiUrl: http://openapi.tuling123.com/openapi/api/v2
+      tuling_apiKey: ${TULING_API_KEY:}
+      tuling_apiUrl: ${TULING_API_URL:http://openapi.tuling123.com/openapi/api/v2}
     wechat:
-      appID: xxx
-      appSecret: xxx
+      appID: ${WECHAT_APP_ID:xxx}
+      appSecret: ${WECHAT_APP_SECRET:}

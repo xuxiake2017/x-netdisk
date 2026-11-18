@@ -1,17 +1,17 @@
 application:
   zookeeper:
-    zkServer: zookeeper:2181
-    connectTimeout: 15000
-    sessionTimeout: 30000
+    zkServer: ${ZOOKEEPER_SERVERS:zookeeper:2181}
+    connectTimeout: ${ZOOKEEPER_CONNECT_TIMEOUT:15000}
+    sessionTimeout: ${ZOOKEEPER_SESSION_TIMEOUT:30000}
     chatRoot: /chatRoot
     routeRoot: /routeRoot
     # 负载均衡算法
     IBLA: group.xuxiake.common.zookeeper.balancer.RandomBalancer
-    hostname: chat-server
+    hostname: ${CHAT_SERVER_HOSTNAME:chat-server}
   socketIo:
-    port: 9527
+    port: ${CHAT_SOCKET_PORT:9527}
     # 注册到zookeeper的socketIp，生产环境需要填写公网
-    ip: localhost
+    ip: ${CHAT_SOCKET_IP:localhost}
     # 设置最大每帧处理数据的长度，防止他人利用大数据来攻击服务器
     maxFramePayloadLength: 1048576
     # 设置http交互最大内容长度
@@ -33,15 +33,15 @@ application:
     delRoute: /route/delRoute
     findRouteByUser: /route/findRouteByUser
 server:
-  port: 8100
+  port: ${CHAT_SERVER_PORT:8100}
   servlet:
     context-path: /chat-server
 spring:
   datasource:
     name: db
-    url: jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8
-    username: root
-    password: 123456
+    url: ${DB_URL:jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD}
 
     # 使用druid数据源
     type: com.alibaba.druid.pool.DruidDataSource
@@ -63,9 +63,9 @@ spring:
       validation-query: select 1
   # redis
   redis:
-    database: 0
-    host: redis
-    port: 6379
+    database: ${REDIS_DATABASE:0}
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml  #注意：一定要对应mapper映射xml文件的所在路径
   type-aliases-package: group.xuxiake.common.entity  # 注意：对应实体类的路径

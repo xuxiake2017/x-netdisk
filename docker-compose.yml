@@ -5,6 +5,44 @@ volumes:
   tracker_data:
   storage_data:
   mysql_data:
+x-app-environment: &app-environment
+  DB_URL: ${DB_URL:-jdbc:mysql://mysql:3306/netdisk?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT%2B8}
+  DB_USERNAME: ${DB_USERNAME:-root}
+  DB_PASSWORD: ${DB_PASSWORD:?请在 .env 中配置 DB_PASSWORD}
+  REDIS_DATABASE: ${REDIS_DATABASE:-0}
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  ZOOKEEPER_SERVERS: ${ZOOKEEPER_SERVERS:-zookeeper:2181}
+  ZOOKEEPER_CONNECT_TIMEOUT: ${ZOOKEEPER_CONNECT_TIMEOUT:-15000}
+  ZOOKEEPER_SESSION_TIMEOUT: ${ZOOKEEPER_SESSION_TIMEOUT:-30000}
+x-web-environment: &web-environment
+  <<: *app-environment
+  WEB_SERVER_PORT: ${WEB_SERVER_PORT:-8080}
+  PUBLIC_SERVER_HOST: ${PUBLIC_SERVER_HOST:-http://127.0.0.1:8181}
+  FASTDFS_TRACKER: ${FASTDFS_TRACKER:-fastdfs_tracker:22122}
+  FASTDFS_NGINX_SERVER: ${FASTDFS_NGINX_SERVER:-http://192.168.81.30:8888}
+  LIBREOFFICE_HOME: ${LIBREOFFICE_HOME:-/usr/lib/libreoffice}
+  LIBREOFFICE_PORTS: ${LIBREOFFICE_PORTS:-2002, 2003, 2004}
+  USER_TOTAL_MEMORY: ${USER_TOTAL_MEMORY:-104857600}
+  FILE_SIZE_MAX: ${FILE_SIZE_MAX:-52428800}
+  VIP_FILE_SIZE_MAX: ${VIP_FILE_SIZE_MAX:-524288000}
+  RECYCLE_DELAY_TIME: ${RECYCLE_DELAY_TIME:-3600000}
+  EMAIL_ACCOUNT: ${EMAIL_ACCOUNT:-xxx}
+  EMAIL_PASSWORD: ${EMAIL_PASSWORD:-}
+  EMAIL_SMTP_HOST: ${EMAIL_SMTP_HOST:-smtp.aliyun.com}
+  EMAIL_SMTP_PORT: ${EMAIL_SMTP_PORT:-465}
+  EMAIL_VERIFY_EXPIRE: ${EMAIL_VERIFY_EXPIRE:-86400000}
+  SMS_ACCESS_KEY_ID: ${SMS_ACCESS_KEY_ID:-}
+  SMS_ACCESS_KEY_SECRET: ${SMS_ACCESS_KEY_SECRET:-}
+  SMS_SIGN_NAME: ${SMS_SIGN_NAME:-xxx}
+  SMS_TEMPLATE_CODE: ${SMS_TEMPLATE_CODE:-xxx}
+  SMS_TEMPLATE_CONTENT: ${SMS_TEMPLATE_CONTENT:-xxx}
+  SMS_QUEUE_NAME: ${SMS_QUEUE_NAME:-xxx}
+  SMS_VERIFY_EXPIRE: ${SMS_VERIFY_EXPIRE:-300000}
+  TULING_API_KEY: ${TULING_API_KEY:-}
+  TULING_API_URL: ${TULING_API_URL:-http://openapi.tuling123.com/openapi/api/v2}
+  WECHAT_APP_ID: ${WECHAT_APP_ID:-xxx}
+  WECHAT_APP_SECRET: ${WECHAT_APP_SECRET:-}
 services:
   redis:
     image: "redis:4.0.9"
@@ -34,10 +72,10 @@ services:
     ports:
       - 3306:3306
     environment:
-      - MYSQL_ROOT_PASSWORD=123456
-      - MYSQL_DATABASE=netdisk
-      - MYSQL_USER=xuxiake
-      - MYSQL_PASSWORD=123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中配置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-netdisk}
+      MYSQL_USER: ${MYSQL_USER:-xuxiake}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 中配置 MYSQL_PASSWORD}
     volumes:
       - ./conf:/etc/mysql/conf.d
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -72,10 +110,12 @@ services:
       - 8888:8888
   web:
     build: ./x-netdisk-web
+    environment:
+      <<: *web-environment
     volumes:
       - ./logs:/logs
     ports:
-      - 8080:8080
+      - ${WEB_SERVER_PORT:-8080}:${WEB_SERVER_PORT:-8080}
     restart: "always"
     networks:
       - netdisk
@@ -92,10 +132,14 @@ services:
         condition: service_started
   route:
     build: ./x-netdisk-route
+    environment:
+      <<: *app-environment
+      ROUTE_HOSTNAME: ${ROUTE_HOSTNAME:-route}
+      ROUTE_SERVER_PORT: ${ROUTE_SERVER_PORT:-9000}
     volumes:
       - ./logs:/logs
     ports:
-      - 9000:9000
+      - ${ROUTE_SERVER_PORT:-9000}:${ROUTE_SERVER_PORT:-9000}
     restart: "always"
     networks:
       - netdisk
@@ -106,10 +150,14 @@ services:
         condition: service_healthy
   quartz:
     build: ./x-netdisk-quartz
+    environment:
+      <<: *app-environment
+      QUARTZ_HOSTNAME: ${QUARTZ_HOSTNAME:-quartz}
+      QUARTZ_SERVER_PORT: ${QUARTZ_SERVER_PORT:-8200}
     volumes:
       - ./logs:/logs
     ports:
-      - 8200:8200
+      - ${QUARTZ_SERVER_PORT:-8200}:${QUARTZ_SERVER_PORT:-8200}
     restart: "always"
     networks:
       - netdisk
@@ -122,11 +170,17 @@ services:
         condition: service_started
   chat-server:
     build: ./x-netdisk-chat-server
+    environment:
+      <<: *app-environment
+      CHAT_SERVER_HOSTNAME: ${CHAT_SERVER_HOSTNAME:-chat-server}
+      CHAT_SERVER_PORT: ${CHAT_SERVER_PORT:-8100}
+      CHAT_SOCKET_PORT: ${CHAT_SOCKET_PORT:-9527}
+      CHAT_SOCKET_IP: ${CHAT_SOCKET_IP:-localhost}
     volumes:
       - ./logs:/logs
     ports:
-      - 8100:8100
-      - 9527:9527
+      - ${CHAT_SERVER_PORT:-8100}:${CHAT_SERVER_PORT:-8100}
+      - ${CHAT_SOCKET_PORT:-9527}:${CHAT_SOCKET_PORT:-9527}
     restart: "always"
     networks:
       - netdisk
@@ -139,10 +193,14 @@ services:
         condition: service_started
   admin:
     build: ./x-netdisk-admin
+    environment:
+      <<: *app-environment
+      ADMIN_SERVER_PORT: ${ADMIN_SERVER_PORT:-8300}
+      TOKEN_SECRET: ${TOKEN_SECRET:?请在 .env 中配置 TOKEN_SECRET}
     volumes:
       - ./logs:/logs
     ports:
-      - 8300:8300
+      - ${ADMIN_SERVER_PORT:-8300}:${ADMIN_SERVER_PORT:-8300}
     restart: "always"
     networks:
       - netdisk
