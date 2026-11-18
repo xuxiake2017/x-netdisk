@@ -44,26 +44,40 @@ install.cmd
 
 部署前至少检查以下配置：
 
-- `x-netdisk-web/src/main/resources/application.yml` 中的 `fdfs-nginx-server`
+- `.env` 中的数据库密码、Token 密钥和对外访问地址
 - `x-netdisk-chat-server/src/main/resources/application.yml` 中注册到 ZooKeeper 的 Socket.IO 地址
-- `docker-compose.yml` 中的数据库账号和密码，生产环境不要使用示例密码
+- 生产环境不要使用 `.env.example` 中的示例密码
 - Windows Docker 若提示 MySQL 配置文件可写权限过高，请将 `conf/my.cnf` 设置为只读
 
 ## Docker 部署
 
-1. 打包全部模块：
+1. 创建生产环境配置：
+
+   ```shell
+   cp .env.example .env
+   ```
+
+   Windows PowerShell 使用：
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   至少需要修改 `MYSQL_ROOT_PASSWORD`、`MYSQL_PASSWORD`、`DB_PASSWORD` 和 `TOKEN_SECRET`，不要将 `.env` 提交到代码仓库。
+
+2. 打包全部模块：
 
    ```shell
    mvn clean package -DskipTests
    ```
 
-2. 构建镜像并启动：
+3. 构建镜像并启动：
 
    ```shell
    docker compose up --build -d
    ```
 
-3. 查看服务状态和日志：
+4. 查看服务状态和日志：
 
    ```shell
    docker compose ps
@@ -71,6 +85,28 @@ install.cmd
    ```
 
 `web` 镜像由 [x-netdisk-web/Dockerfile](x-netdisk-web/Dockerfile) 构建，会自动安装 LibreOffice、简体中文字体和 FFmpeg，无需预先构建本地基础镜像。Compose 会等待 ZooKeeper 健康检查通过后再启动依赖它的 Java 服务。
+
+### Web 环境变量
+
+常用配置均通过根目录 `.env` 管理：
+
+| 配置 | 默认值 | 说明 |
+| --- | --- | --- |
+| `PUBLIC_SERVER_HOST` | `http://127.0.0.1:8181` | 前端对外访问地址，用于邮件链接等场景 |
+| `SESSION_COOKIE_SECURE` | `false` | HTTPS 生产环境设为 `true`；使用 HTTP 时必须为 `false` |
+| `FASTDFS_TRACKER` | `fastdfs_tracker:22122` | FastDFS Tracker 地址 |
+| `FASTDFS_NGINX_SERVER` | `http://192.168.81.30:8888` | FastDFS 文件访问地址 |
+| `MULTIPART_MAX_FILE_SIZE` | `500MB` | Spring 接收的单文件上限，不应低于业务层 VIP 文件上限 |
+| `MULTIPART_MAX_REQUEST_SIZE` | `1024MB` | 单次上传请求总大小上限 |
+| `MEDIA_CORE_POOL_SIZE` | `2` | 音视频转换核心线程数 |
+| `MEDIA_MAX_POOL_SIZE` | `4` | 音视频转换最大线程数 |
+| `MEDIA_QUEUE_CAPACITY` | `20` | 音视频转换等待队列长度 |
+| `SMS_SEND_INTERVAL` | `60000` | 同一手机号发送短信的最短间隔，单位毫秒 |
+| `SMS_MNS_ENABLED` | `false` | 是否启动阿里云短信回执监听 |
+
+Web 服务不再内置 CORS 过滤器。浏览器端建议通过 Nginx 等反向代理将前端和 API 部署为同源地址；如果前后端使用不同域名，需要在网关或反向代理层配置 CORS。
+
+生产环境通过 HTTPS 访问时应设置 `SESSION_COOKIE_SECURE=true`。如果浏览器直接使用 HTTP 访问却开启该选项，登录后的 Session Cookie 不会被发送，会表现为登录后仍提示未登录。
 
 默认端口：
 
@@ -110,6 +146,10 @@ docker compose down
 - 处理 Web 请求，使用 Redis 共享 Session
 - 使用 LibreOffice/JODConverter 生成文档预览
 - 使用 FFmpeg 处理视频、音频和缩略图
+- 文件下载采用流式传输，音视频转换和邮件发送使用有界线程池
+- 新密码使用 BCrypt；旧 MD5 密码在用户成功登录后自动升级
+
+Web API 已明确限制 HTTP 方法：查询使用 `GET`，创建和提交使用 `POST`，更新使用 `PUT`，删除使用 `DELETE`。旧版前端如果曾使用 GET 调用修改类接口，需要同步调整请求方法。
 
 ### `x-netdisk-route`
 
@@ -145,6 +185,15 @@ docker compose down
 - [Emoji Java 转换与存储方案 vdurmont/emoji-java](https://github.com/vdurmont/emoji-java)
 
 ## 更新日志
+
+### 2026-11-18
+
+- 加固 Shiro 认证、分享规则及文件/回收站资源归属校验
+- 密码升级为 BCrypt，并兼容旧 MD5 密码的登录迁移
+- 文件下载改为流式传输，音视频转换和邮件发送改用有界线程池
+- 增加短信频率限制、Session Cookie 安全配置及外部调用超时
+- Web API 明确限制 HTTP 方法，移除应用内 CORS 过滤器
+- 完善 Docker 环境变量和大文件上传配置
 
 ### 2026-11-17
 
