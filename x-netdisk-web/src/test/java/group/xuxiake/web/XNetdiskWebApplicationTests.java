@@ -1,5 +1,7 @@
 package group.xuxiake.web;
 
+import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
+import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import group.xuxiake.common.entity.FileMedia;
 import group.xuxiake.common.entity.FileOrigin;
 import group.xuxiake.common.entity.UserFile;
@@ -9,22 +11,68 @@ import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.common.util.RecyclePurgeHelper;
+import group.xuxiake.web.util.ConvertVideoUtil;
+import group.xuxiake.web.util.FastDFSClientWrapper;
 import group.xuxiake.web.util.PasswordEncoder;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldParseFfprobeVideoInfo() {
+        FileMedia fileMedia = new FileMedia();
+
+        ReflectionTestUtils.invokeMethod(ConvertVideoUtil.class, "applyVideoInfo",
+                "width=1920\nheight=1080\nduration=12.345000\n", fileMedia);
+
+        assertEquals(1920, fileMedia.getVideoWidth());
+        assertEquals(1080, fileMedia.getVideoHeight());
+        assertEquals(12345, fileMedia.getVideoDuration());
+    }
+
+    @Test
+    void shouldConsumeRemainingFastDfsDownloadContentWhenCallbackReturnsEarly() throws Exception {
+        FastFileStorageClient storageClient = mock(FastFileStorageClient.class);
+        FastDFSClientWrapper wrapper = new FastDFSClientWrapper();
+        ReflectionTestUtils.setField(wrapper, "storageClient", storageClient);
+        AtomicReference<ByteArrayInputStream> responseStream = new AtomicReference<>();
+
+        when(storageClient.downloadFile(eq("group1"), eq("M00/test.jpg"), any()))
+                .thenAnswer(invocation -> {
+                    ByteArrayInputStream inputStream = new ByteArrayInputStream(
+                            "image-content".getBytes(StandardCharsets.UTF_8));
+                    responseStream.set(inputStream);
+                    DownloadCallback<?> callback = invocation.getArgument(2);
+                    return callback.recv(inputStream);
+                });
+
+        String result = wrapper.downloadFile("group1/M00/test.jpg", inputStream -> {
+            byte[] header = new byte[5];
+            assertEquals(5, inputStream.read(header));
+            return new String(header, StandardCharsets.UTF_8);
+        });
+
+        assertEquals("image", result);
+        assertEquals(0, responseStream.get().available());
+    }
 
     @Test
     void shouldVerifyNewBcryptPassword() {

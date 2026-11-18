@@ -77,8 +77,8 @@ mybatis:
   configuration:
     call-setters-on-nulls: true
 fdfs:
-  so-timeout: 1501
-  connect-timeout: 601
+  so-timeout: ${FASTDFS_SO_TIMEOUT:30000}
+  connect-timeout: ${FASTDFS_CONNECT_TIMEOUT:3000}
   tracker-list:
     ${FASTDFS_TRACKER:fastdfs_tracker:22122}
 logging:

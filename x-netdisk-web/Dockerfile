@@ -29,6 +29,7 @@ RUN apt-get update \
     && java -version \
     && libreoffice --headless --version \
     && ffmpeg -version \
+    && ffprobe -version \
     && test -x /usr/bin/qt-faststart \
     && rm -rf /var/lib/apt/lists/* /tmp/*
 

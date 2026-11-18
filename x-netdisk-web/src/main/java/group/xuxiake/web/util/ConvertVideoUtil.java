@@ -1,14 +1,17 @@
 package group.xuxiake.web.util;
 
 import group.xuxiake.common.entity.FileMedia;
-import it.sauronsoftware.jave.EncoderException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -20,8 +23,10 @@ import java.util.concurrent.TimeUnit;
 public class ConvertVideoUtil {
 
 	private static String FFMPEG_PATH_OF_LINUX = "/usr/bin/./ffmpeg";
+	private static String FFPROBE_PATH_OF_LINUX = "/usr/bin/./ffprobe";
 	private static String QT_FASTSTART_PATH_OF_LINUX = "/usr/bin/./qt-faststart";
 	private static String FFMPEG_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\ffmpeg";
+	private static String FFPROBE_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\ffprobe";
 	private static String QT_FASTSTART_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\qt-faststart";
 	private static final long PROCESS_TIMEOUT_MINUTES = 30;
 
@@ -68,8 +73,90 @@ public class ConvertVideoUtil {
 		return true;
 	}
 
+	/**
+	 * 使用镜像中安装的 ffprobe 获取视频信息，避免依赖 JAVE 内置的旧版 FFmpeg。
+	 */
+	public static void readVideoInfo(File videoFile, FileMedia fileMedia) {
+		List<String> command = new ArrayList<>();
+		command.add(isLinux() ? FFPROBE_PATH_OF_LINUX : FFPROBE_PATH_OF_WINDOWS);
+		command.add("-v");
+		command.add("error");
+		command.add("-select_streams");
+		command.add("v:0");
+		command.add("-show_entries");
+		command.add("stream=width,height:format=duration");
+		command.add("-of");
+		command.add("default=noprint_wrappers=1");
+		command.add(videoFile.getAbsolutePath());
+
+		applyVideoInfo(executeCommandWithOutput(command, "视频信息读取"), fileMedia);
+	}
+
+	static void applyVideoInfo(String output, FileMedia fileMedia) {
+		Integer width = null;
+		Integer height = null;
+		Double durationSeconds = null;
+		for (String line : output.split("\\R")) {
+			String[] item = line.trim().split("=", 2);
+			if (item.length != 2) {
+				continue;
+			}
+			switch (item[0].toLowerCase(Locale.ROOT)) {
+			case "width":
+				width = Integer.valueOf(item[1]);
+				break;
+			case "height":
+				height = Integer.valueOf(item[1]);
+				break;
+			case "duration":
+				durationSeconds = Double.valueOf(item[1]);
+				break;
+			default:
+				break;
+			}
+		}
+		if (width == null || height == null || durationSeconds == null) {
+			throw new IllegalStateException("视频信息不完整：" + output);
+		}
+		fileMedia.setVideoWidth(width);
+		fileMedia.setVideoHeight(height);
+		fileMedia.setVideoDuration((int) Math.round(durationSeconds * 1000D));
+	}
+
+	private static String executeCommandWithOutput(List<String> command, String operation) {
+		Process process = null;
+		try {
+			process = new ProcessBuilder(command).redirectErrorStream(true).start();
+			if (!process.waitFor(PROCESS_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
+				process.destroyForcibly();
+				throw new IllegalStateException(operation + "超时");
+			}
+			StringBuilder output = new StringBuilder();
+			try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+					process.getInputStream(), StandardCharsets.UTF_8))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					output.append(line).append('\n');
+				}
+			}
+			if (process.exitValue() != 0) {
+				throw new IllegalStateException(operation + "失败，退出码：" + process.exitValue()
+						+ "，输出：" + output);
+			}
+			return output.toString();
+		} catch (IOException e) {
+			throw new IllegalStateException(operation + "启动失败", e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			if (process != null) {
+				process.destroyForcibly();
+			}
+			throw new IllegalStateException(operation + "被中断", e);
+		}
+	}
+
 	// ffmpeg能解析的格式：（asx，asf，mpg，wmv，3gp，mp4，mov，avi，flv等）
-	public static void convertToMp4(String[] paths, FileMedia fileMedia) throws EncoderException {
+	public static void convertToMp4(String[] paths, FileMedia fileMedia) {
 
 		List<String> command = new ArrayList<String>();
 		// 转码命令：ffmpeg -y -i 1.mp4 -vf scale="360:trunc(ow/a/2)*2" -vcodec h264 output.mp4 

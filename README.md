@@ -95,6 +95,8 @@ install.cmd
 | `PUBLIC_SERVER_HOST` | `http://127.0.0.1:8181` | 前端对外访问地址，用于邮件链接等场景 |
 | `SESSION_COOKIE_SECURE` | `false` | HTTPS 生产环境设为 `true`；使用 HTTP 时必须为 `false` |
 | `FASTDFS_TRACKER` | `fastdfs_tracker:22122` | FastDFS Tracker 地址 |
+| `FASTDFS_CONNECT_TIMEOUT` | `3000` | FastDFS 建立连接超时，单位毫秒 |
+| `FASTDFS_SO_TIMEOUT` | `30000` | FastDFS 文件读写超时，单位毫秒 |
 | `FASTDFS_NGINX_SERVER` | `http://192.168.81.30:8888` | FastDFS 文件访问地址 |
 | `MULTIPART_MAX_FILE_SIZE` | `500MB` | Spring 接收的单文件上限，不应低于业务层 VIP 文件上限 |
 | `MULTIPART_MAX_REQUEST_SIZE` | `1024MB` | 单次上传请求总大小上限 |

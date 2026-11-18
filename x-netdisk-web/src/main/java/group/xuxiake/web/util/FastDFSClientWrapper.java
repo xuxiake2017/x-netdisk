@@ -51,7 +51,15 @@ public class FastDFSClientWrapper {
 	public <T> T downloadFile(String filePath, DownloadCallback<T> callback) {
         String groupName = filePath.substring(0, filePath.indexOf("/"));
         String path = filePath.substring(filePath.indexOf("/") + 1, filePath.length());
-		return storageClient.downloadFile(groupName, path, callback);
+		return storageClient.downloadFile(groupName, path, inputStream -> {
+			try {
+				return callback.recv(inputStream);
+			} finally {
+				// FastDFS 会复用下载连接。回调提前返回时必须消费剩余响应体，
+				// 否则残留文件内容会被下一次请求误解析为协议响应头。
+				IOUtils.consume(inputStream);
+			}
+		});
 	}
 
 	public void downloadFile(String filePath, OutputStream outputStream) {

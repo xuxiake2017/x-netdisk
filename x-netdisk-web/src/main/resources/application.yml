@@ -80,8 +80,8 @@ mybatis:
   configuration:
     call-setters-on-nulls: true
 fdfs:
-  so-timeout: 1501
-  connect-timeout: 601
+  so-timeout: ${FASTDFS_SO_TIMEOUT:30000}
+  connect-timeout: ${FASTDFS_CONNECT_TIMEOUT:3000}
   # 缩略图生成参数
   thumb-image:
     width: 150

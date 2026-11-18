@@ -19,10 +19,6 @@ import group.xuxiake.web.service.FileService;
 import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.*;
-import it.sauronsoftware.jave.Encoder;
-import it.sauronsoftware.jave.EncoderException;
-import it.sauronsoftware.jave.MultimediaInfo;
-import it.sauronsoftware.jave.VideoInfo;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.io.FileUtils;
@@ -444,7 +440,7 @@ public class FileServiceImpl implements FileService {
 	 * @param fileOrigin
 	 * @throws IOException
 	 */
-	public void handleMediaFile(FileOrigin fileOrigin, Long lastModifiedDate) throws IOException, EncoderException {
+	public void handleMediaFile(FileOrigin fileOrigin, Long lastModifiedDate) throws IOException {
 
 		// 获取系统临时文件夹
 		String cacheParentPath = System.getProperty("java.io.tmpdir");
@@ -548,29 +544,10 @@ public class FileServiceImpl implements FileService {
 			String cachePathBefore = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
 			String cachePathMiddle = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("mp4"));
 			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("mp4"));
-			String[] paths = {cachePathBefore, cachePathMiddle, cachePathAfter};
-
-			fastDFSClientWrapper.downloadFile(filePath, new File(cachePathBefore));
-			// 获取视频分辨率时长信息
-			MultimediaInfo mi = new Encoder().getInfo(new File(paths[0]));
-			Long duration = mi.getDuration();
-			VideoInfo videoInfo = mi.getVideo();
-			int height = videoInfo.getSize().getHeight();
-			int width = videoInfo.getSize().getWidth();
-			fileMedia.setVideoDuration(duration.intValue());
-			fileMedia.setVideoHeight(height);
-			fileMedia.setVideoWidth(width);
-
-			// 获取缩率图
 			String thumbnailCachePath = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("jpg"));
-			ConvertVideoUtil.thumbnail(cachePathBefore, thumbnailCachePath, duration);
-			File thumbnailCacheFile = new File(thumbnailCachePath);
-			String thumbnailPath = fastDFSClientWrapper.uploadFile(thumbnailCacheFile, "jpg");
-			fileMedia.setThumbnailUrl(fdfsNginxServer + "/" + thumbnailPath);
-			thumbnailCacheFile.delete();
-
-			scheduleMediaTask(new VideoTransformHandler(fileOriginMapper, fastDFSClientWrapper, paths,
-					fileOrigin, fdfsNginxServer, fileMedia), paths);
+			String[] paths = {cachePathBefore, cachePathMiddle, cachePathAfter, thumbnailCachePath};
+			scheduleMediaTask(new VideoTransformHandler(fileOriginMapper, fileMediaMapper,
+					fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer, fileMedia), paths);
 		}
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_MUSIC &&  "mp3".equals(fileOrigin.getFileExtName())) {
 			// lowKmps，降低mp3码率

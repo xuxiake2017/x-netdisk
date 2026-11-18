@@ -143,12 +143,6 @@
             <version>5.1.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>it.sauronsoftware</groupId>
-            <artifactId>jave</artifactId>
-            <version>1.0.2</version>
-        </dependency>
-
         <!--httpclient-->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
