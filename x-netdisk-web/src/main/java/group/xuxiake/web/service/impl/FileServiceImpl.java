@@ -233,11 +233,6 @@ public class FileServiceImpl implements FileService {
 			UserFile userFile = new UserFile();
 			userFile.setOriginId(fileOrigin.getId());
 			userFile.setFileName(param.getFileRealName());
-			if (param.getParentId() == -1) {
-				userFile.setFilePath("/");
-			} else {
-				userFile.setFilePath(userFileMapper.findPathname(param.getParentId()));
-			}
 			userFile.setIsDir(NetdiskConstant.FILE_IS_NOT_DIR);
 			userFile.setUserId(user.getId());
 			userFile.setParentId(param.getParentId());
@@ -307,18 +302,6 @@ public class FileServiceImpl implements FileService {
 				result.setCode(NetdiskErrMsgConstant.RENAME_FILE_NAME_EXIST);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.RENAME_FILE_NAME_EXIST));
 				return result;
-			}
-			// 更新filePath
-			List<Integer> childIds = userFileMapper.findChildIds(userFile.getId());
-			if (childIds.size() > 0) {
-				List<UserFile> childFiles = userFileMapper.finFiledByIds(childIds);
-				for (UserFile file : childFiles) {
-					String filePath = file.getFilePath().replaceFirst(userFile.getFileName(), param.getFileName());
-					file.setFilePath(filePath);
-				}
-				if (childFiles.size() > 0) {
-					userFileMapper.updateBatch(childFiles);
-				}
 			}
 		}
 		UserFile update = new UserFile();
@@ -408,11 +391,6 @@ public class FileServiceImpl implements FileService {
 			UserFile userFile = new UserFile();
 			userFile.setOriginId(fileOrigin.getId());
 			userFile.setFileName(fileRealName);
-			if (parentId == -1) {
-				userFile.setFilePath("/");
-			} else {
-				userFile.setFilePath(userFileMapper.findPathname(parentId));
-			}
 			userFile.setIsDir(NetdiskConstant.FILE_IS_NOT_DIR);
 			userFile.setUserId(user.getId());
 			userFile.setParentId(parentId);
@@ -673,11 +651,6 @@ public class FileServiceImpl implements FileService {
 		param.setCreateTime(new Date());
 		param.setUpdateTime(new Date());
 		param.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
-		if (param.getParentId() == -1) {
-			param.setFilePath("/");
-		} else {
-			param.setFilePath(userFileMapper.findPathname(param.getParentId()));
-		}
 		userFileMapper.insertSelective(param);
 		return result;
 	}
@@ -785,15 +758,6 @@ public class FileServiceImpl implements FileService {
 			result.setMsg("不能将文件夹移动到自身或其子目录");
 			return result;
 		}
-		String targetPatentFilePath = "/";
-		if (param.getParentId() != -1) {
-            targetPatentFilePath = userFileMapper.findPathname(param.getParentId());
-        }
-		String nowParentFilePath = "/";
-		if (userFile.getParentId() != -1) {
-			nowParentFilePath = userFileMapper.findPathname(userFile.getParentId());
-		}
-
 		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			UserFile searchParam = new UserFile();
 			searchParam.setParentId(param.getParentId());
@@ -808,21 +772,7 @@ public class FileServiceImpl implements FileService {
 			}
 		}
 
-		// 更新filePath
-		List<Integer> childIds = userFileMapper.findChildIds(userFile.getId());
-		if (childIds.size() > 0) {
-			List<UserFile> userFiles = userFileMapper.finFiledByIds(childIds);
-			for (UserFile file : userFiles) {
-				String filePath = file.getFilePath().replaceFirst("^" + nowParentFilePath, targetPatentFilePath);
-				file.setFilePath(filePath);
-			}
-			if (userFiles.size() > 0) {
-				userFileMapper.updateBatch(userFiles);
-			}
-		}
-
 		userFile.setParentId(param.getParentId());
-        userFile.setFilePath(null);
 		userFileMapper.updateByPrimaryKeySelective(userFile);
 		return result;
 	}

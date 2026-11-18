@@ -5,7 +5,6 @@
     <id column="id" property="id" jdbcType="INTEGER" />
     <result column="origin_id" property="originId" jdbcType="INTEGER" />
     <result column="file_name" property="fileName" jdbcType="VARCHAR" />
-    <result column="file_path" property="filePath" jdbcType="VARCHAR" />
     <result column="is_dir" property="isDir" jdbcType="INTEGER" />
     <result column="user_id" property="userId" jdbcType="INTEGER" />
     <result column="parent_id" property="parentId" jdbcType="INTEGER" />
@@ -15,7 +14,7 @@
     <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
   </resultMap>
   <sql id="Base_Column_List" >
-    id, origin_id, file_name, file_path, is_dir, user_id, parent_id, `key`, status, create_time,
+    id, origin_id, file_name, is_dir, user_id, parent_id, `key`, status, create_time,
     update_time
   </sql>
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
@@ -29,12 +28,12 @@
     where id = #{id,jdbcType=INTEGER}
   </delete>
   <insert id="insert" parameterType="group.xuxiake.common.entity.UserFile" >
-    insert into x_user_file (id, origin_id, file_name, 
-      file_path, is_dir, user_id, 
+    insert into x_user_file (id, origin_id, file_name,
+      is_dir, user_id,
       parent_id, `key`, status,
       create_time, update_time)
-    values (#{id,jdbcType=INTEGER}, #{originId,jdbcType=INTEGER}, #{fileName,jdbcType=VARCHAR}, 
-      #{filePath,jdbcType=VARCHAR}, #{isDir,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER}, 
+    values (#{id,jdbcType=INTEGER}, #{originId,jdbcType=INTEGER}, #{fileName,jdbcType=VARCHAR},
+      #{isDir,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER},
       #{parentId,jdbcType=INTEGER}, #{key,jdbcType=VARCHAR}, #{status,jdbcType=INTEGER}, 
       #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
   </insert>
@@ -49,9 +48,6 @@
       </if>
       <if test="fileName != null" >
         file_name,
-      </if>
-      <if test="filePath != null" >
-        file_path,
       </if>
       <if test="isDir != null" >
         is_dir,
@@ -85,9 +81,6 @@
       <if test="fileName != null" >
         #{fileName,jdbcType=VARCHAR},
       </if>
-      <if test="filePath != null" >
-        #{filePath,jdbcType=VARCHAR},
-      </if>
       <if test="isDir != null" >
         #{isDir,jdbcType=INTEGER},
       </if>
@@ -120,9 +113,6 @@
       <if test="fileName != null" >
         file_name = #{fileName,jdbcType=VARCHAR},
       </if>
-      <if test="filePath != null" >
-        file_path = #{filePath,jdbcType=VARCHAR},
-      </if>
       <if test="isDir != null" >
         is_dir = #{isDir,jdbcType=INTEGER},
       </if>
@@ -151,7 +141,6 @@
     update x_user_file
     set origin_id = #{originId,jdbcType=INTEGER},
       file_name = #{fileName,jdbcType=VARCHAR},
-      file_path = #{filePath,jdbcType=VARCHAR},
       is_dir = #{isDir,jdbcType=INTEGER},
       user_id = #{userId,jdbcType=INTEGER},
       parent_id = #{parentId,jdbcType=INTEGER},
@@ -358,9 +347,6 @@
       <if test="fileName != null" >
         file_name = #{fileName,jdbcType=VARCHAR},
       </if>
-      <if test="filePath != null" >
-        file_path = #{filePath,jdbcType=VARCHAR},
-      </if>
       <if test="isDir != null" >
         is_dir = #{isDir,jdbcType=INTEGER},
       </if>
@@ -381,36 +367,6 @@
       </if>
     </set>
     where `key` = #{key}
-  </update>
-
-  <!--根据ids查找-->
-  <select id="finFiledByIds" resultMap="BaseResultMap" parameterType="list">
-    select
-    <include refid="Base_Column_List" />
-    from x_user_file
-    WHERE
-    id IN
-    <foreach collection="list" open="(" separator="," close=")" item="id">
-      #{id}
-    </foreach>
-  </select>
-
-  <!--批量更新filePath-->
-  <update id="updateBatch" parameterType="java.util.List">
-    update x_user_file
-    <trim prefix="set" suffixOverrides=",">
-      <trim prefix="file_path = case" suffix="end,">
-        <foreach collection="list" item="i" index="index">
-          <if test="i.filePath != null">
-            when id = #{i.id} then #{i.filePath}
-          </if>
-        </foreach>
-      </trim>
-    </trim>
-    where
-    <foreach collection="list" separator="or" item="i" index="index" >
-      id = #{i.id}
-    </foreach>
   </update>
 
   <resultMap id="StatisticsDataItemResultMap" type="group.xuxiake.common.entity.admin.dashboard.StatisticsDataItem" >

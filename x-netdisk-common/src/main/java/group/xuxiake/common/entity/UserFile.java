@@ -10,8 +10,6 @@ public class UserFile implements Serializable {
 
     private String fileName;
 
-    private String filePath;
-
     private Integer isDir;
 
     private Integer userId;
@@ -48,14 +46,6 @@ public class UserFile implements Serializable {
 
     public void setFileName(String fileName) {
         this.fileName = fileName == null ? null : fileName.trim();
-    }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath == null ? null : filePath.trim();
     }
 
     public Integer getIsDir() {

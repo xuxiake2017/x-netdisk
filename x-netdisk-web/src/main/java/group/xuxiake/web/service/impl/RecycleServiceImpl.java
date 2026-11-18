@@ -169,25 +169,9 @@ public class RecycleServiceImpl implements RecycleService {
 					fileResources.setUpdateTime(new Date());
 					fileResources.setIsDir(NetdiskConstant.FILE_IS_DIR);
 					fileResources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
-					fileResources.setFilePath("/");
 					userFileMapper.insertSelective(fileResources);
 				}
 				userFile.setParentId(fileResources.getId());
-
-				// 父目录更改，更新filePath
-				String targetPatentFilePath = userFileMapper.findPathname(fileResources.getId());
-				String nowParentFilePath = userFileMapper.findPathname(oldParentFile.getId());
-				List<Integer> childIds = userFileMapper.findChildIds(userFile.getId());
-				if (childIds.size() > 0) {
-					List<UserFile> userFiles = userFileMapper.finFiledByIds(childIds);
-					for (UserFile file : userFiles) {
-						String filePath = file.getFilePath().replaceFirst("^" + nowParentFilePath, targetPatentFilePath);
-						file.setFilePath(filePath);
-					}
-					if (userFiles.size() > 0) {
-						userFileMapper.updateBatch(userFiles);
-					}
-				}
 			}
 		}
 

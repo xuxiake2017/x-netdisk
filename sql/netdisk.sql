@@ -312,7 +312,6 @@ CREATE TABLE `x_user_file`  (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'id',
   `origin_id` int(11) NULL DEFAULT NULL COMMENT '源文件id',
   `file_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '文件名称',
-  `file_path` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '文件路径（数据库逻辑路径）',
   `is_dir` int(1) NULL DEFAULT NULL COMMENT '是否是文件夹',
   `user_id` int(11) NULL DEFAULT NULL COMMENT '用户id',
   `parent_id` int(11) NULL DEFAULT NULL COMMENT '文件父id',

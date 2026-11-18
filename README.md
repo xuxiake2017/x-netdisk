@@ -129,6 +129,8 @@ docker compose down
 
 数据卷默认会保留；如需同时删除数据卷，确认数据不再需要后再执行 `docker compose down -v`。
 
+从旧版本升级已有数据库时，需要执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)，删除不再使用的 `x_user_file.file_path` 逻辑路径字段。全新部署无需执行该升级脚本。
+
 ## 架构介绍
 
 - Chat 简易流程图

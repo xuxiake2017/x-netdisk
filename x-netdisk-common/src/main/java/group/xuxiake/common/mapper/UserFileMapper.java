@@ -124,19 +124,6 @@ public interface UserFileMapper {
     void updateByKeySelective(UserFile userFile);
 
     /**
-     * 根据ids查找
-     * @param ids
-     * @return
-     */
-    List<UserFile> finFiledByIds(List<Integer> ids);
-
-    /**
-     * 批量更新filePath
-     * @param list
-     */
-    void updateBatch(List<UserFile> list);
-
-    /**
      * 获取时间内上传统计数据
      * @param startTime
      * @param endTime

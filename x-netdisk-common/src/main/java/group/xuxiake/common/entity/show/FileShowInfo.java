@@ -18,8 +18,6 @@ public class FileShowInfo {
 
     private String fileName;
 
-    private String filePath;
-
     private Integer isDir;
 
     private Integer userId;

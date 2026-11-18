@@ -370,7 +370,6 @@ public class ShareFileServiceImpl implements ShareFileService {
 			fileResources.setUpdateTime(new Date());
 			fileResources.setIsDir(NetdiskConstant.FILE_IS_DIR);
 			fileResources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
-			fileResources.setFilePath("/");
 			userFileMapper.insertSelective(fileResources);
 		}
 
@@ -414,26 +413,7 @@ public class ShareFileServiceImpl implements ShareFileService {
 		userMapper.updateByPrimaryKeySelective(user);
 
 		// 递归保存文件夹内的文件到网盘
-		Integer outterFileId = this.saveToCloudIteration(fileForSave.getId(), fileResources.getId(), user.getId(), fileShare);
-
-		String targetPatentFilePath = userFileMapper.findPathname(fileResources.getId());
-		String nowParentFilePath = "/";
-		if (fileForSave.getParentId() != -1) {
-			nowParentFilePath = userFileMapper.findPathname(fileForSave.getParentId());
-		}
-
-		// 更新filePath
-		List<Integer> childIds = userFileMapper.findChildIds(outterFileId);
-		if (childIds.size() > 0) {
-			List<UserFile> userFiles = userFileMapper.finFiledByIds(childIds);
-			for (UserFile file : userFiles) {
-				String filePath = file.getFilePath().replaceFirst("^" + nowParentFilePath, targetPatentFilePath);
-				file.setFilePath(filePath);
-			}
-			if (userFiles.size() > 0) {
-				userFileMapper.updateBatch(userFiles);
-			}
-		}
+		this.saveToCloudIteration(fileForSave.getId(), fileResources.getId(), user.getId(), fileShare);
 
 		result.setMsg("文件已成功保存到\"我的资源\"文件夹！");
 
@@ -561,9 +541,8 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 * @param newParentId 新文件父id
 	 * @param userId 保存文件用户id
 	 * @param fileShare 分享文件
-	 * @return 保存后的分享文件，最外层文件夹（文件）id
 	 */
-	public Integer saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, FileShare fileShare) {
+	public void saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, FileShare fileShare) {
 
 		UserFile userFile = userFileMapper.selectByPrimaryKey(oldParentId);
 		userFile.setId(null);
@@ -587,6 +566,5 @@ public class ShareFileServiceImpl implements ShareFileService {
 			}
 		}
 
-		return userFile.getId();
 	}
 }
