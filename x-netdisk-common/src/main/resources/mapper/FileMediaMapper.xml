@@ -271,4 +271,12 @@
       AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
       AND user_file.`key` = #{fileKey}
   </select>
+  <delete id="deleteByOriginId">
+    delete from x_file_media where origin_id = #{originId}
+  </delete>
+  <select id="findByOriginId" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from x_file_media where origin_id = #{originId}
+    limit 1
+  </select>
 </mapper>

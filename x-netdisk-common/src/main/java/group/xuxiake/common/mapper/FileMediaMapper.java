@@ -22,4 +22,8 @@ public interface FileMediaMapper {
      * @return
      */
     FileShowMedia getFileMediaInfo(String fileKey);
+
+    FileMedia findByOriginId(Integer originId);
+
+    int deleteByOriginId(Integer originId);
 }

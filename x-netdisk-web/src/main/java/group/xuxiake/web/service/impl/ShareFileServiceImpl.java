@@ -393,11 +393,9 @@ public class ShareFileServiceImpl implements ShareFileService {
 		map.put("id", fileForSave.getId());
 		map.put("sumsize", null);
 		userFileMapper.getSumsizeDel(map);
-		Long sumSize = null;
-		if(map.get("sumsize") != null) {
-			sumSize = Long.valueOf(map.get("sumsize") + "");
-		}
+		long sumSize = map.get("sumsize") == null ? 0L : ((Number) map.get("sumsize")).longValue();
 
+		user = userMapper.selectByPrimaryKeyForUpdate(user.getId());
 		long totalMemory = user.getTotalMemory();
 		long usedMemory = user.getUsedMemory();
 		long availableMemory = totalMemory - usedMemory;

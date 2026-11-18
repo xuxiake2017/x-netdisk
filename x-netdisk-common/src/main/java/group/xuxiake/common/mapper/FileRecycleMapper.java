@@ -15,6 +15,8 @@ public interface FileRecycleMapper {
 
     FileRecycle selectByPrimaryKey(Integer recycleId);
 
+    FileRecycle selectByPrimaryKeyForUpdate(Integer recycleId);
+
     int updateByPrimaryKeySelective(FileRecycle record);
 
     int updateByPrimaryKey(FileRecycle record);

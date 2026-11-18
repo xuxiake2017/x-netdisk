@@ -110,6 +110,14 @@ public interface UserFileMapper {
      */
     List<Integer> findChildIds(Integer fileId);
 
+    List<Integer> findRecycleChildIds(Integer fileId);
+
+    List<UserFile> findByIds(List<Integer> ids);
+
+    int deleteByIds(List<Integer> ids);
+
+    int countByOriginId(Integer originId);
+
     /**
      * 查询文件路径（id）
      * @param fileId

@@ -76,6 +76,11 @@ mybatis:
   type-aliases-package: group.xuxiake.common.entity  # 注意：对应实体类的路径
   configuration:
     call-setters-on-nulls: true
+fdfs:
+  so-timeout: 1501
+  connect-timeout: 601
+  tracker-list:
+    ${FASTDFS_TRACKER:fastdfs_tracker:22122}
 logging:
   level:
     root: INFO

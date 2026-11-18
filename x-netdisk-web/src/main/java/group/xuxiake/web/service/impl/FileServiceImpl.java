@@ -113,6 +113,20 @@ public class FileServiceImpl implements FileService {
 		return result;
 	}
 
+	private boolean isInvalidFileName(String fileName) {
+		if (StringUtils.isBlank(fileName) || fileName.length() > 255
+				|| ".".equals(fileName) || "..".equals(fileName)
+				|| fileName.indexOf('/') >= 0 || fileName.indexOf('\\') >= 0) {
+			return true;
+		}
+		for (int i = 0; i < fileName.length(); i++) {
+			if (Character.isISOControl(fileName.charAt(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private void scheduleMediaTask(Runnable task, String[] cachePaths) {
 		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
 			submitMediaTask(task, cachePaths);
@@ -183,7 +197,7 @@ public class FileServiceImpl implements FileService {
 
 		Result result = new Result();
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
-		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
+		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
 		CustomConfiguration customConfiguration = appConfiguration.getCustomConfiguration();
 		FileOrigin fileOrigin = fileOriginMapper.findFileByMd5Hex(param.getMd5Hex());
@@ -279,7 +293,7 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public Result reName(UserFile param) {
 		Result result = new Result();
-		if (param == null || StringUtils.isAnyBlank(param.getKey(), param.getFileName())) {
+		if (param == null || StringUtils.isBlank(param.getKey()) || isInvalidFileName(param.getFileName())) {
 			return Result.paramIsNull(result);
 		}
 		UserFile ownedFile = findOwnedFileByKey(param.getKey());
@@ -329,7 +343,7 @@ public class FileServiceImpl implements FileService {
         try {
 
 			User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
-			User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
+			User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
 			if (file == null || file.isEmpty()) {
 				result.setCode(NetdiskErrMsgConstant.UPLOAD_FILE_IS_NULL);
@@ -627,8 +641,8 @@ public class FileServiceImpl implements FileService {
 		Result result = new Result();
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 
-		if(param == null || StringUtils.isAnyEmpty(param.getFileName()) || !isOwnedDirectory(param.getParentId())){
-			if (param != null && !StringUtils.isAnyEmpty(param.getFileName())) {
+		if(param == null || isInvalidFileName(param.getFileName()) || !isOwnedDirectory(param.getParentId())){
+			if (param != null && !isInvalidFileName(param.getFileName())) {
 				return forbidden();
 			}
 			result.setCode(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL);
@@ -672,7 +686,7 @@ public class FileServiceImpl implements FileService {
 		}
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
-		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
+		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
 		long usedMemory = user.getUsedMemory();
 		/** 	fileStatus
@@ -696,7 +710,7 @@ public class FileServiceImpl implements FileService {
 			map.put("sumsize", null);
 			userFileMapper.getSumsizeDel(map);
 			if(map.get("sumsize") != null) {
-				Long sumSize = new Long((Integer) map.get("sumsize"));
+				long sumSize = ((Number) map.get("sumsize")).longValue();
 				usedMemory = usedMemory - sumSize;
 				if (usedMemory < 0) {
 					throw new RuntimeException("未知异常，请重试");
@@ -723,7 +737,16 @@ public class FileServiceImpl implements FileService {
 
 		// userService.updatePrincipal();
 
-		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelFilePath(), recycle, Result.class);
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				try {
+					routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelFilePath(), recycle, Result.class);
+				} catch (RuntimeException e) {
+					log.error("创建回收站清理任务失败: {}", recycle.getRecycleId(), e);
+				}
+			}
+		});
 
 		if(tag1 > 0 && tag2 > 0 && tag3 > 0){
 			return result;

@@ -40,4 +40,6 @@ public interface FileShareMapper {
      * @return
      */
     List<ShareFileShowList> findAllByUserId(@Param("userId") Integer userId, @Param("fileName") String fileName);
+
+    int deleteByFileIds(List<Integer> fileIds);
 }

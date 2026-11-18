@@ -252,7 +252,7 @@
 
   <!--查询删除文件的文件大小（包括子文件及子文件夹）-->
   <select id="getSumsizeDel" parameterType="map" statementType="CALLABLE">
-  	{call pro_cre_get_sumsize_del(#{id,jdbcType=INTEGER,mode=IN},#{sumsize,jdbcType=INTEGER,mode=OUT})}
+    {call pro_cre_get_sumsize_del(#{id,jdbcType=INTEGER,mode=IN},#{sumsize,jdbcType=BIGINT,mode=OUT})}
   </select>
 
   <!--删除文件夹-->
@@ -264,7 +264,7 @@
 
   <!--从回收站还原文件时，得到其文件大小（包括子文件及子文件夹）-->
   <select id="getSumsizeRbk" parameterType="map" statementType="CALLABLE">
-  	{call pro_cre_get_sumsize_rbk(#{id,jdbcType=INTEGER,mode=IN},#{sumsize,jdbcType=INTEGER,mode=OUT})}
+    {call pro_cre_get_sumsize_rbk(#{id,jdbcType=INTEGER,mode=IN},#{sumsize,jdbcType=BIGINT,mode=OUT})}
   </select>
 
   <!--从回收站还原文件夹-->
@@ -330,6 +330,34 @@
     {
       call pro_cre_show_childlist(#{fileId,jdbcType=INTEGER,mode=IN})
     }
+  </select>
+
+  <select id="findRecycleChildIds" resultType="int" parameterType="int" statementType="CALLABLE">
+    {
+      call pro_cre_show_recycle_childlist(#{fileId,jdbcType=INTEGER,mode=IN})
+    }
+  </select>
+
+  <select id="findByIds" resultMap="BaseResultMap" parameterType="list">
+    select
+    <include refid="Base_Column_List" />
+    from x_user_file
+    where id in
+    <foreach collection="list" open="(" separator="," close=")" item="id">
+      #{id}
+    </foreach>
+  </select>
+
+  <delete id="deleteByIds" parameterType="list">
+    delete from x_user_file
+    where id in
+    <foreach collection="list" open="(" separator="," close=")" item="id">
+      #{id}
+    </foreach>
+  </delete>
+
+  <select id="countByOriginId" resultType="int">
+    select count(*) from x_user_file where origin_id = #{originId}
   </select>
 
   <!--查询文件路径（id）-->

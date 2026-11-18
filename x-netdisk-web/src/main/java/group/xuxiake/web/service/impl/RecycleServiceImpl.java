@@ -6,19 +6,25 @@ import group.xuxiake.common.entity.*;
 import group.xuxiake.common.entity.show.RecycleShowList;
 import group.xuxiake.common.mapper.FileOriginMapper;
 import group.xuxiake.common.mapper.FileRecycleMapper;
+import group.xuxiake.common.mapper.FileMediaMapper;
+import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
+import group.xuxiake.common.util.RecyclePurgeHelper;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.service.RecycleService;
 import group.xuxiake.web.service.RouteService;
 import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -26,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service("/recycleService")
 public class RecycleServiceImpl implements RecycleService {
 
@@ -43,6 +50,12 @@ public class RecycleServiceImpl implements RecycleService {
 	private AppConfiguration appConfiguration;
 	@Resource
 	private FileOriginMapper fileOriginMapper;
+	@Resource
+	private FileMediaMapper fileMediaMapper;
+	@Resource
+	private FileShareMapper fileShareMapper;
+	@Resource
+	private FastDFSClientWrapper fastDFSClientWrapper;
 
 	/**
 	 * 查询回收站列表
@@ -65,21 +78,27 @@ public class RecycleServiceImpl implements RecycleService {
 	 * @param id
 	 * @return
 	 */
+	@Transactional
 	@Override
 	public Result delete(Integer id) {
 
 		Result result = new Result();
 		User principal = (User) SecurityUtils.getSubject().getPrincipal();
-		FileRecycle recycle = id == null ? null : recycleMapper.selectByPrimaryKey(id);
+		FileRecycle recycle = id == null ? null : recycleMapper.selectByPrimaryKeyForUpdate(id);
 		if (principal == null || recycle == null || !principal.getId().equals(recycle.getDeleteUserId())) {
 			result.setCode(NetdiskErrMsgConstant.FORBIDDEN);
 			return result;
 		}
-		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER);
-		recycleMapper.updateByPrimaryKeySelective(recycle);
+		if (!Integer.valueOf(NetdiskConstant.RECYCLE_STATUS_FILE_DEL).equals(recycle.getRecycleStatus())) {
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("回收站记录已处理");
+			return result;
+		}
+		List<String> storagePaths = RecyclePurgeHelper.purge(recycle.getRecycleId(), recycle.getFileId(),
+				userFileMapper, fileShareMapper, fileMediaMapper, fileOriginMapper, recycleMapper);
 
-		// 删除定时任务
-		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelJobPath(), recycle, Result.class);
+		// 事务提交后删除定时任务和无引用的 FastDFS 文件。
+		cancelRecycleJobAfterCommit(recycle, storagePaths);
 		return result;
 	}
 
@@ -96,7 +115,7 @@ public class RecycleServiceImpl implements RecycleService {
 		Result result = new Result();
 		UserFile userFile = userFileMapper.findFileBySaveNameForReback(fileKey);
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
-		FileRecycle recycleRecord = recycleId == null ? null : recycleMapper.selectByPrimaryKey(recycleId);
+		FileRecycle recycleRecord = recycleId == null ? null : recycleMapper.selectByPrimaryKeyForUpdate(recycleId);
 		if (userThreadContext == null || userFile == null || recycleRecord == null
 				|| !userThreadContext.getId().equals(userFile.getUserId())
 				|| !userThreadContext.getId().equals(recycleRecord.getDeleteUserId())
@@ -104,7 +123,14 @@ public class RecycleServiceImpl implements RecycleService {
 			result.setCode(NetdiskErrMsgConstant.FORBIDDEN);
 			return result;
 		}
-		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
+		if (!Integer.valueOf(NetdiskConstant.RECYCLE_STATUS_FILE_DEL).equals(recycleRecord.getRecycleStatus())
+				|| !Integer.valueOf(NetdiskConstant.FILE_STATUS_OF_DEL).equals(userFile.getStatus())
+				|| recycleRecord.getOverTime() == null || recycleRecord.getOverTime().before(new Date())) {
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("回收站记录已处理或已过期");
+			return result;
+		}
+		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 
@@ -121,7 +147,7 @@ public class RecycleServiceImpl implements RecycleService {
 			if (map.get("sumsize") == null) {
 				sumSize = 0L;
 			} else {
-				sumSize = new Long((Integer) map.get("sumsize"));
+				sumSize = ((Number) map.get("sumsize")).longValue();
 			}
 
 			// 检查目标父目录下是否存在同名文件夹
@@ -196,9 +222,32 @@ public class RecycleServiceImpl implements RecycleService {
 		// userService.updatePrincipal();
 
 		// 删除定时任务
-		routeService.postMsgToRoute(recycle.getRecycleId().toString(), appConfiguration.getDelJobPath(), recycle, Result.class);
+		cancelRecycleJobAfterCommit(recycle, null);
 
 		return result;
+	}
+
+	private void cancelRecycleJobAfterCommit(FileRecycle recycle, List<String> storagePaths) {
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				try {
+					routeService.postMsgToRoute(recycle.getRecycleId().toString(),
+							appConfiguration.getDelJobPath(), recycle, Result.class);
+				} catch (RuntimeException e) {
+					log.error("删除回收站定时任务失败: {}", recycle.getRecycleId(), e);
+				}
+				if (storagePaths != null) {
+					for (String storagePath : storagePaths) {
+						try {
+							fastDFSClientWrapper.deleteFile(storagePath);
+						} catch (RuntimeException e) {
+							log.error("删除 FastDFS 文件失败: {}", storagePath, e);
+						}
+					}
+				}
+			}
+		});
 	}
 
 }

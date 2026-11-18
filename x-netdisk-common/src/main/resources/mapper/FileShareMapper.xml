@@ -266,4 +266,11 @@
     </if>
     ORDER BY file_share.share_time DESC
   </select>
+  <delete id="deleteByFileIds" parameterType="list">
+    delete from x_file_share
+    where file_id in
+    <foreach collection="list" open="(" separator="," close=")" item="id">
+      #{id}
+    </foreach>
+  </delete>
 </mapper>

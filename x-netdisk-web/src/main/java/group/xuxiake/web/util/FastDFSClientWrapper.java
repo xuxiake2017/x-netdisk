@@ -44,6 +44,10 @@ public class FastDFSClientWrapper {
         }
     }
 
+    public void deleteFile(String filePath) {
+        storageClient.deleteFile(filePath);
+    }
+
 	public <T> T downloadFile(String filePath, DownloadCallback<T> callback) {
         String groupName = filePath.substring(0, filePath.indexOf("/"));
         String path = filePath.substring(filePath.indexOf("/") + 1, filePath.length());

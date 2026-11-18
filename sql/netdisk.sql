@@ -319,7 +319,11 @@ CREATE TABLE `x_user_file`  (
   `status` int(2) NULL DEFAULT NULL COMMENT '文件状态',
   `create_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '更新时间',
-  PRIMARY KEY (`id`) USING BTREE
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_user_file_key` (`key`) USING BTREE,
+  KEY `idx_user_file_user_parent_status` (`user_id`, `parent_id`, `status`) USING BTREE,
+  KEY `idx_user_file_parent_status` (`parent_id`, `status`) USING BTREE,
+  KEY `idx_user_file_origin` (`origin_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 47 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -466,7 +470,7 @@ BEGIN
     -- 下面这行表示若没有数据返回，程序继续，并将变量done设为1
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
     -- mysql中可以利用系统参数 max_sp_recursion_depth 来控制递归调用的层数上限。
-    SET max_sp_recursion_depth=12;
+    SET max_sp_recursion_depth=255;
 
     OPEN cur1;
     -- 游标向下走一步
@@ -498,7 +502,7 @@ BEGIN
     -- 下面这行表示若没有数据返回，程序继续，并将变量done设为1
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
     -- mysql中可以利用系统参数 max_sp_recursion_depth 来控制递归调用的层数上限。
-    SET max_sp_recursion_depth=12;
+    SET max_sp_recursion_depth=255;
 
     OPEN cur1;
     -- 游标向下走一步
@@ -557,7 +561,7 @@ BEGIN
     DECLARE b INT;
     DECLARE cur1 CURSOR FOR SELECT id FROM x_user_file WHERE parent_id = rootId and `status`=0;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-    SET max_sp_recursion_depth=12;
+    SET max_sp_recursion_depth=255;
 
     INSERT INTO tmpList VALUES (NULL,rootId,nDepth);
 
@@ -585,7 +589,7 @@ BEGIN
       DECLARE b INT;   
       DECLARE cur1 CURSOR FOR SELECT id FROM x_user_file WHERE parent_id=rootId and `status`=0;   
       DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;   
-      SET max_sp_recursion_depth=12;   
+      SET max_sp_recursion_depth=255;
        
       INSERT INTO tmpList VALUES (NULL,rootId,nDepth);   
        
@@ -613,7 +617,7 @@ BEGIN
       DECLARE b INT;   
       DECLARE cur1 CURSOR FOR SELECT id FROM x_user_file WHERE parent_id=rootId and `status`=2;   
       DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;   
-      SET max_sp_recursion_depth=12;   
+      SET max_sp_recursion_depth=255;
        
       INSERT INTO tmpList VALUES (NULL,rootId,nDepth);   
        
@@ -657,7 +661,7 @@ delimiter ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `pro_cre_get_sumsize_del`;
 delimiter ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_get_sumsize_del`(IN rootId INT,OUT sumsize INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_get_sumsize_del`(IN rootId INT,OUT sumsize BIGINT)
 BEGIN
     DROP TEMPORARY TABLE IF EXISTS tmpList;
     CREATE TEMPORARY TABLE IF NOT EXISTS tmpList(
@@ -667,8 +671,8 @@ BEGIN
 
     CALL pro_cre_childlist_del(rootId,0);
 		
-		SELECT 
-			SUM(x_file_origin.file_size) INTO sumsize
+		SELECT
+			COALESCE(SUM(x_file_origin.file_size), 0) INTO sumsize
 		FROM
 			x_user_file,
 			x_file_origin
@@ -686,7 +690,7 @@ delimiter ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `pro_cre_get_sumsize_rbk`;
 delimiter ;;
-CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_get_sumsize_rbk`(IN rootId INT,OUT sumsize INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_get_sumsize_rbk`(IN rootId INT,OUT sumsize BIGINT)
 BEGIN
     DROP TEMPORARY TABLE IF EXISTS tmpList;
     CREATE TEMPORARY TABLE IF NOT EXISTS tmpList(
@@ -696,8 +700,8 @@ BEGIN
 
     CALL pro_cre_childlist_rbk(rootId,0);
 		
-		SELECT 
-			SUM(x_file_origin.file_size) INTO sumsize
+		SELECT
+			COALESCE(SUM(x_file_origin.file_size), 0) INTO sumsize
 		FROM
 			x_user_file,
 			x_file_origin
@@ -750,6 +754,26 @@ BEGIN
 
     select tmpList.id from tmpList;
   END
+;;
+delimiter ;
+
+-- ----------------------------
+-- Procedure structure for pro_cre_show_recycle_childlist
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `pro_cre_show_recycle_childlist`;
+delimiter ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `pro_cre_show_recycle_childlist`(IN rootId int)
+BEGIN
+    DROP TEMPORARY TABLE IF EXISTS tmpList;
+    CREATE TEMPORARY TABLE IF NOT EXISTS tmpList(
+      sno INT PRIMARY KEY AUTO_INCREMENT,
+      id INT,
+      depth INT);
+
+    CALL pro_cre_childlist_rbk(rootId,0);
+
+    select tmpList.id from tmpList;
+END
 ;;
 delimiter ;
 
