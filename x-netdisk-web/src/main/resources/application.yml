@@ -23,6 +23,12 @@ application:
     quartz:
       delFilePath: /route/delFile
       delJobPath: /route/delJob
+  media:
+    corePoolSize: ${MEDIA_CORE_POOL_SIZE:2}
+    maxPoolSize: ${MEDIA_MAX_POOL_SIZE:4}
+    queueCapacity: ${MEDIA_QUEUE_CAPACITY:20}
+  security:
+    sessionCookieSecure: ${SESSION_COOKIE_SECURE:false}
 spring:
   datasource:
     name: db
@@ -56,8 +62,9 @@ spring:
   # 文件上传大小
   servlet:
     multipart:
-      max-file-size: 200MB
-      max-request-size: 1024MB
+      # 容器层限制不能低于业务层 VIP 单文件上限，否则请求到不了 FileService。
+      max-file-size: ${MULTIPART_MAX_FILE_SIZE:500MB}
+      max-request-size: ${MULTIPART_MAX_REQUEST_SIZE:1024MB}
   shiro:
     sessionManager:
       # 设置session超时时间半天，默认半小时

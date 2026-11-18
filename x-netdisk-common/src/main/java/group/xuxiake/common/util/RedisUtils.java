@@ -157,6 +157,14 @@ public class RedisUtils {
     }
 
     /**
+     * 仅在 key 不存在时写入，并设置毫秒级过期时间。
+     */
+    public boolean setIfAbsent(String key, Object value, long time) {
+        Boolean success = redisTemplate.opsForValue().setIfAbsent(key, value, time, TimeUnit.MILLISECONDS);
+        return Boolean.TRUE.equals(success);
+    }
+
+    /**
      * 递增
      *
      * @param key 键

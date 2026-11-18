@@ -26,6 +26,7 @@ import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
@@ -113,6 +114,15 @@ public class VerifyServiceImpl implements VerifyService {
     public Result sendCodeToPhone(String phone) {
 
         Result result = new Result();
+		if (StringUtils.isBlank(phone) || !phone.matches("^1\\d{10}$")) {
+			return Result.paramIsNull(result);
+		}
+		String rateLimitKey = "SMS_RATE:" + phone;
+		if (!redisUtils.setIfAbsent(rateLimitKey, Boolean.TRUE,
+				appConfiguration.getCustomConfiguration().getSmsSendInterval())) {
+			result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
+			return result;
+		}
         String smsCode = null;
         try {
             SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);

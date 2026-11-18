@@ -4,6 +4,7 @@ import group.xuxiake.common.entity.Page;
 import group.xuxiake.web.service.UserFriendMessageService;
 import group.xuxiake.common.entity.Result;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +27,7 @@ public class UserFriendMessageController {
      * 获取好友消息列表
      * @return
      */
-    @RequestMapping("/getFriendMessages")
+    @RequestMapping(value = "/getFriendMessages", method = RequestMethod.GET)
     public Result getFriendMessages(Page page, Integer friendId) {
 
         if (friendId == null) {
@@ -42,7 +43,7 @@ public class UserFriendMessageController {
      * @param file
      * @return
      */
-    @RequestMapping("/uploadImage")
+    @RequestMapping(value = "/uploadImage", method = RequestMethod.POST)
     public Result uploadImage(MultipartFile file) {
         return userFriendMessageService.uploadImage(file);
     }
@@ -52,7 +53,7 @@ public class UserFriendMessageController {
      * @param session
      * @return
      */
-    @RequestMapping("/getServer")
+    @RequestMapping(value = "/getServer", method = RequestMethod.GET)
     public Result getServer(HttpSession session) {
         return userFriendMessageService.getServer(session);
     }

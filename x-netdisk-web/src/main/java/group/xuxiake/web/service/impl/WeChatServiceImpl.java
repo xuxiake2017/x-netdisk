@@ -384,6 +384,9 @@ public class WeChatServiceImpl implements WeChatService {
                 return result;
             }
             String phone = param.getPhone();
+			if (!phone.matches("^1\\d{10}$")) {
+				return Result.paramIsNull(result);
+			}
             long current = new Date().getTime();
             long timestamp = Long.parseLong(param.get_timestamp());
             if (timestamp - current >= 20000 || current - timestamp >= 20000) {
@@ -399,6 +402,12 @@ public class WeChatServiceImpl implements WeChatService {
                 result.setMsg("签名不一致");
                 return result;
             }
+			String rateLimitKey = "SMS_RATE:" + phone;
+			if (!redisUtils.setIfAbsent(rateLimitKey, Boolean.TRUE,
+					appConfiguration.getCustomConfiguration().getSmsSendInterval())) {
+				result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
+				return result;
+			}
             SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);
             SendSmsVerifyCodeResponse response = smsSendResult.getResponse();
             String smsCode = smsSendResult.getCode();

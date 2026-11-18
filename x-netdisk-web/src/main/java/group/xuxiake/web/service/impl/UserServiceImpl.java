@@ -32,8 +32,11 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.vdurmont.emoji.EmojiParser;
@@ -67,6 +70,36 @@ public class UserServiceImpl implements UserService {
 	private AppConfiguration appConfiguration;
 	@Resource
 	private RedisUtils redisUtils;
+	@Resource(name = "emailTaskExecutor")
+	private TaskExecutor emailTaskExecutor;
+
+	private void sendRegistrationEmail(String email, String receiver, String key) {
+		Runnable submitTask = () -> submitRegistrationEmail(email, receiver, key);
+		if (TransactionSynchronizationManager.isSynchronizationActive()) {
+			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+				@Override
+				public void afterCommit() {
+					submitTask.run();
+				}
+			});
+			return;
+		}
+		submitTask.run();
+	}
+
+	private void submitRegistrationEmail(String email, String receiver, String key) {
+		try {
+			emailTaskExecutor.execute(() -> {
+				try {
+					EmailSendUtil.sendEmail(email, receiver, key);
+				} catch (Exception e) {
+					log.error("注册邮件发送失败: {}", email, e);
+				}
+			});
+		} catch (RuntimeException e) {
+			log.error("注册邮件任务提交失败: {}", email, e);
+		}
+	}
 
 	@Override
 	public User findByName(String userName) {
@@ -121,7 +154,7 @@ public class UserServiceImpl implements UserService {
 		user.setUserStatus(NetdiskConstant.USER_STATUS_NOT_VERIFY);
 
 		String key = UUID.randomUUID().toString();
-		EmailSendUtil.regNetDisk(user.getEmail(), user.getUsername(), key);
+		sendRegistrationEmail(user.getEmail(), user.getUsername(), key);
 
 		user.setPassword(PasswordEncoder.encode(user.getPassword(), user.getUsername()));
 		user.setAvatar(appConfiguration.getCustomConfiguration().getServerHost() + "/logo/default_avatar.gif");
@@ -174,9 +207,21 @@ public class UserServiceImpl implements UserService {
 	@Override
 	public Result update(User user) {
 		Result result = new Result();
-		if (user.getPassword() != null && !"".equals(user.getPassword())) {
-			user.setPassword(PasswordEncoder.encode(user.getPassword(), user.getUsername()));
+		User principal = (User) SecurityUtils.getSubject().getPrincipal();
+		if (principal == null || user == null) {
+			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+			return result;
 		}
+		User currentUser = userMapper.selectByPrimaryKey(principal.getId());
+		if (currentUser == null) {
+			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+			return result;
+		}
+		user.setId(currentUser.getId());
+		if (user.getPassword() != null && !"".equals(user.getPassword())) {
+			user.setPassword(PasswordEncoder.encode(user.getPassword(), currentUser.getUsername()));
+		}
+		user.setUsername(null);
 		user.setUsedMemory(null);
 		user.setTotalMemory(null);
 		user.setUserStatus(null);
@@ -363,7 +408,7 @@ public class UserServiceImpl implements UserService {
 
 		String key = UUID.randomUUID().toString();
 //		String key = "5af009c7-ac31-4f4c-b4d1-43c4acbf415d";
-		EmailSendUtil.regNetDisk(user.getEmail(), param.getEmail(), key);
+		sendRegistrationEmail(user.getEmail(), param.getEmail(), key);
 
 		user.setPassword(PasswordEncoder.encode(param.getPassword(), param.getEmail()));
 		userMapper.insertSelective(user);

@@ -32,6 +32,8 @@ public class CustomConfiguration {
 
 
     private static Integer verifySmsExpire;
+    @Value("${app.config.sms.sendInterval}")
+    private Long smsSendInterval;
     private static String accessKeyId;
     private static String accessKeySecret;
     private static String signName;

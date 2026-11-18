@@ -55,6 +55,17 @@ public class ShareFileServiceImpl implements ShareFileService {
 	@Resource
 	private FileMediaMapper fileMediaMapper;
 
+	private Integer getCurrentUserId() {
+		User principal = (User) SecurityUtils.getSubject().getPrincipal();
+		return principal == null ? null : principal.getId();
+	}
+
+	private Result forbidden() {
+		Result result = new Result();
+		result.setCode(NetdiskErrMsgConstant.FORBIDDEN);
+		return result;
+	}
+
 	/**
 	 * 创建分享文件
 	 * @param fileKey
@@ -67,6 +78,10 @@ public class ShareFileServiceImpl implements ShareFileService {
 		Result result = new Result();
 
 		UserFile fileUpload = userFileMapper.findFileByKey(fileKey);
+		Integer currentUserId = getCurrentUserId();
+		if (fileUpload == null || currentUserId == null || !currentUserId.equals(fileUpload.getUserId())) {
+			return forbidden();
+		}
 		Integer shareUserId = fileUpload.getUserId();
 		String shareId = RandomCodeUtil.getRandomShareId();
 		String sharePwd = RandomCodeUtil.getRandomSharePwd();
@@ -132,6 +147,10 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 		Result result = new Result();
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		if (user == null) {
+			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+			return result;
+		}
 		PageHelper.startPage(page.getPageNum(), page.getPageSize());
 		List<ShareFileShowList> list = fileShareMapper.findAllByUserId(user.getId(), page.getFileRealName());
 		PageInfo<ShareFileShowList> pageInfo = new PageInfo<>(list);
@@ -172,8 +191,11 @@ public class ShareFileServiceImpl implements ShareFileService {
 		if (id == null) {
 			return Result.paramIsNull(result);
 		}
-		FileShare shareFile = new FileShare();
-		shareFile.setId(id);
+		FileShare shareFile = fileShareMapper.selectByPrimaryKey(id);
+		Integer currentUserId = getCurrentUserId();
+		if (shareFile == null || currentUserId == null || !currentUserId.equals(shareFile.getShareUserId())) {
+			return forbidden();
+		}
 		shareFile.setShareStatus(NetdiskConstant.SHARE_STATUS_OF_DEL);
 		fileShareMapper.updateByPrimaryKeySelective(shareFile);
 
@@ -261,35 +283,14 @@ public class ShareFileServiceImpl implements ShareFileService {
 		//增加下载次数
 		this.addDownloadTimes(shareFile.getId());
 		String filePath = fileOrigin.getFilePath();
-		OutputStream out = null;
-		BufferedInputStream bis = null;
-		try {
-			bis = new BufferedInputStream(fastDFSClientWrapper.getInputStream(filePath));
+		try (OutputStream out = response.getOutputStream()) {
 			// 设置响应头，控制浏览器下载该文件
 			response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(userFile.getFileName(), "UTF-8"));
 			// 设置文件大小
 			response.addHeader("Content-Length", fileOrigin.getFileSize().toString());
-			out = response.getOutputStream();
-			byte buffer[] = new byte[1024];
-			int len = 0;
-			while ((len = bis.read(buffer)) > 0) {
-				out.write(buffer, 0, len);
-			}
+			fastDFSClientWrapper.downloadFile(filePath, out);
 		} catch (Exception e) {
 			log.error("文件下载失败", e);
-		} finally {
-			try {
-				if (bis!=null) {
-					// 关闭文件输入流
-					bis.close();
-				}
-				if (out!=null) {
-					// 关闭输出流
-					out.close();
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
 		}
 	}
 

@@ -6,8 +6,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 用于视音频转码的工具类
@@ -21,6 +23,33 @@ public class ConvertVideoUtil {
 	private static String QT_FASTSTART_PATH_OF_LINUX = "/usr/bin/./qt-faststart";
 	private static String FFMPEG_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\ffmpeg";
 	private static String QT_FASTSTART_PATH_OF_WINDOWS = "D:\\tools\\ffmpeg\\bin\\qt-faststart";
+	private static final long PROCESS_TIMEOUT_MINUTES = 30;
+
+	private static void executeCommand(List<String> command, String operation) {
+		Process process = null;
+		try {
+			process = new ProcessBuilder(command).start();
+			Thread errorReader = new PrintStream(process.getErrorStream());
+			Thread outputReader = new PrintStream(process.getInputStream());
+			errorReader.start();
+			outputReader.start();
+			if (!process.waitFor(PROCESS_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
+				process.destroyForcibly();
+				throw new IllegalStateException(operation + "超时");
+			}
+			if (process.exitValue() != 0) {
+				throw new IllegalStateException(operation + "失败，退出码：" + process.exitValue());
+			}
+		} catch (IOException e) {
+			throw new IllegalStateException(operation + "启动失败", e);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			if (process != null) {
+				process.destroyForcibly();
+			}
+			throw new IllegalStateException(operation + "被中断", e);
+		}
+	}
 
 	//判断当前运行环境
 	public static boolean isLinux(){
@@ -68,17 +97,9 @@ public class ConvertVideoUtil {
 		command.add("-vcodec");
 		command.add("h264");
 		command.add(paths[1]);
-		try {
-			//调用线程命令进行转码
-			Process videoProcess = new ProcessBuilder(command).start();
-			new PrintStream(videoProcess.getErrorStream()).start();
-			new PrintStream(videoProcess.getInputStream()).start();
-			videoProcess.waitFor();
-			//mp4格式文件转码后处理(将moov atom元数据移动到视频文件最前面，使视频能边缓存边播放)
-			qtFaststart(paths[1], paths[2]);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		executeCommand(command, "视频转码");
+		//mp4格式文件转码后处理(将moov atom元数据移动到视频文件最前面，使视频能边缓存边播放)
+		qtFaststart(paths[1], paths[2]);
 	}
 	public static void qtFaststart(String inputPath, String outPath){
 		
@@ -91,15 +112,7 @@ public class ConvertVideoUtil {
 		}
 		command.add(inputPath);
 		command.add(outPath);
-		Process qtProcess;
-		try {
-			qtProcess = new ProcessBuilder(command).start();
-			new PrintStream(qtProcess.getErrorStream()).start();
-			new PrintStream(qtProcess.getInputStream()).start();
-			qtProcess.waitFor();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		executeCommand(command, "MP4 faststart处理");
 	}
 	/**
 	 * 降低MP3码率
@@ -126,15 +139,7 @@ public class ConvertVideoUtil {
 		command.add("-f");
 		command.add("mp3");
 		command.add(paths[1]);
-		try {
-			//调用线程命令进行转码
-			Process process = new ProcessBuilder(command).start();
-			new PrintStream(process.getErrorStream()).start();
-			new PrintStream(process.getInputStream()).start();
-			process.waitFor();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		executeCommand(command, "音频转码");
 	}
 
 	/**
@@ -164,14 +169,7 @@ public class ConvertVideoUtil {
 		command.add("-y");
 		command.add(thumbnailPath);
 
-		try {
-			Process process = new ProcessBuilder(command).start();
-			new PrintStream(process.getErrorStream()).start();
-			new PrintStream(process.getInputStream()).start();
-			process.waitFor();
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-		}
+		executeCommand(command, "视频缩略图生成");
 
 	}
 }

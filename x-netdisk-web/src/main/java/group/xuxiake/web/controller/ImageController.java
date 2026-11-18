@@ -6,6 +6,7 @@ import group.xuxiake.web.service.ImageService;
 import group.xuxiake.common.entity.Result;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -24,7 +25,7 @@ public class ImageController {
 	/*
 	 * 得到图片列表
 	 */
-	@RequestMapping("/toImgList")
+	@RequestMapping(value = "/toImgList", method = RequestMethod.GET)
 	@ResponseBody
 	public Result toImgList(Page page) {
 		return imageService.toImgList(page);

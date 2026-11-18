@@ -5,6 +5,7 @@ import group.xuxiake.common.entity.UserFile;
 import group.xuxiake.web.service.FileService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,7 +32,7 @@ public class FileController {
 	 * @param file
 	 * @return
 	 */
-	@RequestMapping(value="/fileUpload")
+	@RequestMapping(value="/fileUpload", method = RequestMethod.POST)
 	@ResponseBody
 	public Result fileUplaod(Integer parentId, String md5Hex, Long lastModifiedDate, String fileRealName,  MultipartFile file) {
 		return fileService.fileUpload(parentId, md5Hex, lastModifiedDate, fileRealName, file);
@@ -40,7 +41,7 @@ public class FileController {
 	/*
 	 * 删除文件
 	 */
-	@RequestMapping(value="/deleteFile")
+	@RequestMapping(value="/deleteFile", method = RequestMethod.DELETE)
 	@ResponseBody
 	public Result deleteFile(String fileKey) {
 		return fileService.deleteFile(fileKey);
@@ -49,7 +50,7 @@ public class FileController {
 	/*
 	 * 下载文件
 	 */
-	@RequestMapping("/downLoad")
+	@RequestMapping(value = "/downLoad", method = RequestMethod.GET)
 	public void downloadFile(String fileKey) {
 
 		fileService.downLoad(fileKey);
@@ -60,7 +61,7 @@ public class FileController {
 	 * @param userFile
 	 * @return
 	 */
-	@RequestMapping(value="/reName")
+	@RequestMapping(value="/reName", method = RequestMethod.PUT)
 	@ResponseBody
 	public Result reName(UserFile userFile) {
 		return fileService.reName(userFile);
@@ -71,7 +72,7 @@ public class FileController {
 	 * @param parentId
 	 * @return
 	 */
-	@RequestMapping("/findPathname")
+	@RequestMapping(value = "/findPathname", method = RequestMethod.GET)
 	@ResponseBody
 	public Result findPathname(Integer parentId){
 
@@ -83,7 +84,7 @@ public class FileController {
 	 * @param fileId
 	 * @return
 	 */
-	@RequestMapping("findChildIds")
+	@RequestMapping(value = "findChildIds", method = RequestMethod.GET)
 	@ResponseBody
 	public Result findChildIds(Integer fileId) {
 		return fileService.findChildIds(fileId);
@@ -94,7 +95,7 @@ public class FileController {
 	 * @param fileId
 	 * @return
 	 */
-	@RequestMapping("getPathStore")
+	@RequestMapping(value = "getPathStore", method = RequestMethod.GET)
 	@ResponseBody
 	public Result getPathStore(Integer fileId) {
 		return fileService.getPathStore(fileId);
@@ -105,7 +106,7 @@ public class FileController {
 	 * @param id
 	 * @return
 	 */
-	@RequestMapping("findById")
+	@RequestMapping(value = "findById", method = RequestMethod.GET)
 	@ResponseBody
 	public Result findById(Integer id) {
 		return fileService.findById(id);
@@ -116,7 +117,7 @@ public class FileController {
 	 * @param fileKey
 	 * @return
 	 */
-	@RequestMapping("/getFileMediaInfo")
+	@RequestMapping(value = "/getFileMediaInfo", method = RequestMethod.GET)
 	@ResponseBody
 	public Result getFileMediaInfo(String fileKey) {
 		return fileService.getFileMediaInfo(fileKey);

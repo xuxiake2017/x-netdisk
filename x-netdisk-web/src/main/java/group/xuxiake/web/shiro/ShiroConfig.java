@@ -4,7 +4,6 @@ import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.web.filter.ShiroLoginFilter;
 import group.xuxiake.web.filter.VerifyUserFilter;
 import org.apache.shiro.authc.Authenticator;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.authc.pam.ModularRealmAuthenticator;
 import org.apache.shiro.authz.Authorizer;
 import org.apache.shiro.authz.ModularRealmAuthorizer;
@@ -12,6 +11,8 @@ import org.apache.shiro.cache.CacheManager;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.servlet.Cookie;
+import org.apache.shiro.web.servlet.SimpleCookie;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
@@ -60,12 +61,7 @@ public class ShiroConfig {
 
     @Bean
     public AutoLoginCredentialsMatcher autoLoginCredentialsMatcher() {
-        AutoLoginCredentialsMatcher autoLoginCredentialsMatcher = new AutoLoginCredentialsMatcher();
-        // 加密的算法
-        autoLoginCredentialsMatcher.setHashAlgorithmName("MD5");
-        // 加密的次数
-        autoLoginCredentialsMatcher.setHashIterations(1024);
-        return autoLoginCredentialsMatcher;
+        return new AutoLoginCredentialsMatcher();
     }
 
     //注入自定义的realm，告诉shiro如何获取用户信息来做登录或权限控制
@@ -105,6 +101,11 @@ public class ShiroConfig {
         SessionConfig sessionConfig = new SessionConfig();
         sessionConfig.setSessionDAO(this.redisSessionDAO());
         sessionConfig.setSessionValidationSchedulerEnabled(true);
+        SimpleCookie sessionCookie = new SimpleCookie("XNETDISK_SESSION");
+        sessionCookie.setHttpOnly(true);
+        sessionCookie.setSecure(appConfiguration.getSessionCookieSecure());
+        sessionCookie.setSameSite(Cookie.SameSiteOptions.LAX);
+        sessionConfig.setSessionIdCookie(sessionCookie);
         // 设置session超时时间半天，默认半小时
         sessionConfig.setGlobalSessionTimeout(appConfiguration.getGlobalSessionTimeout());
         return sessionConfig;
@@ -150,6 +151,10 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/user/registerApp", "anon");
         filterChainDefinitionMap.put("/verify/**", "anon");
         filterChainDefinitionMap.put("/user/createImg/**", "anon");
+        filterChainDefinitionMap.put("/share/shareFile", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/share/findAll", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/share/delete/*", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/share/saveToCloud", "ShiroLoginFilter");
         filterChainDefinitionMap.put("/share/**", "anon");
         filterChainDefinitionMap.put("/friendMessage/getServer", "anon");
         filterChainDefinitionMap.put("/wechat/loginAndRegister", "anon");
@@ -157,9 +162,6 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/wechat/getCaptcha", "anon");
         filterChainDefinitionMap.put("/wechat/verifyCaptcha", "anon");
         filterChainDefinitionMap.put("/wechat/sendSMSCaptcha", "anon");
-        filterChainDefinitionMap.put("/share/shareFile", "VerifyUserFilter");
-        filterChainDefinitionMap.put("/share/findAll", "VerifyUserFilter");
-        filterChainDefinitionMap.put("/share/delete/*", "VerifyUserFilter");
         filterChainDefinitionMap.put("/file/**", "VerifyUserFilter");
         filterChainDefinitionMap.put("/img/**", "VerifyUserFilter");
         filterChainDefinitionMap.put("/dir/**", "VerifyUserFilter");

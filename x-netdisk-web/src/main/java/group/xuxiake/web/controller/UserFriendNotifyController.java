@@ -3,6 +3,7 @@ package group.xuxiake.web.controller;
 import group.xuxiake.web.service.UserFriendNotifyService;
 import group.xuxiake.common.entity.Result;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -23,7 +24,7 @@ public class UserFriendNotifyController {
      * 获取好友通知
      * @return
      */
-    @RequestMapping("/getAll")
+    @RequestMapping(value = "/getAll", method = RequestMethod.GET)
     public Result getAllNotify() {
         return userFriendNotifyService.getAllNotify();
     }

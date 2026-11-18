@@ -26,20 +26,12 @@ public class SessionConfig extends DefaultWebSessionManager {
     protected Serializable getSessionId(ServletRequest request, ServletResponse response) {
 
         String id = WebUtils.toHttp(request).getHeader("X-Token");
-        String token = request.getParameter("X-Token");
-
         if (!StringUtils.isEmpty(id)) {
             // token
             request.setAttribute(ShiroHttpServletRequest.REFERENCED_SESSION_ID_SOURCE, "Stateless request");
             request.setAttribute(ShiroHttpServletRequest.REFERENCED_SESSION_ID, id);
             request.setAttribute(ShiroHttpServletRequest.REFERENCED_SESSION_ID_IS_VALID, Boolean.TRUE);
             return id;
-        } else if (!StringUtils.isEmpty(token)) {
-            // URL重写
-            request.setAttribute(ShiroHttpServletRequest.REFERENCED_SESSION_ID_SOURCE, "Stateless request");
-            request.setAttribute(ShiroHttpServletRequest.REFERENCED_SESSION_ID, token);
-            request.setAttribute(ShiroHttpServletRequest.REFERENCED_SESSION_ID_IS_VALID, Boolean.TRUE);
-            return token;
         } else {
             //否则按默认规则从cookie取sessionId
             return super.getSessionId(request, response);

@@ -1,6 +1,7 @@
 package group.xuxiake.web.configuration;
 
 import group.xuxiake.common.zookeeper.SubscribeZK;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -13,10 +14,14 @@ public class AppPostConstruct {
     private SubscribeZK subscribeZK;
     @Resource
     private AlicomMnsReceiveHandler alicomMnsReceiveHandler;
+    @Value("${app.config.sms.mnsEnabled:false}")
+    private boolean mnsEnabled;
     @PostConstruct
     public void start() {
         // 订阅事件（route server变动）
         subscribeZK.subscribeEvent();
-        alicomMnsReceiveHandler.start();
+        if (mnsEnabled) {
+            alicomMnsReceiveHandler.start();
+        }
     }
 }

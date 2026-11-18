@@ -32,8 +32,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -73,6 +76,79 @@ public class FileServiceImpl implements FileService {
 	private FileRecycleMapper fileRecycleMapper;
 	@Resource
 	private DocConverterUtil docConverterUtil;
+	@Resource(name = "mediaTaskExecutor")
+	private TaskExecutor mediaTaskExecutor;
+
+	private Integer getCurrentUserId() {
+		User principal = (User) SecurityUtils.getSubject().getPrincipal();
+		return principal == null ? null : principal.getId();
+	}
+
+	private UserFile findOwnedFileByKey(String fileKey) {
+		Integer userId = getCurrentUserId();
+		UserFile userFile = StringUtils.isEmpty(fileKey) ? null : userFileMapper.findFileByKey(fileKey);
+		return userFile != null && userId != null && userId.equals(userFile.getUserId()) ? userFile : null;
+	}
+
+	private UserFile findOwnedFileById(Integer fileId) {
+		Integer userId = getCurrentUserId();
+		UserFile userFile = fileId == null ? null : userFileMapper.selectByPrimaryKey(fileId);
+		return userFile != null && userId != null && userId.equals(userFile.getUserId()) ? userFile : null;
+	}
+
+	private boolean isOwnedDirectory(Integer parentId) {
+		if (parentId == null) {
+			return false;
+		}
+		if (parentId == -1) {
+			return true;
+		}
+		UserFile parent = findOwnedFileById(parentId);
+		return parent != null && Objects.equals(parent.getIsDir(), NetdiskConstant.FILE_IS_DIR);
+	}
+
+	private Result forbidden() {
+		Result result = new Result();
+		result.setCode(NetdiskErrMsgConstant.FORBIDDEN);
+		return result;
+	}
+
+	private void scheduleMediaTask(Runnable task, String[] cachePaths) {
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			submitMediaTask(task, cachePaths);
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				submitMediaTask(task, cachePaths);
+			}
+
+			@Override
+			public void afterCompletion(int status) {
+				if (status != TransactionSynchronization.STATUS_COMMITTED) {
+					deleteCacheFiles(cachePaths);
+				}
+			}
+		});
+	}
+
+	private void submitMediaTask(Runnable task, String[] cachePaths) {
+		try {
+			mediaTaskExecutor.execute(task);
+		} catch (RuntimeException e) {
+			deleteCacheFiles(cachePaths);
+			throw e;
+		}
+	}
+
+	private void deleteCacheFiles(String[] cachePaths) {
+		for (String path : cachePaths) {
+			if (path != null) {
+				FileUtils.deleteQuietly(new File(path));
+			}
+		}
+	}
 
 	/**
 	 * 检查文件MD5值是否在数据库存在
@@ -110,12 +186,21 @@ public class FileServiceImpl implements FileService {
 		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 
 		CustomConfiguration customConfiguration = appConfiguration.getCustomConfiguration();
+		FileOrigin fileOrigin = fileOriginMapper.findFileByMd5Hex(param.getMd5Hex());
+		if (fileOrigin == null) {
+			result.setCode(NetdiskErrMsgConstant.CHECKMD5_MD5_NOT_EXIST);
+			return result;
+		}
+		long fileSize = fileOrigin.getFileSize();
+		if (!isOwnedDirectory(param.getParentId())) {
+			return forbidden();
+		}
 
         // 检查文件大小
 		try {
 			// 普通用户
 			if (user.getUserStatus() == NetdiskConstant.USER_STATUS_NORMAL) {
-				if (param.getFileSize() > customConfiguration.getFileSizeMax()) {
+				if (fileSize > customConfiguration.getFileSizeMax()) {
 					result.setCode(NetdiskErrMsgConstant.CHECKMD5_OUT_OF_MEMORY_LIMIT);
 					result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.CHECKMD5_OUT_OF_MEMORY_LIMIT));
 					return result;
@@ -123,7 +208,7 @@ public class FileServiceImpl implements FileService {
 			}
 			// vip用户
 			if (user.getUserStatus() == NetdiskConstant.USER_STATUS_VIP) {
-				if (param.getFileSize() > customConfiguration.getVipFileSizeMax()) {
+				if (fileSize > customConfiguration.getVipFileSizeMax()) {
 					result.setCode(NetdiskErrMsgConstant.CHECKMD5_OUT_OF_MEMORY_LIMIT);
 					result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.CHECKMD5_OUT_OF_MEMORY_LIMIT));
 					return result;
@@ -134,16 +219,13 @@ public class FileServiceImpl implements FileService {
 			long totalMemory = user.getTotalMemory();
 			long usedMemory = user.getUsedMemory();
 			long availableMemory = totalMemory - usedMemory;
-			if (availableMemory < param.getFileSize()) {
+			if (availableMemory < fileSize) {
 				result.setCode(NetdiskErrMsgConstant.CHECKMD5_AVAIABLE_MEMORY_NOT_ENOUGH);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.CHECKMD5_AVAIABLE_MEMORY_NOT_ENOUGH));
 				return result;
 			}
 
-			// 根据前端传来的文件MD5值去数据库查找
-			FileOrigin fileOrigin = fileOriginMapper.findFileByMd5Hex(param.getMd5Hex());
-
-			usedMemory = usedMemory + param.getFileSize();
+			usedMemory = usedMemory + fileSize;
 			user.setUsedMemory(usedMemory);
 			userMapper.updateByPrimaryKey(user);
 
@@ -202,9 +284,19 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public Result reName(UserFile param) {
 		Result result = new Result();
+		if (param == null || StringUtils.isAnyBlank(param.getKey(), param.getFileName())) {
+			return Result.paramIsNull(result);
+		}
+		UserFile ownedFile = findOwnedFileByKey(param.getKey());
+		if (ownedFile == null) {
+			return forbidden();
+		}
+		param.setUserId(ownedFile.getUserId());
+		param.setParentId(ownedFile.getParentId());
+		param.setIsDir(ownedFile.getIsDir());
 
 		if (param.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
-			UserFile userFile = userFileMapper.findFileByKey(param.getKey());
+			UserFile userFile = ownedFile;
 			if (param.getFileName().equals(userFile.getFileName())) {
 				return result;
 			}
@@ -229,7 +321,11 @@ public class FileServiceImpl implements FileService {
 				}
 			}
 		}
-		userFileMapper.updateByKeySelective(param);
+		UserFile update = new UserFile();
+		update.setKey(ownedFile.getKey());
+		update.setFileName(param.getFileName());
+		update.setUpdateTime(new Date());
+		userFileMapper.updateByKeySelective(update);
 		return result;
 	}
 
@@ -252,7 +348,7 @@ public class FileServiceImpl implements FileService {
 			User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
 			User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 
-			if (file.isEmpty()) {
+			if (file == null || file.isEmpty()) {
 				result.setCode(NetdiskErrMsgConstant.UPLOAD_FILE_IS_NULL);
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.UPLOAD_FILE_IS_NULL));
 				return result;
@@ -268,6 +364,13 @@ public class FileServiceImpl implements FileService {
 			}
 			//文件大小
 			long fileSize = file.getSize();
+			CustomConfiguration customConfiguration = appConfiguration.getCustomConfiguration();
+			long maxFileSize = user.getUserStatus() == NetdiskConstant.USER_STATUS_VIP
+					? customConfiguration.getVipFileSizeMax() : customConfiguration.getFileSizeMax();
+			if (fileSize > maxFileSize) {
+				result.setCode(NetdiskErrMsgConstant.CHECKMD5_OUT_OF_MEMORY_LIMIT);
+				return result;
+			}
 			// 查询剩余空间
 			long totalMemory = user.getTotalMemory();
 			long usedMemory = user.getUsedMemory();
@@ -281,6 +384,9 @@ public class FileServiceImpl implements FileService {
 			Integer fileType = FileUtil.getFileType(fileExtName.toLowerCase());
 			if (parentId == null) {
 				parentId = -1;
+			}
+			if (!isOwnedDirectory(parentId)) {
+				return forbidden();
 			}
 			String filePath = fastDFSClientWrapper.uploadFile(file);
 			String fileKey = FileUtil.makeFileKey();
@@ -362,19 +468,22 @@ public class FileServiceImpl implements FileService {
 				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_POWERPOINT
 				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
 
-			byte[] fileBytes = fastDFSClientWrapper.getFileBytes(filePath);
-			if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
-				fileBytes = FileUtil.textEncodingConvert(fileBytes);
-			}
-			byte[] bytes = null;
-			try (InputStream in = new ByteArrayInputStream(fileBytes)) {
-				bytes = docConverterUtil.docToPDF(in, fileOrigin.getFileExtName());
-			}
-			try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);) {
+			byte[] bytes = fastDFSClientWrapper.downloadFile(filePath, inputStream -> {
+				if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
+					byte[] converted = FileUtil.textEncodingConvert(IOUtils.toByteArray(inputStream));
+					try (ByteArrayInputStream convertedInput = new ByteArrayInputStream(converted)) {
+						return docConverterUtil.docToPDF(convertedInput, fileOrigin.getFileExtName());
+					}
+				}
+				return docConverterUtil.docToPDF(inputStream, fileOrigin.getFileExtName());
+			});
+			if (bytes != null) {
+				try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
 				String previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, "pdf");
 				previewUrl = fdfsNginxServer + "/" + previewUrl;
 				fileOrigin.setPreviewUrl(previewUrl);
 				fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+				}
 			}
 		}
 
@@ -387,12 +496,18 @@ public class FileServiceImpl implements FileService {
 
 		//获得图片的信息（拍摄时间、宽、高）
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_PIC) {
-			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath)) {
-				Map<String, Object> imgInfo = ImageUtil.getImgInfo(is, lastModifiedDate);
+			try {
+				Map<String, Object> imgInfo = fastDFSClientWrapper.downloadFile(filePath, inputStream -> {
+					try {
+						return ImageUtil.getImgInfo(inputStream, lastModifiedDate);
+					} catch (ImageProcessingException e) {
+						throw new IOException(e);
+					}
+				});
 				fileMedia.setShootTime((Date) imgInfo.get("shootTime"));
 				fileMedia.setImgHeight((Integer) imgInfo.get("imgHeight"));
 				fileMedia.setImgWidth((Integer) imgInfo.get("imgWidth"));
-			} catch (ImageProcessingException e) {
+			} catch (Exception e) {
 				fileMedia.setShootTime(new Date(lastModifiedDate));
 				fileMedia.setImgHeight(1000);
 				fileMedia.setImgWidth(1000);
@@ -400,12 +515,16 @@ public class FileServiceImpl implements FileService {
 			String previewUrl = filePath;
 			ByteArrayOutputStream byteArrayOutputStream = null;
 			ByteArrayInputStream inputStream = null;
-			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath)) {
+			try {
 				//如果图片大小超过100kb，对图片进行缩略，否则不缩略
 				if (fileOrigin.getFileSize() >= 100 * 1024) {
-					byteArrayOutputStream = new ByteArrayOutputStream();
-					Thumbnails.of(is).size(1000, 1000).outputQuality(0.5D).toOutputStream(byteArrayOutputStream);
-					byte[] bytes = byteArrayOutputStream.toByteArray();
+					byte[] bytes = fastDFSClientWrapper.downloadFile(filePath, inputStreamFromStorage -> {
+						try (ByteArrayOutputStream thumbnailOutput = new ByteArrayOutputStream()) {
+							Thumbnails.of(inputStreamFromStorage).size(1000, 1000).outputQuality(0.5D)
+									.toOutputStream(thumbnailOutput);
+							return thumbnailOutput.toByteArray();
+						}
+					});
 					inputStream = new ByteArrayInputStream(bytes);
 					previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileOrigin.getFileExtName());
 				} else {
@@ -439,10 +558,7 @@ public class FileServiceImpl implements FileService {
 			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("mp4"));
 			String[] paths = {cachePathBefore, cachePathMiddle, cachePathAfter};
 
-			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath);
-				 FileOutputStream fos = new FileOutputStream(new File(cachePathBefore))) {
-				IOUtils.copy(is, fos);
-			}
+			fastDFSClientWrapper.downloadFile(filePath, new File(cachePathBefore));
 			// 获取视频分辨率时长信息
 			MultimediaInfo mi = new Encoder().getInfo(new File(paths[0]));
 			Long duration = mi.getDuration();
@@ -461,7 +577,8 @@ public class FileServiceImpl implements FileService {
 			fileMedia.setThumbnailUrl(fdfsNginxServer + "/" + thumbnailPath);
 			thumbnailCacheFile.delete();
 
-			new Thread(new VideoTransformHandler(fileOriginMapper, fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer, fileMedia)).start();
+			scheduleMediaTask(new VideoTransformHandler(fileOriginMapper, fastDFSClientWrapper, paths,
+					fileOrigin, fdfsNginxServer, fileMedia), paths);
 		}
 		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_MUSIC &&  "mp3".equals(fileOrigin.getFileExtName())) {
 			// lowKmps，降低mp3码率
@@ -469,10 +586,7 @@ public class FileServiceImpl implements FileService {
 			String cachePathBefore = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
 			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
 
-			try (InputStream is = fastDFSClientWrapper.getInputStream(filePath);
-				 FileOutputStream fos = new FileOutputStream(new File(cachePathBefore))) {
-				IOUtils.copy(is, fos);
-			}
+			fastDFSClientWrapper.downloadFile(filePath, new File(cachePathBefore));
 			String[] paths = {cachePathBefore,cachePathAfter};
 
 			ByteArrayOutputStream byteArrayOutputStream = null;
@@ -517,7 +631,8 @@ public class FileServiceImpl implements FileService {
 				}
 			}
 			//System.out.println("[音频开始降低码率]");
-			new Thread(new LowKbpsHandler(fileOriginMapper, fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer)).start();
+			scheduleMediaTask(new LowKbpsHandler(fileOriginMapper, fastDFSClientWrapper, paths,
+					fileOrigin, fdfsNginxServer), paths);
 		}
 		fileMediaMapper.insertSelective(fileMedia);
 	}
@@ -534,12 +649,17 @@ public class FileServiceImpl implements FileService {
 		Result result = new Result();
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 
-		if(StringUtils.isAnyEmpty(param.getFileName())){
+		if(param == null || StringUtils.isAnyEmpty(param.getFileName()) || !isOwnedDirectory(param.getParentId())){
+			if (param != null && !StringUtils.isAnyEmpty(param.getFileName())) {
+				return forbidden();
+			}
 			result.setCode(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL));
 			return result;
 		}
 		param.setUserId(user.getId());
+		param.setId(null);
+		param.setOriginId(null);
 
 		UserFile userFile = userFileMapper.findFileByRealName(param);
 		if(userFile != null) {
@@ -573,7 +693,10 @@ public class FileServiceImpl implements FileService {
 			return result;
 		}
 
-		UserFile userFile = userFileMapper.findFileByKey(fileKey);
+		UserFile userFile = findOwnedFileByKey(fileKey);
+		if (userFile == null) {
+			return forbidden();
+		}
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
 		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
@@ -648,7 +771,20 @@ public class FileServiceImpl implements FileService {
 	public Result moveFile(UserFile param) {
 
 		Result result = new Result();
-		UserFile userFile = userFileMapper.findFileByKey(param.getKey());
+		if (param == null || StringUtils.isEmpty(param.getKey()) || !isOwnedDirectory(param.getParentId())) {
+			return forbidden();
+		}
+		UserFile userFile = findOwnedFileByKey(param.getKey());
+		if (userFile == null) {
+			return forbidden();
+		}
+		if (Objects.equals(userFile.getIsDir(), NetdiskConstant.FILE_IS_DIR)
+				&& (Objects.equals(userFile.getId(), param.getParentId())
+				|| userFileMapper.findChildIds(userFile.getId()).contains(param.getParentId()))) {
+			result.setCode(NetdiskErrMsgConstant.MOVEFILE_FAILED);
+			result.setMsg("不能将文件夹移动到自身或其子目录");
+			return result;
+		}
 		String targetPatentFilePath = "/";
 		if (param.getParentId() != -1) {
             targetPatentFilePath = userFileMapper.findPathname(param.getParentId());
@@ -700,6 +836,9 @@ public class FileServiceImpl implements FileService {
 	public Result findPathname(Integer parentId) {
 
 		Result result = new Result();
+		if (!isOwnedDirectory(parentId)) {
+			return forbidden();
+		}
 		Map<String, Object> map = new HashMap<>();
 		map.put("parentId", parentId);
 		if (parentId == -1) {
@@ -718,42 +857,25 @@ public class FileServiceImpl implements FileService {
 	@Override
 	public void downLoad(String fileKey) {
 
-		UserFile userFile = userFileMapper.findFileByKey(fileKey);
+		UserFile userFile = findOwnedFileByKey(fileKey);
+		if (userFile == null) {
+			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+			return;
+		}
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
 		// 得到文件的真实名字
 		String fileRealName = userFile.getFileName();
 		String filePath = fileOrigin.getFilePath();
-		OutputStream out = null;
-		BufferedInputStream bis = null;
-		try {
-			bis = new BufferedInputStream(fastDFSClientWrapper.getInputStream(filePath));
+		try (OutputStream out = response.getOutputStream()) {
 			String fileName = URLEncoder.encode(fileRealName, "UTF-8");
 			fileName = fileName.replace("+", "%20");
 			// 设置响应头，控制浏览器下载该文件
 			response.setHeader("content-disposition", "attachment;filename=" + fileName);
 			// 设置文件大小
 			response.addHeader("Content-Length", fileOrigin.getFileSize().toString());
-			out = response.getOutputStream();
-			byte buffer[] = new byte[1024];
-			int len = -1;
-			while ((len = bis.read(buffer)) != -1) {
-				out.write(buffer, 0, len);
-			}
+			fastDFSClientWrapper.downloadFile(filePath, out);
 		} catch (Exception e) {
 			log.error("文件下载失败", e);
-		} finally {
-			try {
-				if (bis!=null) {
-					// 关闭文件输入流
-					bis.close();
-				}
-				if (out!=null) {
-					// 关闭输出流
-					out.close();
-				}
-			} catch (IOException e) {
-				log.error(e.getMessage(), e);
-			}
 		}
 	}
 
@@ -766,6 +888,9 @@ public class FileServiceImpl implements FileService {
 	public Result findChildIds(Integer fileId) {
 
 		Result result = new Result();
+		if (findOwnedFileById(fileId) == null) {
+			return forbidden();
+		}
 		List<Integer> childIds = userFileMapper.findChildIds(fileId);
 		result.setData(childIds);
 		return result;
@@ -780,6 +905,9 @@ public class FileServiceImpl implements FileService {
 	public Result getPathStore(Integer fileId) {
 
 		Result result = new Result();
+		if (findOwnedFileById(fileId) == null) {
+			return forbidden();
+		}
 
 		String path = userFileMapper.findIdPath(fileId);
 		String[] ids = path.split("/");
@@ -814,7 +942,10 @@ public class FileServiceImpl implements FileService {
 		if (id == null || id <= 0) {
 			return Result.paramIsNull(result);
 		}
-		UserFile userFile = userFileMapper.selectByPrimaryKey(id);
+		UserFile userFile = findOwnedFileById(id);
+		if (userFile == null) {
+			return forbidden();
+		}
 		result.setData(userFile);
 		return result;
 	}
@@ -828,6 +959,9 @@ public class FileServiceImpl implements FileService {
 	public Result getFileMediaInfo(String fileKey) {
 
 		Result result = new Result();
+		if (findOwnedFileByKey(fileKey) == null) {
+			return forbidden();
+		}
 		FileShowMedia fileShowMedia = fileMediaMapper.getFileMediaInfo(fileKey);
 		result.setData(fileShowMedia);
 		return result;

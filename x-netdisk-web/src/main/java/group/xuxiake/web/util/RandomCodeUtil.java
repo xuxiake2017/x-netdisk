@@ -1,6 +1,6 @@
 package group.xuxiake.web.util;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 /**
  * 产生随机码的工具类
@@ -8,6 +8,7 @@ import java.util.Random;
  *
  */
 public class RandomCodeUtil {
+	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private static final char[] CHARS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'q', 'w', 'e', 'r', 't',
 			'y', 'u', 'i', 'o', 'p', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'z', 'x', 'c', 'v', 'b', 'n', 'm',
@@ -18,10 +19,9 @@ public class RandomCodeUtil {
 	 * @return
 	 */
 	public static String getRandomCode(){
-		Random random = new Random();
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < 4; i++) {
-			int randomNum = random.nextInt(10);
+			int randomNum = RANDOM.nextInt(10);
 			sb.append(randomNum);
 		}
 		return sb.toString();
@@ -31,10 +31,9 @@ public class RandomCodeUtil {
 	 * @return
 	 */
 	public static String getRandomShareId(){
-		Random random = new Random();
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < 8; i++) {
-			int randomNum = random.nextInt(CHARS.length);
+			int randomNum = RANDOM.nextInt(CHARS.length);
 			sb.append(CHARS[randomNum]);
 		}
 		return sb.toString();
@@ -44,10 +43,9 @@ public class RandomCodeUtil {
 	 * @return
 	 */
 	public static String getRandomSharePwd(){
-		Random random = new Random();
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < 4; i++) {
-			int randomNum = random.nextInt(CHARS.length);
+			int randomNum = RANDOM.nextInt(CHARS.length);
 			sb.append(CHARS[randomNum]);
 		}
 		return sb.toString();

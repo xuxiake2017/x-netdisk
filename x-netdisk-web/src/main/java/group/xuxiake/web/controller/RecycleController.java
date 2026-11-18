@@ -6,6 +6,7 @@ import group.xuxiake.common.entity.Result;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -25,7 +26,7 @@ public class RecycleController {
 	/*
 	 * 得到回收站列表
 	 */
-	@RequestMapping("/toRecycleList")
+	@RequestMapping(value = "/toRecycleList", method = RequestMethod.GET)
 	@ResponseBody
 	public Result toRecycleList(Page page) {
 		return recycleService.toRecycleList(page);
@@ -37,7 +38,7 @@ public class RecycleController {
 	 * @param id
 	 * @return
 	 */
-	@RequestMapping(value="/delete/{id}")
+	@RequestMapping(value="/delete/{id}", method = RequestMethod.DELETE)
 	@ResponseBody
 	public Result delete(@PathVariable("id")Integer id) {
 		return recycleService.delete(id);
@@ -49,7 +50,7 @@ public class RecycleController {
 	 * @param fileKey
 	 * @return
 	 */
-	@RequestMapping(value="/reback")
+	@RequestMapping(value="/reback", method = RequestMethod.POST)
 	@ResponseBody
 	public Result reback(Integer recycleId, String fileKey) {
 		return recycleService.reback(recycleId, fileKey);

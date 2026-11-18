@@ -26,6 +26,7 @@ public class ShiroLoginFilter extends UserFilter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
 
+		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		response.setContentType("application/json;charset=UTF-8");
 		try(PrintWriter writer = response.getWriter()) {
 			Gson gson = new Gson();

@@ -51,6 +51,9 @@ public class EmailSendUtil {
         props.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
         props.setProperty("mail.smtp.socketFactory.fallback", "false");
         props.setProperty("mail.smtp.socketFactory.port", smtpPort);
+        props.setProperty("mail.smtp.connectiontimeout", "5000");
+        props.setProperty("mail.smtp.timeout", "10000");
+        props.setProperty("mail.smtp.writetimeout", "10000");
         
 
         // 2. 根据配置创建会话对象, 用于和邮件服务器交互
@@ -77,13 +80,16 @@ public class EmailSendUtil {
         //           (5) 如果以上几点都确定无误, 到邮件服务器网站查找帮助。
         //
         //    PS_03: 仔细看log, 认真看log, 看懂log, 错误原因都在log已说明。
-        transport.connect(myEmailAccount, myEmailPassword);
+        try {
+            transport.connect(myEmailAccount, myEmailPassword);
 
-        // 6. 发送邮件, 发到所有的收件地址, message.getAllRecipients() 获取到的是在创建邮件对象时添加的所有收件人, 抄送人, 密送人
-        transport.sendMessage(message, message.getAllRecipients());
-
-        // 7. 关闭连接
-        transport.close();
+            // 6. 发送邮件, 发到所有的收件地址, message.getAllRecipients() 获取到的是在创建邮件对象时添加的所有收件人, 抄送人, 密送人
+            transport.sendMessage(message, message.getAllRecipients());
+        } finally {
+            if (transport.isConnected()) {
+                transport.close();
+            }
+        }
 
     }
 	 public static MimeMessage createMimeMessage(Session session, String sendMail, String receiveMail, String receiver, String key) throws Exception {
@@ -118,29 +124,4 @@ public class EmailSendUtil {
 		return emailContent;
 		 
 	 }
-	 public static void regNetDisk(String receiveMail, String receiver, String key) {
-		new Thread(new EmailHandler(receiveMail, receiver, key)).start();
-	 }
-}
-
-class EmailHandler implements Runnable{
-
-    private String receiveMail;
-    private String receiver;
-    private String key;
-
-    public EmailHandler(String receiveMail, String receiver, String key) {
-        this.receiveMail = receiveMail;
-        this.receiver = receiver;
-        this.key = key;
-    }
-
-    @Override
-    public void run() {
-        try {
-            EmailSendUtil.sendEmail(receiveMail, receiver, key);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

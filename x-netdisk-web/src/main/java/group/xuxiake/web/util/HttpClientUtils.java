@@ -2,9 +2,10 @@ package group.xuxiake.web.util;
 
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -22,17 +23,21 @@ public class HttpClientUtils {
 
     public static JSONObject doPost(String url, JSONObject json) {
 
-        CloseableHttpClient httpclient = HttpClientBuilder.create().build();
-
         HttpPost post = new HttpPost(url);
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(5000)
+                .setConnectionRequestTimeout(5000)
+                .setSocketTimeout(10000)
+                .build();
+        post.setConfig(requestConfig);
         JSONObject response = null;
-        try {
-            String sendMsg = json.toJSONString();
-            StringEntity s = new StringEntity(sendMsg, "UTF-8");
-            s.setContentEncoding("UTF-8");
-            s.setContentType("application/json");//发送json数据需要设置contentType
-            post.setEntity(s);
-            HttpResponse res = httpclient.execute(post);
+        String sendMsg = json.toJSONString();
+        StringEntity s = new StringEntity(sendMsg, "UTF-8");
+        s.setContentEncoding("UTF-8");
+        s.setContentType("application/json");
+        post.setEntity(s);
+        try (CloseableHttpClient httpclient = HttpClientBuilder.create().build();
+             CloseableHttpResponse res = httpclient.execute(post)) {
             if(res.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
                 String result = EntityUtils.toString(res.getEntity(), "UTF-8");// 返回json格式：
                 response = JSONObject.parseObject(result);

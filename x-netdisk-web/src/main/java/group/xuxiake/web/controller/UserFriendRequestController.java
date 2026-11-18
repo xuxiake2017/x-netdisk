@@ -4,6 +4,7 @@ import group.xuxiake.common.entity.UserFriendRequest;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.web.service.UserFriendRequestService;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -26,7 +27,7 @@ public class UserFriendRequestController {
      * @param option 操作 1：同意；2：拒绝
      * @return
      */
-    @RequestMapping("/friendRequestOption")
+    @RequestMapping(value = "/friendRequestOption", method = RequestMethod.POST)
     public Result friendApplyForOption(Integer applicant, Integer option) {
 
         return userFriendRequestService.friendRequestOption(applicant, option);
@@ -37,7 +38,7 @@ public class UserFriendRequestController {
      * @param key 关键词
      * @return
      */
-    @RequestMapping("/searchFriend")
+    @RequestMapping(value = "/searchFriend", method = RequestMethod.GET)
     public Result searchFriend(String key) {
 
         return userFriendRequestService.searchFriend(key);
@@ -48,7 +49,7 @@ public class UserFriendRequestController {
      * @param param
      * @return
      */
-    @RequestMapping("/addFriendRequest")
+    @RequestMapping(value = "/addFriendRequest", method = RequestMethod.POST)
     public Result addFriendRequest(UserFriendRequest param) {
         return userFriendRequestService.addFriendRequest(param);
     }

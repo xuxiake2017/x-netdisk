@@ -6,6 +6,7 @@ import group.xuxiake.common.entity.wechat.LoginAndRegisterParam;
 import group.xuxiake.web.service.WeChatService;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -23,7 +24,7 @@ public class WeChatController {
      * @param param
      * @return
      */
-    @RequestMapping("/loginAndRegister")
+    @RequestMapping(value = "/loginAndRegister", method = RequestMethod.POST)
     public Result loginAndRegister (@RequestBody LoginAndRegisterParam param) {
         return this.weChatService.loginAndRegister(param);
     }
@@ -33,7 +34,7 @@ public class WeChatController {
      * @param code
      * @return
      */
-    @RequestMapping("/autoLogin")
+    @RequestMapping(value = "/autoLogin", method = RequestMethod.POST)
     public Result autoLogin (String code) {
         return this.weChatService.autoLogin(code);
     }
@@ -43,7 +44,7 @@ public class WeChatController {
      * @param uuid
      * @return
      */
-    @RequestMapping("/getCaptcha")
+    @RequestMapping(value = "/getCaptcha", method = RequestMethod.GET)
     public Result getCaptcha (String uuid) {
         return this.weChatService.getCaptcha(uuid);
     }
@@ -54,7 +55,7 @@ public class WeChatController {
      * @param captcha
      * @return
      */
-    @RequestMapping("/verifyCaptcha")
+    @RequestMapping(value = "/verifyCaptcha", method = RequestMethod.POST)
     public Result verifyCaptcha (String uuid, String captcha) {
         return this.weChatService.verifyCaptcha(uuid, captcha);
     }
@@ -63,7 +64,7 @@ public class WeChatController {
      * 发送短信验证码
      * @return
      */
-    @RequestMapping("/sendSMSCaptcha")
+    @RequestMapping(value = "/sendSMSCaptcha", method = RequestMethod.POST)
     public Result sendSMSCaptcha (@RequestBody WechatSendSMSCaptchaParam param) {
         return this.weChatService.sendSMSCaptcha(param);
     }
@@ -72,7 +73,7 @@ public class WeChatController {
      * 登出（解除绑定）
      * @return
      */
-    @RequestMapping("/logout")
+    @RequestMapping(value = "/logout", method = RequestMethod.POST)
     public Result logout(HttpSession session) {
         return this.weChatService.logout(session);
     }

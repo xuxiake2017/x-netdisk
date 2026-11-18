@@ -69,8 +69,12 @@ public class RecycleServiceImpl implements RecycleService {
 	public Result delete(Integer id) {
 
 		Result result = new Result();
-		FileRecycle recycle = new FileRecycle();
-		recycle.setRecycleId(id);
+		User principal = (User) SecurityUtils.getSubject().getPrincipal();
+		FileRecycle recycle = id == null ? null : recycleMapper.selectByPrimaryKey(id);
+		if (principal == null || recycle == null || !principal.getId().equals(recycle.getDeleteUserId())) {
+			result.setCode(NetdiskErrMsgConstant.FORBIDDEN);
+			return result;
+		}
 		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_DEL_FOREVER);
 		recycleMapper.updateByPrimaryKeySelective(recycle);
 
@@ -92,6 +96,14 @@ public class RecycleServiceImpl implements RecycleService {
 		Result result = new Result();
 		UserFile userFile = userFileMapper.findFileBySaveNameForReback(fileKey);
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		FileRecycle recycleRecord = recycleId == null ? null : recycleMapper.selectByPrimaryKey(recycleId);
+		if (userThreadContext == null || userFile == null || recycleRecord == null
+				|| !userThreadContext.getId().equals(userFile.getUserId())
+				|| !userThreadContext.getId().equals(recycleRecord.getDeleteUserId())
+				|| !userFile.getId().equals(recycleRecord.getFileId())) {
+			result.setCode(NetdiskErrMsgConstant.FORBIDDEN);
+			return result;
+		}
 		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());

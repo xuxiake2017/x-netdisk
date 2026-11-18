@@ -18,8 +18,10 @@ app:
       smtpPort: ${EMAIL_SMTP_PORT:465}
     # 发送短信
     sms:
+      mnsEnabled: ${SMS_MNS_ENABLED:false}
       # 短信验证超时时间(5分钟)
       verifySmsExpire: ${SMS_VERIFY_EXPIRE:300000}
+      sendInterval: ${SMS_SEND_INTERVAL:60000}
       accessKeyId: ${SMS_ACCESS_KEY_ID:}
       accessKeySecret: ${SMS_ACCESS_KEY_SECRET:}
       signName: ${SMS_SIGN_NAME:xxx}

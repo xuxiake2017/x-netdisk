@@ -1,9 +1,11 @@
 package group.xuxiake.web.util;
 
 import com.github.tobato.fastdfs.domain.fdfs.StorePath;
-import com.github.tobato.fastdfs.domain.proto.storage.DownloadByteArray;
+import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
+import com.github.tobato.fastdfs.domain.proto.storage.DownloadFileWriter;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,41 +38,26 @@ public class FastDFSClientWrapper {
         return storageClient.uploadFile(inputStream, fileSize, fileExtName, null).getFullPath();
     }
 
-    public String uploadFile(File file, String fileExtName) throws FileNotFoundException {
-        return this.uploadFile(new FileInputStream(file), file.length(), fileExtName);
+    public String uploadFile(File file, String fileExtName) throws IOException {
+        try (InputStream inputStream = new FileInputStream(file)) {
+            return this.uploadFile(inputStream, file.length(), fileExtName);
+        }
     }
 
-    /**
-     * 下载文件
-     * @param filePath 不带IP
-     * @return
-     */
-    public byte[] downloadFile(String filePath) {
-        DownloadByteArray downloadByteArray = new DownloadByteArray();
+	public <T> T downloadFile(String filePath, DownloadCallback<T> callback) {
         String groupName = filePath.substring(0, filePath.indexOf("/"));
         String path = filePath.substring(filePath.indexOf("/") + 1, filePath.length());
-        byte[] bytes = storageClient.downloadFile(groupName, path, downloadByteArray);
-        return bytes;
-    }
+		return storageClient.downloadFile(groupName, path, callback);
+	}
 
-    /**
-     * 得到输入流
-     * @param filePath 不带IP
-     * @return
-     */
-    public InputStream getInputStream(String filePath) {
-        byte[] bytes = this.downloadFile(filePath);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
-        return inputStream;
-    }
+	public void downloadFile(String filePath, OutputStream outputStream) {
+		this.downloadFile(filePath, inputStream -> {
+			IOUtils.copyLarge(inputStream, outputStream);
+			return null;
+		});
+	}
 
-    /**
-     * 获取文件bytes
-     * @param filePath
-     * @return
-     */
-    public byte[] getFileBytes(String filePath) {
-        byte[] bytes = this.downloadFile(filePath);
-        return bytes;
+	public void downloadFile(String filePath, File targetFile) {
+		this.downloadFile(filePath, new DownloadFileWriter(targetFile.getAbsolutePath()));
     }
 }

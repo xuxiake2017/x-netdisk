@@ -4,6 +4,7 @@ import group.xuxiake.common.entity.Page;
 import group.xuxiake.web.service.ListFileService;
 import group.xuxiake.common.entity.Result;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -20,7 +21,7 @@ public class ListFileController {
 	@Resource
 	private ListFileService listFileService;
 
-	@RequestMapping("/listFile")
+	@RequestMapping(value = "/listFile", method = RequestMethod.GET)
 	public Result listFile(Page page) {
 		return listFileService.listFile(page);
 	}
@@ -30,7 +31,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping("getDocumentList")
+	@RequestMapping(value = "getDocumentList", method = RequestMethod.GET)
 	public Result getDocumentList(Page page) {
 		return listFileService.getDocumentList(page);
 	}
@@ -40,7 +41,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping("getVideoList")
+	@RequestMapping(value = "getVideoList", method = RequestMethod.GET)
 	public Result getVideoList(Page page) {
 		return listFileService.getVideoList(page);
 	}
@@ -50,7 +51,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping("getPicList")
+	@RequestMapping(value = "getPicList", method = RequestMethod.GET)
 	public Result getPicList(Page page) {
 		return listFileService.getPicList(page);
 	}
@@ -60,7 +61,7 @@ public class ListFileController {
 	 * @param page
 	 * @return
 	 */
-	@RequestMapping("getAudioList")
+	@RequestMapping(value = "getAudioList", method = RequestMethod.GET)
 	public Result getAudioList(Page page) {
 		return listFileService.getAudioList(page);
 	}

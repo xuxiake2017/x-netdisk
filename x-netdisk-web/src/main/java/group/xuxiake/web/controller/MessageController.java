@@ -4,6 +4,7 @@ import group.xuxiake.web.service.MessageService;
 import group.xuxiake.common.entity.Result;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -18,7 +19,7 @@ public class MessageController {
      * 消息已读
      * @return
      */
-    @RequestMapping("/haveRead")
+    @RequestMapping(value = "/haveRead", method = RequestMethod.PUT)
     @ResponseBody
     public Result haveRead(Integer id) {
         return messageService.haveRead(id);

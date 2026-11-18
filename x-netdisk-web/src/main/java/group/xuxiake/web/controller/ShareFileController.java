@@ -7,6 +7,7 @@ import group.xuxiake.web.util.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -28,7 +29,7 @@ public class ShareFileController {
 	 * @param shareId
 	 * @return
 	 */
-	@RequestMapping("/getShareFile")
+	@RequestMapping(value = "/getShareFile", method = RequestMethod.GET)
 	@ResponseBody
 	public Result getShareFile(String shareId) {
 		
@@ -41,7 +42,7 @@ public class ShareFileController {
 	 * @param sharePwd 分享文件密码
 	 * @return
 	 */
-	@RequestMapping(value="/checkPwd")
+	@RequestMapping(value="/checkPwd", method = RequestMethod.POST)
 	@ResponseBody
 	public Result checkPwd(String shareId, String sharePwd) {
 
@@ -55,7 +56,7 @@ public class ShareFileController {
 	 * @param parentId
 	 * @return
 	 */
-	@RequestMapping(value="/getSubList")
+	@RequestMapping(value="/getSubList", method = RequestMethod.POST)
 	@ResponseBody
 	public Result getSubList(String shareId, String sharePwd, Integer parentId) {
 
@@ -65,7 +66,7 @@ public class ShareFileController {
 	/*
 	 * 下载分享文件
 	 */
-	@RequestMapping("/download")
+	@RequestMapping(value = "/download", method = RequestMethod.GET)
 	public void download(String shareId, String sharePwd, Integer fileId) {
 
 		shareFileService.download(shareId, sharePwd, fileId);
@@ -77,7 +78,7 @@ public class ShareFileController {
 	 * @param sharePwd
 	 * @return
 	 */
-	@RequestMapping("/saveToCloud")
+	@RequestMapping(value = "/saveToCloud", method = RequestMethod.POST)
 	@ResponseBody
 	public Result saveToCloud(String shareId, String sharePwd, Integer fileId) {
 
@@ -89,7 +90,7 @@ public class ShareFileController {
 	 * @param fileKey
 	 * @return
 	 */
-	@RequestMapping(value="/shareFile")
+	@RequestMapping(value="/shareFile", method = RequestMethod.POST)
 	@ResponseBody
 	public Result shareFile(String fileKey) {
 		return shareFileService.shareFile(fileKey);
@@ -98,7 +99,7 @@ public class ShareFileController {
 	/*
 	 * 到我分享的文件的列表，进行管理
 	 */
-	@RequestMapping("/findAll")
+	@RequestMapping(value = "/findAll", method = RequestMethod.GET)
 	@ResponseBody
 	public Result findAll(Page page) {
 
@@ -110,7 +111,7 @@ public class ShareFileController {
 	 * @param id
 	 * @return
 	 */
-	@RequestMapping(value="/delete/{id}")
+	@RequestMapping(value="/delete/{id}", method = RequestMethod.DELETE)
 	@ResponseBody
 	public Result deleteShare(@PathVariable("id")Integer id) {
 		return shareFileService.deleteShare(id);
@@ -123,7 +124,7 @@ public class ShareFileController {
 	 * @param fileId
 	 * @return
 	 */
-	@RequestMapping("/getFileMediaInfo")
+	@RequestMapping(value = "/getFileMediaInfo", method = RequestMethod.POST)
 	@ResponseBody
 	public Result getFileMediaInfo(String shareId, String sharePwd, Integer fileId) {
 		return shareFileService.getFileMediaInfo(shareId, sharePwd, fileId);

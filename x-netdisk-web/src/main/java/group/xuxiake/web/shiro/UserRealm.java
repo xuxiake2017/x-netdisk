@@ -6,22 +6,14 @@ import group.xuxiake.web.service.UserService;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
-import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.PrincipalCollection;
-import org.apache.shiro.subject.SimplePrincipalCollection;
-import org.apache.shiro.subject.support.DefaultSubjectContext;
-import org.apache.shiro.util.ByteSource;
-import org.crazycake.shiro.RedisSessionDAO;
 
 import javax.annotation.Resource;
-import java.util.Collection;
 
 public class UserRealm extends AuthorizingRealm {
 
 	@Resource
 	private UserService userService;
-	@Resource
-	private RedisSessionDAO redisSessionDAO;
 	@Resource
 	private UserMapper userMapper;
 
@@ -48,7 +40,6 @@ public class UserRealm extends AuthorizingRealm {
 			if (userByOpenid == null) {
 				throw new UnknownAccountException("未注册");
 			}
-			this.keepOneLogin(userByOpenid);
 			return new SimpleAuthenticationInfo(userByOpenid, null, null, realmName);
 		}
 
@@ -68,27 +59,7 @@ public class UserRealm extends AuthorizingRealm {
 
 
 
-		//盐
-		ByteSource credentialsSalt =  ByteSource.Util.bytes(user.getUsername());
-		SimpleAuthenticationInfo simpleAuthenticationInfo = 
-				new SimpleAuthenticationInfo(user, user.getPassword(), credentialsSalt, realmName);
-		this.keepOneLogin(user);
-		return simpleAuthenticationInfo;
-	}
-
-	private void keepOneLogin(User user) {
-		// 不允许用户重复登录
-		Collection<Session> sessions = redisSessionDAO.getActiveSessions();
-		for (Session session: sessions) {
-			SimplePrincipalCollection simplePrincipalCollection = (SimplePrincipalCollection) session.getAttribute(DefaultSubjectContext.PRINCIPALS_SESSION_KEY);
-			if (simplePrincipalCollection != null) {
-				User primaryPrincipal = (User) simplePrincipalCollection.getPrimaryPrincipal();
-				if (primaryPrincipal.getId().intValue() == user.getId().intValue()) {
-					// 删除session，即将其踢出系统
-					redisSessionDAO.delete(session);
-				}
-			}
-		}
+		return new SimpleAuthenticationInfo(user, user.getPassword(), realmName);
 	}
 
 }

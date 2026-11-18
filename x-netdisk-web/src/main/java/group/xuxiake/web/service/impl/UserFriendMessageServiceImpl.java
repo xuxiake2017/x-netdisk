@@ -114,10 +114,10 @@ public class UserFriendMessageServiceImpl implements UserFriendMessageService {
     public Result uploadImage(MultipartFile file) {
         Result result = new Result();
 
-        ByteArrayOutputStream baos = null;
-        BufferedInputStream bis = null;
         try {
-            InputStream is = file.getInputStream();
+            if (file == null || file.isEmpty()) {
+                return Result.paramIsNull(result);
+            }
             // 得到上传的文件名称，
             String originalFilename = file.getOriginalFilename();
             // 得到上传文件的扩展名
@@ -126,21 +126,16 @@ public class UserFriendMessageServiceImpl implements UserFriendMessageService {
             if (originalFilename.contains(".")) {
                 fileExtName = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
             }
-            bis = new BufferedInputStream(is);
-            baos = new ByteArrayOutputStream(1024);
-            byte[] temp = new byte[1024];
-            int len = -1;
-            while((len = bis.read(temp)) != -1) {
-                baos.write(temp, 0, len);
-            }
             String filePath = fastDFSClientWrapper.uploadFile(file);
 
             // 如果图片大小超过100kb，对图片进行缩略，否则不缩略
             if (fileSize >= 100*1024) {
-                is = fastDFSClientWrapper.getInputStream(filePath);
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                Thumbnails.of(is).size(500, 500).toOutputStream(byteArrayOutputStream);
-                byte[] bytes = byteArrayOutputStream.toByteArray();
+                byte[] bytes = fastDFSClientWrapper.downloadFile(filePath, inputStream -> {
+                    try (ByteArrayOutputStream thumbnailOutput = new ByteArrayOutputStream()) {
+                        Thumbnails.of(inputStream).size(500, 500).toOutputStream(thumbnailOutput);
+                        return thumbnailOutput.toByteArray();
+                    }
+                });
                 ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
                 filePath = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileExtName);
             }
@@ -149,20 +144,6 @@ public class UserFriendMessageServiceImpl implements UserFriendMessageService {
             result.setData(url);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
-            if (bis != null) {
-                try {
-                    bis.close();
-                } catch (IOException e1) {
-                    e.printStackTrace();
-                }
-            }
-            if (baos != null) {
-                try {
-                    baos.close();
-                } catch (IOException e1) {
-                    e.printStackTrace();
-                }
-            }
             result.setCode(NetdiskErrMsgConstant.EXCEPTION);
             return result;
         }

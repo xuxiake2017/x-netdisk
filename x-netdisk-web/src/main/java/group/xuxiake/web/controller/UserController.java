@@ -13,6 +13,7 @@ import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.SmsSendUtil;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,7 +38,7 @@ public class UserController {
 	/*
 	 * 用户登录
 	 */
-	@RequestMapping(value="/login")
+	@RequestMapping(value="/login", method = RequestMethod.POST)
 	public Result login(@RequestBody UserLoginParam param) {
 		return userService.login(param);
 	}
@@ -48,7 +49,7 @@ public class UserController {
 	// 	return new Result(result);
 	// }
 
-	@RequestMapping("/getInfo")
+	@RequestMapping(value = "/getInfo", method = RequestMethod.GET)
 	@ResponseBody
 	public Result getInfo() {
 		return userService.getInfo();
@@ -58,7 +59,7 @@ public class UserController {
 	 * 用户详情
 	 * @return
 	 */
-	@RequestMapping("/detail")
+	@RequestMapping(value = "/detail", method = RequestMethod.GET)
 	@ResponseBody
 	public Result detail() {
 		return userService.detail();
@@ -69,7 +70,7 @@ public class UserController {
 	 * @param user
 	 * @return
 	 */
-	@RequestMapping("/update")
+	@RequestMapping(value = "/update", method = RequestMethod.PUT)
 	@ResponseBody
 	public Result update(@RequestBody User user) {
 		return userService.update(user);
@@ -79,7 +80,7 @@ public class UserController {
 	 * 更新用户状态
 	 * @return
 	 */
-	@RequestMapping("/updatePrincipal")
+	@RequestMapping(value = "/updatePrincipal", method = RequestMethod.POST)
 	@ResponseBody
 	public Result updatePrincipal() {
 		userService.updatePrincipal();
@@ -91,7 +92,7 @@ public class UserController {
 	 * @param file
 	 * @return
 	 */
-	@RequestMapping("/uploadAvatar")
+	@RequestMapping(value = "/uploadAvatar", method = RequestMethod.POST)
 	@ResponseBody
 	public Result uploadAvatar(MultipartFile file) {
 		return userService.uploadAvatar(file);
@@ -102,7 +103,7 @@ public class UserController {
 	 * @param session
 	 * @return
 	 */
-	@RequestMapping("/logout")
+	@RequestMapping(value = "/logout", method = RequestMethod.POST)
 	@SysLogRecord(logType = LogType.LOGOUT, recordContent = false)
 	public Result logout(HttpSession session) {
 		session.invalidate();
@@ -112,7 +113,7 @@ public class UserController {
 	/*
 	 * 用户注册
 	 */
-	@RequestMapping("/register")
+	@RequestMapping(value = "/register", method = RequestMethod.POST)
 	@ResponseBody
 	public Result register(UserRegisteParam param) {
 		return userService.register(param);
@@ -123,7 +124,7 @@ public class UserController {
 	 * @param param
 	 * @return
 	 */
-	@RequestMapping("/registerApp")
+	@RequestMapping(value = "/registerApp", method = RequestMethod.POST)
 	@ResponseBody
 	public Result registerApp(UserAppRegisteParam param) {
 		return userService.registerApp(param);
@@ -132,7 +133,7 @@ public class UserController {
 	/*
 	 * 检查注册用户名是否可用
 	 */
-	@RequestMapping("/checkUserName")
+	@RequestMapping(value = "/checkUserName", method = RequestMethod.GET)
 	@ResponseBody
 	public Result checkUserName(String username) {
 		User user = userService.findByName(username);
@@ -147,7 +148,7 @@ public class UserController {
 	/*
 	 * 检查电话是否被注册
 	 */
-	@RequestMapping("/checkPhone")
+	@RequestMapping(value = "/checkPhone", method = RequestMethod.GET)
 	@ResponseBody
 	public Result checkPhone(String phone) {
 		User user = userService.findByPhone(phone);
@@ -162,7 +163,7 @@ public class UserController {
 	/*
 	 * 检查邮箱是否被注册
 	 */
-	@RequestMapping("/checkEmail")
+	@RequestMapping(value = "/checkEmail", method = RequestMethod.GET)
 	@ResponseBody
 	public Result checkEmail(String email) {
 		User user = userService.findByEmail(email);
@@ -177,7 +178,7 @@ public class UserController {
 	/*
 	 * 检查图片验证码
 	 */
-	@RequestMapping("/checkImgCode")
+	@RequestMapping(value = "/checkImgCode", method = RequestMethod.POST)
 	@ResponseBody
 	public Result checkImgCode(String imgCode, HttpSession session) {
 
@@ -189,7 +190,7 @@ public class UserController {
 	 * @param request
 	 * @param response
 	 */
-	@RequestMapping("/createImg")
+	@RequestMapping(value = "/createImg", method = RequestMethod.GET)
 	public void createImg(HttpServletRequest request, HttpServletResponse response) {
 
 		userService.createImg(request, response);

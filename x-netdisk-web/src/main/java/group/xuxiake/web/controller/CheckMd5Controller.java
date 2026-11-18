@@ -5,6 +5,7 @@ import group.xuxiake.web.service.FileService;
 import group.xuxiake.common.entity.Result;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.annotation.Resource;
@@ -25,7 +26,7 @@ public class CheckMd5Controller {
 	/*
 	 * 检查文件的md5值
 	 */
-	@RequestMapping(value = "/checkMd5")
+	@RequestMapping(value = "/checkMd5", method = RequestMethod.GET)
 	@ResponseBody
 	public Result checkMd5(String md5Hex) {
 		
@@ -37,7 +38,7 @@ public class CheckMd5Controller {
 	 * @param param
 	 * @return
 	 */
-	@RequestMapping("/uploadMD5")
+	@RequestMapping(value = "/uploadMD5", method = RequestMethod.POST)
 	@ResponseBody
 	public Result uploadMD5(FileUploadParamByMD5 param) {
 		return fileService.uploadMD5(param);

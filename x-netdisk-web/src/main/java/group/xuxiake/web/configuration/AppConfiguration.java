@@ -56,6 +56,16 @@ public class AppConfiguration {
     @Value("${jodconverter.local.portNumbers}")
     private String portNumbers;
 
+    @Value("${application.media.corePoolSize}")
+    private Integer mediaCorePoolSize;
+    @Value("${application.media.maxPoolSize}")
+    private Integer mediaMaxPoolSize;
+    @Value("${application.media.queueCapacity}")
+    private Integer mediaQueueCapacity;
+
+    @Value("${application.security.sessionCookieSecure}")
+    private Boolean sessionCookieSecure;
+
     @Resource
     private CustomConfiguration customConfiguration;
 }
