@@ -30,12 +30,15 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Map;
 
 @Slf4j
 @Service("verifyService")
 public class VerifyServiceImpl implements VerifyService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     @Resource
     private UserMapper userMapper;
@@ -158,5 +161,61 @@ public class VerifyServiceImpl implements VerifyService {
         result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED);
         result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED));
         return result;
+    }
+
+    @Override
+    public Result sendCodeToEmail(String email, String imgCode) {
+        Result result = new Result();
+        String normalizedEmail = EmailAddressUtil.normalize(email);
+        if (!EmailAddressUtil.isValid(normalizedEmail) || StringUtils.isBlank(imgCode)) {
+            return Result.paramIsNull(result);
+        }
+
+        String captchaKey = appConfiguration.getCaptchaPrefix() + session.getId();
+        String expectedImgCode = (String) redisUtils.get(captchaKey);
+        if (StringUtils.isBlank(expectedImgCode)) {
+            result.setCode(NetdiskErrMsgConstant.REGISTER_CAPTCHA_TIMEOUT);
+            return result;
+        }
+        if (!expectedImgCode.equalsIgnoreCase(imgCode.trim())) {
+            result.setCode(NetdiskErrMsgConstant.REGISTER_IMG_CODE_ERR);
+            return result;
+        }
+        if (!redisUtils.compareAndDelete(captchaKey, expectedImgCode)) {
+            result.setCode(NetdiskErrMsgConstant.REGISTER_CAPTCHA_TIMEOUT);
+            return result;
+        }
+
+        User query = new User();
+        query.setEmail(normalizedEmail);
+        if (userMapper.findByLoginInfo(query) != null) {
+            result.setCode(NetdiskErrMsgConstant.REGISTER_EMAIL_EXIST);
+            return result;
+        }
+
+        CustomConfiguration custom = appConfiguration.getCustomConfiguration();
+        String rateLimitKey = "EMAIL_REGISTER_RATE:" + normalizedEmail;
+        if (!redisUtils.setIfAbsent(rateLimitKey, Boolean.TRUE, custom.getEmailSendInterval())) {
+            result.setCode(NetdiskErrMsgConstant.SEND_EMAIL_CODE_BUSINESS_LIMIT_CONTROL);
+            return result;
+        }
+
+        String codeKey = "EMAIL_REGISTER_CODE:" + normalizedEmail;
+        String attemptsKey = "EMAIL_REGISTER_ATTEMPTS:" + normalizedEmail;
+        String code = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
+        try {
+            redisUtils.del(attemptsKey);
+            if (!redisUtils.set(codeKey, code, custom.getEmailCodeExpire())) {
+                throw new IllegalStateException("邮箱验证码写入 Redis 失败");
+            }
+            long expireMinutes = Math.max(1L, custom.getEmailCodeExpire() / 60000L);
+            EmailSendUtil.sendVerificationCode(normalizedEmail, code, expireMinutes);
+            return result;
+        } catch (Exception e) {
+            redisUtils.del(codeKey, attemptsKey, rateLimitKey);
+            log.error("注册邮箱验证码发送失败: {}", normalizedEmail, e);
+            result.setCode(NetdiskErrMsgConstant.SEND_EMAIL_CODE_FAILED);
+            return result;
+        }
     }
 }

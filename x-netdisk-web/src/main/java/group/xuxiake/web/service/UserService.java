@@ -5,7 +5,6 @@ import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
-import group.xuxiake.common.entity.param.UserRegisteParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,10 +36,10 @@ public interface UserService {
 
 	/**
 	 * 用户注册
-	 * @param user
+	 * @param param 注册参数
 	 * @return
 	 */
-	Result register(UserRegisteParam param);
+	Result register(UserAppRegisteParam param);
 
   	//根据id查找User
 	User findById(Integer id);

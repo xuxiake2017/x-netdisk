@@ -16,6 +16,10 @@ app:
       emailPassword: ${EMAIL_PASSWORD:}
       emailSMTPHost: ${EMAIL_SMTP_HOST:smtp.aliyun.com}
       smtpPort: ${EMAIL_SMTP_PORT:465}
+      # 注册邮箱验证码有效期、发送间隔（毫秒）及最大校验次数
+      codeExpire: ${EMAIL_CODE_EXPIRE:600000}
+      sendInterval: ${EMAIL_SEND_INTERVAL:60000}
+      maxVerifyAttempts: ${EMAIL_MAX_VERIFY_ATTEMPTS:5}
     # 发送短信
     sms:
       mnsEnabled: ${SMS_MNS_ENABLED:false}

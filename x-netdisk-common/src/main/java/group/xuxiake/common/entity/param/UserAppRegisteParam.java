@@ -11,7 +11,7 @@ public class UserAppRegisteParam {
 
     private String password;
 
-    private String imgCode;
+    private String emailCode;
 
     public String getEmail() {
         return email;
@@ -29,11 +29,11 @@ public class UserAppRegisteParam {
         this.password = password;
     }
 
-    public String getImgCode() {
-        return imgCode;
+    public String getEmailCode() {
+        return emailCode;
     }
 
-    public void setImgCode(String imgCode) {
-        this.imgCode = imgCode;
+    public void setEmailCode(String emailCode) {
+        this.emailCode = emailCode;
     }
 }

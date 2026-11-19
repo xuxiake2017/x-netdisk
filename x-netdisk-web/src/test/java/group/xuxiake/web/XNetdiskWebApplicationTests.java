@@ -5,21 +5,28 @@ import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import group.xuxiake.common.entity.FileMedia;
 import group.xuxiake.common.entity.FileOrigin;
 import group.xuxiake.common.entity.UserFile;
+import group.xuxiake.common.entity.param.UserAppRegisteParam;
+import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.mapper.FileMediaMapper;
 import group.xuxiake.common.mapper.FileOriginMapper;
 import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.common.util.RecyclePurgeHelper;
+import group.xuxiake.common.util.NicknameGenerator;
 import group.xuxiake.web.util.ConvertVideoUtil;
+import group.xuxiake.web.util.EmailAddressUtil;
 import group.xuxiake.web.util.FastDFSClientWrapper;
 import group.xuxiake.web.util.PasswordEncoder;
+import group.xuxiake.web.aspect.SysLogRecord;
+import group.xuxiake.web.service.impl.UserServiceImpl;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,6 +42,33 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldRecordRegistrationClientTypeForEachEndpoint() throws Exception {
+        Method webRegister = UserServiceImpl.class.getMethod("register", UserAppRegisteParam.class);
+        Method appRegister = UserServiceImpl.class.getMethod("registerApp", UserAppRegisteParam.class);
+
+        assertEquals(ClientType.WEB, webRegister.getAnnotation(SysLogRecord.class).clientType());
+        assertEquals(ClientType.H5, appRegister.getAnnotation(SysLogRecord.class).clientType());
+    }
+
+    @Test
+    void shouldGenerateFriendlyDefaultNickname() {
+        String nickname = NicknameGenerator.generate();
+
+        assertTrue(nickname.matches("(快乐|阳光|可爱|聪明|勇敢|活泼|温柔|开心)"
+                + "(小熊|小兔|小鹿|星星|月亮|鲸鱼|海豚|小猫)\\d{4}"));
+    }
+
+    @Test
+    void shouldNormalizeAndValidateRegistrationEmail() {
+        String email = EmailAddressUtil.normalize("  User.Name+tag@Example.COM  ");
+
+        assertEquals("user.name+tag@example.com", email);
+        assertTrue(EmailAddressUtil.isValid(email));
+        assertFalse(EmailAddressUtil.isValid("invalid-email"));
+        assertFalse(EmailAddressUtil.isValid("user@localhost"));
+    }
 
     @Test
     void shouldParseFfprobeVideoInfo() {

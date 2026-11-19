@@ -103,6 +103,9 @@ install.cmd
 | `MEDIA_CORE_POOL_SIZE` | `2` | 音视频转换核心线程数 |
 | `MEDIA_MAX_POOL_SIZE` | `4` | 音视频转换最大线程数 |
 | `MEDIA_QUEUE_CAPACITY` | `20` | 音视频转换等待队列长度 |
+| `EMAIL_CODE_EXPIRE` | `600000` | 注册邮箱验证码有效期，单位毫秒 |
+| `EMAIL_SEND_INTERVAL` | `60000` | 同一邮箱发送验证码的最短间隔，单位毫秒 |
+| `EMAIL_MAX_VERIFY_ATTEMPTS` | `5` | 单个邮箱验证码允许的最大校验次数 |
 | `SMS_SEND_INTERVAL` | `60000` | 同一手机号发送短信的最短间隔，单位毫秒 |
 | `SMS_MNS_ENABLED` | `false` | 是否启动阿里云短信回执监听 |
 
@@ -131,7 +134,7 @@ docker compose down
 
 数据卷默认会保留；如需同时删除数据卷，确认数据不再需要后再执行 `docker compose down -v`。
 
-从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql) 和 [sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql)。全新部署无需执行升级脚本。
+从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql) 和 [sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql)。全新部署无需执行升级脚本。添加邮箱唯一索引前如存在重复的非空邮箱，需要先人工确认并合并重复账号。
 
 ## 架构介绍
 
@@ -154,6 +157,8 @@ docker compose down
 - 新密码使用 BCrypt；旧 MD5 密码在用户成功登录后自动升级
 
 Web API 已明确限制 HTTP 方法：查询使用 `GET`，创建和提交使用 `POST`，更新使用 `PUT`，删除使用 `DELETE`。旧版前端如果曾使用 GET 调用修改类接口，需要同步调整请求方法。
+
+邮箱注册采用两步流程：先 `POST /verify/sendCodeToEmail` 提交 `email` 和 `imgCode`，再提交 `email`、`password` 和 `emailCode`；Web 端调用 `POST /user/register`，APP/H5 端调用 `POST /user/registerApp`。两个入口使用相同注册逻辑，邮箱验证码验证成功后才会创建账号，验证码只能使用一次。
 
 ### `x-netdisk-route`
 
@@ -189,6 +194,11 @@ Web API 已明确限制 HTTP 方法：查询使用 `GET`，创建和提交使用
 - [Emoji Java 转换与存储方案 vdurmont/emoji-java](https://github.com/vdurmont/emoji-java)
 
 ## 更新日志
+
+### 2026-11-19
+
+- APP/H5 注册改为邮箱验证码验证成功后创建账号，增加发送限流、校验次数限制和邮箱唯一约束
+- 默认头像改由客户端兜底展示，数据库 `avatar` 字段保持为 `NULL`
 
 ### 2026-11-18
 

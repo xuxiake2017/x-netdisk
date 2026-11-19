@@ -30,6 +30,15 @@ public class VerifyController {
 		return verifyService.sendCodeToPhone(phone);
 	}
 
+	/*
+	 * 发送注册邮箱验证码，图形验证码用于防止接口被滥用
+	 */
+	@RequestMapping(value = "/sendCodeToEmail", method = RequestMethod.POST)
+	@ResponseBody
+	public Result sendCodeToEmail(String email, String imgCode) {
+		return verifyService.sendCodeToEmail(email, imgCode);
+	}
+
 	@RequestMapping(value = "verifyEmail", method = RequestMethod.GET)
 	@ResponseBody
 	public Result verifyEmail(String key) {

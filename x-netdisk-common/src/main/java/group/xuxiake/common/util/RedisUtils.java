@@ -2,7 +2,9 @@ package group.xuxiake.common.util;
 
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.connection.ReturnType;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -78,6 +80,20 @@ public class RedisUtils {
                 redisTemplate.delete(key);
             }
         }
+    }
+
+    /**
+     * 值匹配时原子删除，适用于一次性验证码消费。
+     */
+    public boolean compareAndDelete(String key, Object expectedValue) {
+        final byte[] script = ("if redis.call('get', KEYS[1]) == ARGV[1] then "
+                + "return redis.call('del', KEYS[1]) else return 0 end").getBytes(StandardCharsets.UTF_8);
+        Long deleted = (Long) redisTemplate.execute((RedisCallback<Long>) connection -> {
+            byte[] rawKey = redisTemplate.getKeySerializer().serialize(key);
+            byte[] rawValue = redisTemplate.getValueSerializer().serialize(expectedValue);
+            return connection.eval(script, ReturnType.INTEGER, 1, rawKey, rawValue);
+        });
+        return deleted != null && deleted > 0;
     }
 
     /**

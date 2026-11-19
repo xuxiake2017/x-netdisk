@@ -5,7 +5,6 @@ import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
-import group.xuxiake.common.entity.param.UserRegisteParam;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.mapper.SysMessageMapper;
@@ -33,11 +32,9 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.task.TaskExecutor;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.vdurmont.emoji.EmojiParser;
@@ -72,37 +69,6 @@ public class UserServiceImpl implements UserService {
 	private AppConfiguration appConfiguration;
 	@Resource
 	private RedisUtils redisUtils;
-	@Resource(name = "emailTaskExecutor")
-	private TaskExecutor emailTaskExecutor;
-
-	private void sendRegistrationEmail(String email, String receiver, String key) {
-		Runnable submitTask = () -> submitRegistrationEmail(email, receiver, key);
-		if (TransactionSynchronizationManager.isSynchronizationActive()) {
-			TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-				@Override
-				public void afterCommit() {
-					submitTask.run();
-				}
-			});
-			return;
-		}
-		submitTask.run();
-	}
-
-	private void submitRegistrationEmail(String email, String receiver, String key) {
-		try {
-			emailTaskExecutor.execute(() -> {
-				try {
-					EmailSendUtil.sendEmail(email, receiver, key);
-				} catch (Exception e) {
-					log.error("注册邮件发送失败: {}", email, e);
-				}
-			});
-		} catch (RuntimeException e) {
-			log.error("注册邮件任务提交失败: {}", email, e);
-		}
-	}
-
 	@Override
 	public User findByName(String userName) {
 		User user = new User();
@@ -124,64 +90,11 @@ public class UserServiceImpl implements UserService {
 		return userMapper.findByLoginInfo(user);
 	}
 
-	@SysLogRecord(logType = LogType.REGISTER)
+	@SysLogRecord(logType = LogType.REGISTER, clientType = ClientType.WEB)
 	@Transactional
 	@Override
-	public Result register(UserRegisteParam param) {
-
-		Result result = new Result();
-		User user = new User();
-
-		String smsCodeFromRedis = (String) redisUtils.get("SMS_CODE:" + session.getId());
-		if(param.getVerifyInfo().contains("@")){
-			user.setEmail(param.getVerifyInfo());
-		} else {
-			user.setPhone(param.getVerifyInfo());
-			if (smsCodeFromRedis == null || "".equals(smsCodeFromRedis)) {
-				result.setCode(NetdiskErrMsgConstant.USER_REGISTER_SMS_CODE_TIME_OUT);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.USER_REGISTER_SMS_CODE_TIME_OUT));
-				return result;
-			}
-			if (!smsCodeFromRedis.equals(param.getSmsCode())) {
-				result.setCode(NetdiskErrMsgConstant.USER_REGISTER_SMS_CODE_ERR);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.USER_REGISTER_SMS_CODE_ERR));
-				return result;
-			}
-		}
-		Date regTime = new Date();
-		user.setUsername(param.getUsername());
-		user.setRegTime(regTime);
-		user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
-		user.setUsedMemory(0L);
-		user.setUserStatus(NetdiskConstant.USER_STATUS_NOT_VERIFY);
-
-		String key = UUID.randomUUID().toString();
-		sendRegistrationEmail(user.getEmail(), user.getUsername(), key);
-
-		user.setPassword(PasswordEncoder.encode(user.getPassword(), user.getUsername()));
-		user.setAvatar(appConfiguration.getCustomConfiguration().getServerHost() + "/logo/default_avatar.gif");
-		userMapper.insertSelective(user);
-
-		// 添加消息
-		SysMessage message = new SysMessage();
-		message.setType(NetdiskConstant.MESSAGE_TYPE_OF_WARNING);
-		message.setTitle("账户激活");
-		message.setDescription("您的账户尚未激活，激活链接已经发送到您邮箱，请尽快激活");
-		message.setUserId(user.getId());
-		messageMapper.insertSelective(message);
-
-		message.setType(NetdiskConstant.MESSAGE_TYPE_OF_SUCCESS);
-		message.setTitle("注册成功");
-		message.setDescription("恭喜您注册成功，网盘初始容量为" + new Double(appConfiguration.getCustomConfiguration().getTotalMemory()) / (1024*1024) + "M");
-		messageMapper.insertSelective(message);
-
-		if(param.getVerifyInfo().contains("@")){
-			Map<String, Object> map = new HashMap<>();
-			map.put("key", key);
-			map.put("id", user.getId());
-			redisUtils.set("EMAIL_KEY:" + key, map, appConfiguration.getCustomConfiguration().getVerifyEmailExpire());
-		}
-		return result;
+	public Result register(UserAppRegisteParam param) {
+		return registerByEmailCode(param);
 	}
 
 	@Override
@@ -371,73 +284,88 @@ public class UserServiceImpl implements UserService {
 	@Transactional
 	@Override
 	public Result registerApp(UserAppRegisteParam param) {
+		return registerByEmailCode(param);
+	}
 
+	private Result registerByEmailCode(UserAppRegisteParam param) {
 		Result result = new Result();
 
-		// 未加密原始密码
-		String noencodePassword = "";
-		if (StringUtils.isAnyEmpty(param.getEmail(), param.getPassword(), param.getImgCode())) {
+		if (param == null || StringUtils.isAnyBlank(param.getEmail(), param.getPassword(), param.getEmailCode())) {
 			return Result.paramIsNull(result);
 		}
-		noencodePassword = param.getPassword();
-		//判断验证码
-		String imgCodeRedis = (String) redisUtils.get(appConfiguration.getCaptchaPrefix() + session.getId());
-		if (StringUtils.isEmpty(imgCodeRedis)) {
-			result.setCode(NetdiskErrMsgConstant.REGISTER_CAPTCHA_TIMEOUT);
-			return result;
+		String email = EmailAddressUtil.normalize(param.getEmail());
+		if (!EmailAddressUtil.isValid(email)) {
+			return Result.paramIsNull(result);
 		}
-		if(!imgCodeRedis.equalsIgnoreCase(param.getImgCode())) {
-			result.setCode(NetdiskErrMsgConstant.REGISTER_IMG_CODE_ERR);
+		String noencodePassword = param.getPassword();
+
+		if (this.findByEmail(email) != null) {
+			result.setCode(NetdiskErrMsgConstant.REGISTER_EMAIL_EXIST);
 			return result;
 		}
 
-		if (this.findByEmail(param.getEmail()) != null) {
-			result.setCode(NetdiskErrMsgConstant.REGISTER_EMAIL_EXIST);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.REGISTER_EMAIL_EXIST));
+		String codeKey = "EMAIL_REGISTER_CODE:" + email;
+		String attemptsKey = "EMAIL_REGISTER_ATTEMPTS:" + email;
+		String expectedCode = (String) redisUtils.get(codeKey);
+		if (StringUtils.isBlank(expectedCode)) {
+			result.setCode(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_TIME_OUT);
 			return result;
 		}
+		long attempts = redisUtils.incr(attemptsKey, 1L);
+		if (attempts == 1L) {
+			long expireSeconds = Math.max(1L,
+					appConfiguration.getCustomConfiguration().getEmailCodeExpire() / 1000L);
+			redisUtils.expire(attemptsKey, expireSeconds);
+		}
+		if (attempts > appConfiguration.getCustomConfiguration().getEmailMaxVerifyAttempts()) {
+			redisUtils.del(codeKey);
+			result.setCode(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_ATTEMPTS_EXCEEDED);
+			return result;
+		}
+		String submittedCode = param.getEmailCode().trim();
+		if (!expectedCode.equals(submittedCode)) {
+			if (attempts >= appConfiguration.getCustomConfiguration().getEmailMaxVerifyAttempts()) {
+				redisUtils.del(codeKey);
+				result.setCode(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_ATTEMPTS_EXCEEDED);
+			} else {
+				result.setCode(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_ERR);
+			}
+			return result;
+		}
+		if (!redisUtils.compareAndDelete(codeKey, submittedCode)) {
+			result.setCode(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_TIME_OUT);
+			return result;
+		}
+		redisUtils.del(attemptsKey);
 
 		Date regTime = new Date();
 		User user = new User();
-		user.setUsername(param.getEmail());
-		user.setEmail(param.getEmail());
+		user.setUsername(email);
+		user.setEmail(email);
 		user.setRegTime(regTime);
 		user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
 		user.setUsedMemory(0L);
-		user.setUserStatus(NetdiskConstant.USER_STATUS_NOT_VERIFY);
-		user.setAvatar(appConfiguration.getCustomConfiguration().getServerHost() + "/logo/default_avatar.gif");
-		user.setNickName(RandomName.randomName(true, 3) + "_" + UUID.randomUUID().toString().substring(0, 6));
+		user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
+		user.setNickName(NicknameGenerator.generate());
 
-		String key = UUID.randomUUID().toString();
-//		String key = "5af009c7-ac31-4f4c-b4d1-43c4acbf415d";
-		sendRegistrationEmail(user.getEmail(), param.getEmail(), key);
+		user.setPassword(PasswordEncoder.encode(param.getPassword(), email));
+		try {
+			userMapper.insertSelective(user);
+		} catch (DuplicateKeyException e) {
+			result.setCode(NetdiskErrMsgConstant.REGISTER_EMAIL_EXIST);
+			return result;
+		}
 
-		user.setPassword(PasswordEncoder.encode(param.getPassword(), param.getEmail()));
-		userMapper.insertSelective(user);
-
-		// 添加消息
 		SysMessage message = new SysMessage();
-		message.setType(NetdiskConstant.MESSAGE_TYPE_OF_WARNING);
-		message.setTitle("账户激活");
-		message.setDescription("您的账户尚未激活，激活链接已经发送到您邮箱，请尽快激活");
-		message.setUserId(user.getId());
-		messageMapper.insertSelective(message);
-
-		message = new SysMessage();
 		message.setType(NetdiskConstant.MESSAGE_TYPE_OF_SUCCESS);
 		message.setTitle("注册成功");
 		message.setDescription("恭喜您注册成功，网盘初始容量为" + new Double(appConfiguration.getCustomConfiguration().getTotalMemory()) / (1024*1024) + "M");
 		message.setUserId(user.getId());
 		messageMapper.insertSelective(message);
 
-		Map<String, Object> map = new HashMap<>();
-		map.put("key", key);
-		map.put("id", user.getId());
-		redisUtils.set("EMAIL_KEY:" + key, map, appConfiguration.getCustomConfiguration().getVerifyEmailExpire().longValue());
-
 		// 注册完立即登录
 		Subject currentUser = SecurityUtils.getSubject();
-		AutoLoginToken token = new AutoLoginToken(param.getEmail(), noencodePassword, LoginType.PASSWORD);
+		AutoLoginToken token = new AutoLoginToken(email, noencodePassword, LoginType.PASSWORD);
 		currentUser.login(token);
 
 		User userNow = (User)SecurityUtils.getSubject().getPrincipal();

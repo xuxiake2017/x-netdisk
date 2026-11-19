@@ -16,4 +16,9 @@ public interface VerifyService {
      * @return
      */
     Result sendCodeToPhone(String phone);
+
+    /**
+     * 发送注册邮箱验证码
+     */
+    Result sendCodeToEmail(String email, String imgCode);
 }

@@ -6,7 +6,6 @@ import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
-import group.xuxiake.common.entity.param.UserRegisteParam;
 import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.web.aspect.SysLogRecord;
@@ -116,7 +115,7 @@ public class UserController {
 	 */
 	@RequestMapping(value = "/register", method = RequestMethod.POST)
 	@ResponseBody
-	public Result register(UserRegisteParam param) {
+	public Result register(UserAppRegisteParam param) {
 		return userService.register(param);
 	}
 

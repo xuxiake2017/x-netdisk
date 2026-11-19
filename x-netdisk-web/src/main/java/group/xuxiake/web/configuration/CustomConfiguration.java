@@ -29,6 +29,12 @@ public class CustomConfiguration {
     private static String emailPassword;
     private static String emailSMTPHost;
     private static String smtpPort;
+    @Value("${app.config.email.codeExpire}")
+    private Long emailCodeExpire;
+    @Value("${app.config.email.sendInterval}")
+    private Long emailSendInterval;
+    @Value("${app.config.email.maxVerifyAttempts}")
+    private Integer emailMaxVerifyAttempts;
 
 
     private static Integer verifySmsExpire;

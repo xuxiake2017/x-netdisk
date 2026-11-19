@@ -53,9 +53,14 @@ public class NetdiskErrMsgConstant {
 
 		errMessage.put(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL, "您操作太频繁了，请稍后再试");
 		errMessage.put(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED, "抱歉，验证码发送失败");
+		errMessage.put(NetdiskErrMsgConstant.SEND_EMAIL_CODE_BUSINESS_LIMIT_CONTROL, "您操作太频繁了，请稍后再试");
+		errMessage.put(NetdiskErrMsgConstant.SEND_EMAIL_CODE_FAILED, "抱歉，邮箱验证码发送失败");
 
 		errMessage.put(NetdiskErrMsgConstant.USER_REGISTER_SMS_CODE_TIME_OUT, "短信验证码超时，请重新发送");
 		errMessage.put(NetdiskErrMsgConstant.USER_REGISTER_SMS_CODE_ERR, "短信验证码错误");
+		errMessage.put(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_TIME_OUT, "邮箱验证码超时，请重新发送");
+		errMessage.put(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_ERR, "邮箱验证码错误");
+		errMessage.put(NetdiskErrMsgConstant.USER_REGISTER_EMAIL_CODE_ATTEMPTS_EXCEEDED, "邮箱验证码错误次数过多，请重新发送");
 
 		errMessage.put(NetdiskErrMsgConstant.VERIFY_TIME_OUT, "验证链接已经过期");
 
@@ -177,11 +182,21 @@ public class NetdiskErrMsgConstant {
 	public static final int SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL = 20081;
 	/*发送短信验证码-发送失败*/
 	public static final int SEND_SMS_CODE_FAILED = 20082;
+	/*发送邮箱验证码-操作太频繁*/
+	public static final int SEND_EMAIL_CODE_BUSINESS_LIMIT_CONTROL = 20083;
+	/*发送邮箱验证码-发送失败*/
+	public static final int SEND_EMAIL_CODE_FAILED = 20084;
 
 	/*用户注册-短信验证码超时*/
 	public static final int USER_REGISTER_SMS_CODE_TIME_OUT = 20091;
 	/*用户注册-短信验证码错误*/
 	public static final int USER_REGISTER_SMS_CODE_ERR = 20092;
+	/*用户注册-邮箱验证码超时*/
+	public static final int USER_REGISTER_EMAIL_CODE_TIME_OUT = 20093;
+	/*用户注册-邮箱验证码错误*/
+	public static final int USER_REGISTER_EMAIL_CODE_ERR = 20094;
+	/*用户注册-邮箱验证码错误次数过多*/
+	public static final int USER_REGISTER_EMAIL_CODE_ATTEMPTS_EXCEEDED = 20095;
 
 	/*邮箱验证-超时*/
 	public static final int VERIFY_TIME_OUT = 20101;

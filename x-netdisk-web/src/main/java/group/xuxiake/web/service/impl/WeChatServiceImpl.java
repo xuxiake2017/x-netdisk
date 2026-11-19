@@ -192,7 +192,7 @@ public class WeChatServiceImpl implements WeChatService {
             user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
             user.setUsedMemory(0L);
             user.setPhone(phone);
-            user.setEmail("");
+            user.setEmail(null);
             user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
             user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
             user.setNickName(wechatUserInfo.getNickName());
@@ -243,7 +243,7 @@ public class WeChatServiceImpl implements WeChatService {
             user.setTotalMemory(appConfiguration.getCustomConfiguration().getTotalMemory());
             user.setUsedMemory(0L);
             user.setPhone(phone);
-            user.setEmail("");
+            user.setEmail(null);
             user.setUserStatus(NetdiskConstant.USER_STATUS_NORMAL);
             user.setAvatar(appConfiguration.getFdfsNginxServer() + "/" + path);
             user.setNickName(wechatUserInfo.getNickName());
