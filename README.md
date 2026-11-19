@@ -10,7 +10,7 @@ x-netdisk 是一个前后端分离的分布式在线网盘系统，包含文件�
 
 - [netdisk-app](https://github.com/xuxiake2017/netdisk-app)
 - [x-netdisk-react-preview（待完善）](https://github.com/xuxiake2017/x-netdisk-react-preview)
-- [netdisk-mp-preview](https://github.com/xuxiake2017/x-netdisk-mp-preview)
+- [netdisk-mp-preview](https://github.com/xuxiake2017/netdisk-mp-preview)
 
 ## 技术栈
 
