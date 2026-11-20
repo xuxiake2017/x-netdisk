@@ -29,6 +29,26 @@ public class ShareFileShowInfo {
 
     private Integer isDir;
 
+    private Integer isPublic;
+
+    private Date overTime;
+
+    public Integer getIsPublic() {
+        return isPublic;
+    }
+
+    public void setIsPublic(Integer isPublic) {
+        this.isPublic = isPublic;
+    }
+
+    public Date getOverTime() {
+        return overTime;
+    }
+
+    public void setOverTime(Date overTime) {
+        this.overTime = overTime;
+    }
+
     public String getAvatar() {
         return avatar;
     }

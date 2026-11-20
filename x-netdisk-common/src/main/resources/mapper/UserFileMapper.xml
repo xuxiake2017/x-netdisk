@@ -332,6 +332,15 @@
     }
   </select>
 
+  <select id="findChildren" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from x_user_file
+    where user_id = #{userId}
+      and parent_id = #{parentId}
+      and status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    order by is_dir desc, file_name asc, id asc
+  </select>
+
   <select id="findRecycleChildIds" resultType="int" parameterType="int" statementType="CALLABLE">
     {
       call pro_cre_show_recycle_childlist(#{fileId,jdbcType=INTEGER,mode=IN})

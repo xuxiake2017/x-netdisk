@@ -257,14 +257,17 @@ CREATE TABLE `x_file_share`  (
   `share_user_id` int(11) NULL DEFAULT NULL COMMENT '分享文件用户id',
   `share_pwd` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '分享密码',
   `is_public` int(1) NULL DEFAULT 0 COMMENT '是否公开（公开不需要密码）1公开 0不公开',
-  `share_time` datetime(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '分享时间',
+  `share_time` datetime(0) NULL DEFAULT NULL COMMENT '分享时间',
   `over_time` datetime(0) NULL DEFAULT NULL COMMENT '过期时间（null表示永不过期）',
   `share_status` int(11) NULL DEFAULT NULL COMMENT '分享状态',
   `file_id` int(11) NULL DEFAULT NULL COMMENT '关联文件id（x_user_file）',
   `access_times` int(11) NULL DEFAULT NULL COMMENT '访问词次数',
   `download_times` int(11) NULL DEFAULT NULL COMMENT '下载次数',
   `save_times` int(11) NULL DEFAULT NULL COMMENT '保存次数',
-  PRIMARY KEY (`id`) USING BTREE
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `uk_file_share_share_id` (`share_id`) USING BTREE,
+  KEY `idx_file_share_user_status` (`share_user_id`, `share_status`) USING BTREE,
+  KEY `idx_file_share_file` (`file_id`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------

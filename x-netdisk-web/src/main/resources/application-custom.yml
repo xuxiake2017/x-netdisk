@@ -4,7 +4,7 @@ app:
     totalMemory: ${USER_TOTAL_MEMORY:104857600}
     fileSizeMax: ${FILE_SIZE_MAX:52428800}
     vipFileSizeMax: ${VIP_FILE_SIZE_MAX:524288000}
-    # 部署前端代码的公网地址（包含邮件链接中的logo以及默认头像）
+    # 部署前端代码的公网地址（用于分享链接和客户端来源识别）
     server_host: ${PUBLIC_SERVER_HOST:http://127.0.0.1:8181}
     # 回收站超时时间(测试1小时)
     recycleDelayTime: ${RECYCLE_DELAY_TIME:3600000}
@@ -20,6 +20,10 @@ app:
       codeExpire: ${EMAIL_CODE_EXPIRE:600000}
       sendInterval: ${EMAIL_SEND_INTERVAL:60000}
       maxVerifyAttempts: ${EMAIL_MAX_VERIFY_ATTEMPTS:5}
+    share:
+      # 分享提取码连续错误次数及锁定时间（毫秒）
+      maxPasswordAttempts: ${SHARE_MAX_PASSWORD_ATTEMPTS:5}
+      passwordLockTime: ${SHARE_PASSWORD_LOCK_TIME:600000}
     # 发送短信
     sms:
       mnsEnabled: ${SMS_MNS_ENABLED:false}

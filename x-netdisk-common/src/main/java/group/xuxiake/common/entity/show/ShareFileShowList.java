@@ -37,4 +37,8 @@ public class ShareFileShowList {
     private Integer fileType;
 
     private Integer isDir;
+
+    private Integer isPublic;
+
+    private Date overTime;
 }

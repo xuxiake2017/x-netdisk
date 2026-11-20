@@ -2,6 +2,7 @@ package group.xuxiake.web.controller;
 
 import group.xuxiake.common.entity.Page;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.param.ShareFileParam;
 import group.xuxiake.web.service.ShareFileService;
 import group.xuxiake.web.util.*;
 import org.springframework.stereotype.Controller;
@@ -66,7 +67,7 @@ public class ShareFileController {
 	/*
 	 * 下载分享文件
 	 */
-	@RequestMapping(value = "/download", method = RequestMethod.GET)
+	@RequestMapping(value = "/download", method = RequestMethod.POST)
 	public void download(String shareId, String sharePwd, Integer fileId) {
 
 		shareFileService.download(shareId, sharePwd, fileId);
@@ -87,13 +88,13 @@ public class ShareFileController {
 
 	/**
 	 * 创建分享文件
-	 * @param fileKey
+	 * @param param 分享参数
 	 * @return
 	 */
 	@RequestMapping(value="/shareFile", method = RequestMethod.POST)
 	@ResponseBody
-	public Result shareFile(String fileKey) {
-		return shareFileService.shareFile(fileKey);
+	public Result shareFile(ShareFileParam param) {
+		return shareFileService.shareFile(param);
 	}
 
 	/*

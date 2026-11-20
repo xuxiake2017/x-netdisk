@@ -186,12 +186,16 @@
     <result column="file_Size" property="fileSize" />
     <result column="file_Type" property="fileType" />
     <result column="is_Dir" property="isDir" />
+    <result column="is_public" property="isPublic" />
+    <result column="over_time" property="overTime" />
   </resultMap>
 
   <select id="getShareFileInfo" resultMap="shareInfoResultMap">
   	SELECT
   	  file_share.share_Id,
   	  file_share.share_Time,
+	  file_share.is_public,
+	  file_share.over_time,
   	  x_user.nick_name,
   	  x_user.avatar,
   	  user_file.id file_id,
@@ -209,6 +213,7 @@
   	file_share.share_Id = #{shareId}
   	AND file_share.file_id = user_file.id
   	AND file_share.share_status = ${@group.xuxiake.common.util.NetdiskConstant@SHARE_STATUS_OF_NORMAL}
+	AND (file_share.over_time IS NULL OR file_share.over_time > NOW())
   	AND user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
   	AND file_share.share_user_id = x_user.id
   </select>
@@ -236,6 +241,8 @@
     <result column="file_Size" property="fileSize" />
     <result column="file_Type" property="fileType" />
     <result column="is_Dir" property="isDir" />
+    <result column="is_public" property="isPublic" />
+    <result column="over_time" property="overTime" />
   </resultMap>
 
   <select id="findAllByUserId" resultMap="ResultMapShowList">
@@ -244,9 +251,12 @@
       file_share.share_Id,
       file_share.share_Pwd,
       file_share.share_Time,
+      file_share.is_public,
+      file_share.over_time,
       file_share.access_times,
       file_share.download_times,
       file_share.save_times,
+      file_share.file_id,
       user_file.`key` file_key,
       user_file.file_name,
       file_origin.file_size,
@@ -266,6 +276,21 @@
     </if>
     ORDER BY file_share.share_time DESC
   </select>
+  <update id="incrementAccessTimes">
+    update x_file_share
+    set access_times = COALESCE(access_times, 0) + 1
+    where id = #{id}
+  </update>
+  <update id="incrementDownloadTimes">
+    update x_file_share
+    set download_times = COALESCE(download_times, 0) + 1
+    where id = #{id}
+  </update>
+  <update id="incrementSaveTimes">
+    update x_file_share
+    set save_times = COALESCE(save_times, 0) + 1
+    where id = #{id}
+  </update>
   <delete id="deleteByFileIds" parameterType="list">
     delete from x_file_share
     where file_id in

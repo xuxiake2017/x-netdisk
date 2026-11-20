@@ -106,6 +106,8 @@ install.cmd
 | `EMAIL_CODE_EXPIRE` | `600000` | 注册邮箱验证码有效期，单位毫秒 |
 | `EMAIL_SEND_INTERVAL` | `60000` | 同一邮箱发送验证码的最短间隔，单位毫秒 |
 | `EMAIL_MAX_VERIFY_ATTEMPTS` | `5` | 单个邮箱验证码允许的最大校验次数 |
+| `SHARE_MAX_PASSWORD_ATTEMPTS` | `5` | 同一来源连续输入错误分享提取码的最大次数 |
+| `SHARE_PASSWORD_LOCK_TIME` | `600000` | 分享提取码错误次数超限后的锁定时间，单位毫秒 |
 | `SMS_SEND_INTERVAL` | `60000` | 同一手机号发送短信的最短间隔，单位毫秒 |
 | `SMS_MNS_ENABLED` | `false` | 是否启动阿里云短信回执监听 |
 
@@ -134,7 +136,7 @@ docker compose down
 
 数据卷默认会保留；如需同时删除数据卷，确认数据不再需要后再执行 `docker compose down -v`。
 
-从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql) 和 [sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql)。全新部署无需执行升级脚本。添加邮箱唯一索引前如存在重复的非空邮箱，需要先人工确认并合并重复账号。
+从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql)、[sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql) 和 [sql/upgrade_20261120_share_hardening.sql](sql/upgrade_20261120_share_hardening.sql)。全新部署无需执行升级脚本。添加唯一索引前如存在重复邮箱或重复分享 ID，需要先人工确认并清理重复数据。
 
 ## 架构介绍
 
@@ -157,6 +159,8 @@ docker compose down
 - 新密码使用 BCrypt；旧 MD5 密码在用户成功登录后自动升级
 
 Web API 已明确限制 HTTP 方法：查询使用 `GET`，创建和提交使用 `POST`，更新使用 `PUT`，删除使用 `DELETE`。旧版前端如果曾使用 GET 调用修改类接口，需要同步调整请求方法。
+
+创建分享使用 `POST /share/shareFile`，参数为 `fileKey`、`isPublic`（`0` 私密、`1` 公开）和可选的 `expireDays`（`0` 或不传表示永久，最大 365 天）。分享下载使用 `POST /share/download`，私密分享在请求体中提交 `sharePwd`，避免提取码出现在 URL 和访问日志中。普通下载和分享下载均支持文件夹流式打包为 ZIP。
 
 邮箱注册采用两步流程：先 `POST /verify/sendCodeToEmail` 提交 `email` 和 `imgCode`，再提交 `email`、`password` 和 `emailCode`；Web 端调用 `POST /user/register`，APP/H5 端调用 `POST /user/registerApp`。两个入口使用相同注册逻辑，邮箱验证码验证成功后才会创建账号，验证码只能使用一次。
 
@@ -194,6 +198,11 @@ Web API 已明确限制 HTTP 方法：查询使用 `GET`，创建和提交使用
 - [Emoji Java 转换与存储方案 vdurmont/emoji-java](https://github.com/vdurmont/emoji-java)
 
 ## 更新日志
+
+### 2026-11-20
+
+- 加固分享有效性、提取码限流、过期与公开分享、唯一约束和原子统计
+- 普通下载与分享下载支持文件夹流式打包 ZIP，分享下载改为 POST 避免提取码进入 URL
 
 ### 2026-11-19
 

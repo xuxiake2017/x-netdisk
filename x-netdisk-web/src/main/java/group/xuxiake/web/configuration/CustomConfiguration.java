@@ -35,6 +35,10 @@ public class CustomConfiguration {
     private Long emailSendInterval;
     @Value("${app.config.email.maxVerifyAttempts}")
     private Integer emailMaxVerifyAttempts;
+    @Value("${app.config.share.maxPasswordAttempts}")
+    private Integer shareMaxPasswordAttempts;
+    @Value("${app.config.share.passwordLockTime}")
+    private Long sharePasswordLockTime;
 
 
     private static Integer verifySmsExpire;

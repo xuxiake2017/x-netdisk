@@ -114,6 +114,8 @@ public interface UserFileMapper {
 
     List<UserFile> findByIds(List<Integer> ids);
 
+    List<UserFile> findChildren(@Param("userId") Integer userId, @Param("parentId") Integer parentId);
+
     int deleteByIds(List<Integer> ids);
 
     int countByOriginId(Integer originId);

@@ -4,6 +4,8 @@ import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import group.xuxiake.common.entity.FileMedia;
 import group.xuxiake.common.entity.FileOrigin;
+import group.xuxiake.common.entity.FileShare;
+import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.UserFile;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.enums.ClientType;
@@ -14,34 +16,193 @@ import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.common.util.RecyclePurgeHelper;
 import group.xuxiake.common.util.NicknameGenerator;
+import group.xuxiake.common.util.NetdiskErrMsgConstant;
+import group.xuxiake.common.util.RedisUtils;
+import group.xuxiake.web.configuration.AppConfiguration;
+import group.xuxiake.web.configuration.CustomConfiguration;
 import group.xuxiake.web.util.ConvertVideoUtil;
 import group.xuxiake.web.util.EmailAddressUtil;
 import group.xuxiake.web.util.FastDFSClientWrapper;
+import group.xuxiake.web.util.FileDownloadUtil;
 import group.xuxiake.web.util.PasswordEncoder;
 import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.service.impl.UserServiceImpl;
+import group.xuxiake.web.service.impl.ShareFileServiceImpl;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.mock.web.MockHttpServletResponse;
+
+import javax.servlet.http.HttpServletRequest;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldLockSharePasswordAfterTooManyFailures() {
+        FileShareMapper shareMapper = mock(FileShareMapper.class);
+        UserFileMapper userFileMapper = mock(UserFileMapper.class);
+        RedisUtils redisUtils = mock(RedisUtils.class);
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        CustomConfiguration custom = new CustomConfiguration();
+        custom.setShareMaxPasswordAttempts(2);
+        custom.setSharePasswordLockTime(600000L);
+        AppConfiguration appConfiguration = new AppConfiguration();
+        appConfiguration.setCustomConfiguration(custom);
+        ShareFileServiceImpl service = new ShareFileServiceImpl();
+        ReflectionTestUtils.setField(service, "fileShareMapper", shareMapper);
+        ReflectionTestUtils.setField(service, "userFileMapper", userFileMapper);
+        ReflectionTestUtils.setField(service, "redisUtils", redisUtils);
+        ReflectionTestUtils.setField(service, "request", request);
+        ReflectionTestUtils.setField(service, "appConfiguration", appConfiguration);
+
+        FileShare share = new FileShare();
+        share.setShareId("private");
+        share.setSharePwd("ABCD");
+        share.setShareUserId(10);
+        share.setFileId(1);
+        share.setIsPublic(0);
+        UserFile root = new UserFile();
+        root.setId(1);
+        root.setUserId(10);
+        root.setStatus(0);
+        when(shareMapper.findByShareId("private")).thenReturn(share);
+        when(userFileMapper.selectByPrimaryKey(1)).thenReturn(root);
+        when(request.getRemoteAddr()).thenReturn("127.0.0.1");
+        when(redisUtils.incr(anyString(), eq(1L))).thenReturn(1L, 2L);
+
+        Result first = service.checkPwd("private", "wrong");
+        Result second = service.checkPwd("private", "wrong");
+
+        assertEquals(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG, first.getCode());
+        assertEquals(NetdiskErrMsgConstant.SHARE_PWD_ATTEMPTS_EXCEEDED, second.getCode());
+        verify(redisUtils).expire(anyString(), eq(600L));
+    }
+
+    @Test
+    void shouldRejectExpiredAndRecycledSharesAndAllowPublicShare() {
+        FileShareMapper shareMapper = mock(FileShareMapper.class);
+        UserFileMapper userFileMapper = mock(UserFileMapper.class);
+        ShareFileServiceImpl service = new ShareFileServiceImpl();
+        ReflectionTestUtils.setField(service, "fileShareMapper", shareMapper);
+        ReflectionTestUtils.setField(service, "userFileMapper", userFileMapper);
+
+        FileShare expired = new FileShare();
+        expired.setFileId(1);
+        expired.setShareUserId(10);
+        expired.setOverTime(new Date(System.currentTimeMillis() - 1000));
+        when(shareMapper.findByShareId("expired")).thenReturn(expired);
+
+        FileShare recycled = new FileShare();
+        recycled.setFileId(2);
+        recycled.setShareUserId(10);
+        UserFile recycledRoot = new UserFile();
+        recycledRoot.setId(2);
+        recycledRoot.setUserId(10);
+        recycledRoot.setStatus(2);
+        when(shareMapper.findByShareId("recycled")).thenReturn(recycled);
+        when(userFileMapper.selectByPrimaryKey(2)).thenReturn(recycledRoot);
+
+        FileShare publicShare = new FileShare();
+        publicShare.setFileId(3);
+        publicShare.setShareUserId(10);
+        publicShare.setIsPublic(1);
+        UserFile publicRoot = new UserFile();
+        publicRoot.setId(3);
+        publicRoot.setUserId(10);
+        publicRoot.setStatus(0);
+        when(shareMapper.findByShareId("public")).thenReturn(publicShare);
+        when(userFileMapper.selectByPrimaryKey(3)).thenReturn(publicRoot);
+
+        Result expiredResult = service.checkPwd("expired", null);
+        Result recycledResult = service.checkPwd("recycled", null);
+        Result publicResult = service.checkPwd("public", null);
+
+        assertEquals(NetdiskErrMsgConstant.GET_SHARE_FILE_EXPIRED, expiredResult.getCode());
+        assertEquals(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST, recycledResult.getCode());
+        assertEquals(NetdiskErrMsgConstant.REQUEST_SUCCESS, publicResult.getCode());
+    }
+
+    @Test
+    void shouldStreamDirectoryAsZip() throws Exception {
+        UserFileMapper userFileMapper = mock(UserFileMapper.class);
+        FileOriginMapper fileOriginMapper = mock(FileOriginMapper.class);
+        FastDFSClientWrapper fastDFSClientWrapper = mock(FastDFSClientWrapper.class);
+        FileDownloadUtil downloadUtil = new FileDownloadUtil();
+        ReflectionTestUtils.setField(downloadUtil, "userFileMapper", userFileMapper);
+        ReflectionTestUtils.setField(downloadUtil, "fileOriginMapper", fileOriginMapper);
+        ReflectionTestUtils.setField(downloadUtil, "fastDFSClientWrapper", fastDFSClientWrapper);
+
+        UserFile root = new UserFile();
+        root.setId(1);
+        root.setUserId(10);
+        root.setFileName("资料");
+        root.setIsDir(0);
+        root.setStatus(0);
+        UserFile child = new UserFile();
+        child.setId(2);
+        child.setUserId(10);
+        child.setParentId(1);
+        child.setFileName("说明.txt");
+        child.setIsDir(1);
+        child.setStatus(0);
+        FileOrigin origin = new FileOrigin();
+        origin.setFilePath("group1/M00/readme.txt");
+
+        when(userFileMapper.findChildren(10, 1)).thenReturn(Arrays.asList(child));
+        when(fileOriginMapper.findByUserFileId(2)).thenReturn(origin);
+        doAnswer(invocation -> {
+            OutputStream output = invocation.getArgument(1);
+            output.write("zip-content".getBytes(StandardCharsets.UTF_8));
+            return null;
+        }).when(fastDFSClientWrapper).downloadFile(eq("group1/M00/readme.txt"), any(OutputStream.class));
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        downloadUtil.download(root, response);
+
+        String content = null;
+        try (ZipInputStream zip = new ZipInputStream(
+                new ByteArrayInputStream(response.getContentAsByteArray()), StandardCharsets.UTF_8)) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if ("资料/说明.txt".equals(entry.getName())) {
+                    ByteArrayOutputStream output = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[64];
+                    int length;
+                    while ((length = zip.read(buffer)) != -1) {
+                        output.write(buffer, 0, length);
+                    }
+                    content = new String(output.toByteArray(), StandardCharsets.UTF_8);
+                }
+            }
+        }
+
+        assertEquals("application/zip", response.getContentType());
+        assertEquals("zip-content", content);
+    }
 
     @Test
     void shouldRecordRegistrationClientTypeForEachEndpoint() throws Exception {

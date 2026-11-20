@@ -3,15 +3,16 @@ package group.xuxiake.web.service;
 import group.xuxiake.common.entity.FileShare;
 import group.xuxiake.common.entity.Page;
 import group.xuxiake.common.entity.Result;
+import group.xuxiake.common.entity.param.ShareFileParam;
 
 public interface ShareFileService {
 
 	/**
 	 * 创建分享文件
-	 * @param fileKey
+	 * @param param
 	 * @return
 	 */
-  	Result shareFile(String fileKey);
+	Result shareFile(ShareFileParam param);
 
 	/**
 	 * 获取分享文件

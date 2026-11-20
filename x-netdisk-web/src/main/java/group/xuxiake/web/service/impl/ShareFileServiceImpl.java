@@ -4,32 +4,32 @@ import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.gson.Gson;
 import group.xuxiake.common.entity.*;
+import group.xuxiake.common.entity.param.ShareFileParam;
 import group.xuxiake.common.entity.show.FileShowInfo;
 import group.xuxiake.common.entity.show.FileShowMedia;
 import group.xuxiake.common.mapper.*;
 import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
+import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.web.configuration.AppConfiguration;
 import group.xuxiake.common.entity.show.ShareFileShowInfo;
 import group.xuxiake.common.entity.show.ShareFileShowList;
 import group.xuxiake.web.service.ShareFileService;
-import group.xuxiake.web.service.UserService;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedInputStream;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.util.*;
 
 @Slf4j
@@ -42,18 +42,30 @@ public class ShareFileServiceImpl implements ShareFileService {
 	private UserFileMapper userFileMapper;
 	@Autowired
 	private HttpServletResponse response;
+	@Autowired
+	private HttpServletRequest request;
 	@Resource
 	private UserMapper userMapper;
 	@Resource
-	private UserService userService;
-	@Resource
-	private FastDFSClientWrapper fastDFSClientWrapper;
-	@Resource
 	private AppConfiguration appConfiguration;
 	@Resource
-	private FileOriginMapper fileOriginMapper;
-	@Resource
 	private FileMediaMapper fileMediaMapper;
+	@Resource
+	private RedisUtils redisUtils;
+	@Resource
+	private FileDownloadUtil fileDownloadUtil;
+
+	private static class ShareAccess {
+		private final FileShare share;
+		private final UserFile root;
+		private final Result error;
+
+		private ShareAccess(FileShare share, UserFile root, Result error) {
+			this.share = share;
+			this.root = root;
+			this.error = error;
+		}
+	}
 
 	private Integer getCurrentUserId() {
 		User principal = (User) SecurityUtils.getSubject().getPrincipal();
@@ -66,42 +78,125 @@ public class ShareFileServiceImpl implements ShareFileService {
 		return result;
 	}
 
+	private Result error(int code) {
+		Result result = new Result();
+		result.setCode(code);
+		return result;
+	}
+
+	private ShareAccess loadShare(String shareId, String sharePwd, boolean verifyPassword) {
+		if (shareId == null || shareId.trim().isEmpty()) {
+			return new ShareAccess(null, null, Result.paramIsNull(new Result()));
+		}
+		FileShare share = fileShareMapper.findByShareId(shareId.trim());
+		if (share == null) {
+			return new ShareAccess(null, null, error(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
+		}
+		if (share.getOverTime() != null && !share.getOverTime().after(new Date())) {
+			return new ShareAccess(null, null, error(NetdiskErrMsgConstant.GET_SHARE_FILE_EXPIRED));
+		}
+		UserFile root = userFileMapper.selectByPrimaryKey(share.getFileId());
+		if (root == null || !Integer.valueOf(NetdiskConstant.FILE_STATUS_OF_NORMAL).equals(root.getStatus())
+				|| !share.getShareUserId().equals(root.getUserId())) {
+			return new ShareAccess(null, null, error(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
+		}
+		if (verifyPassword && !Integer.valueOf(1).equals(share.getIsPublic())) {
+			if (sharePwd == null || sharePwd.isEmpty()) {
+				return new ShareAccess(null, null, Result.paramIsNull(new Result()));
+			}
+			String attemptsKey = passwordAttemptsKey(share.getShareId());
+			Object attemptsValue = redisUtils.get(attemptsKey);
+			long attempts = attemptsValue instanceof Number ? ((Number) attemptsValue).longValue() : 0L;
+			int maxAttempts = appConfiguration.getCustomConfiguration().getShareMaxPasswordAttempts();
+			if (attempts >= maxAttempts) {
+				return new ShareAccess(null, null, error(NetdiskErrMsgConstant.SHARE_PWD_ATTEMPTS_EXCEEDED));
+			}
+			if (!Objects.equals(share.getSharePwd(), sharePwd)) {
+				attempts = redisUtils.incr(attemptsKey, 1L);
+				if (attempts == 1L) {
+					long seconds = Math.max(1L,
+							appConfiguration.getCustomConfiguration().getSharePasswordLockTime() / 1000L);
+					redisUtils.expire(attemptsKey, seconds);
+				}
+				int code = attempts >= maxAttempts
+						? NetdiskErrMsgConstant.SHARE_PWD_ATTEMPTS_EXCEEDED
+						: NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG;
+				return new ShareAccess(null, null, error(code));
+			}
+			redisUtils.del(attemptsKey);
+		}
+		return new ShareAccess(share, root, null);
+	}
+
+	private String passwordAttemptsKey(String shareId) {
+		return "SHARE_PWD_ATTEMPTS:" + shareId + ":" + request.getRemoteAddr();
+	}
+
+	private UserFile resolveSharedFile(ShareAccess access, Integer fileId) {
+		if (fileId == null || fileId.equals(access.root.getId())) {
+			return access.root;
+		}
+		List<Integer> childIds = userFileMapper.findChildIds(access.root.getId());
+		if (!childIds.contains(fileId)) {
+			return null;
+		}
+		UserFile file = userFileMapper.selectByPrimaryKey(fileId);
+		return file != null
+				&& Integer.valueOf(NetdiskConstant.FILE_STATUS_OF_NORMAL).equals(file.getStatus())
+				&& access.share.getShareUserId().equals(file.getUserId()) ? file : null;
+	}
+
 	/**
 	 * 创建分享文件
-	 * @param fileKey
+	 * @param param
 	 * @return
 	 */
 	@Transactional
 	@Override
-	public Result shareFile(String fileKey) {
+	public Result shareFile(ShareFileParam param) {
 
 		Result result = new Result();
+		if (param == null || param.getFileKey() == null || param.getFileKey().trim().isEmpty()
+				|| (param.getIsPublic() != null && param.getIsPublic() != 0 && param.getIsPublic() != 1)
+				|| (param.getExpireDays() != null && (param.getExpireDays() < 0 || param.getExpireDays() > 365))) {
+			return Result.paramIsNull(result);
+		}
 
-		UserFile fileUpload = userFileMapper.findFileByKey(fileKey);
+		UserFile fileUpload = userFileMapper.findFileByKey(param.getFileKey());
 		Integer currentUserId = getCurrentUserId();
 		if (fileUpload == null || currentUserId == null || !currentUserId.equals(fileUpload.getUserId())) {
 			return forbidden();
 		}
 		Integer shareUserId = fileUpload.getUserId();
-		String shareId = RandomCodeUtil.getRandomShareId();
-		String sharePwd = RandomCodeUtil.getRandomSharePwd();
-
-		if (fileShareMapper.findByShareId(shareId) != null) {
-			shareId = RandomCodeUtil.getRandomShareId();
-		}
 		Date shareTime = new Date();
 		FileShare fileShare = new FileShare();
-		fileShare.setShareId(shareId);
-		fileShare.setSharePwd(sharePwd);
+		boolean publicShare = Integer.valueOf(1).equals(param.getIsPublic());
+		fileShare.setSharePwd(publicShare ? null : RandomCodeUtil.getRandomSharePwd());
+		fileShare.setIsPublic(publicShare ? 1 : 0);
 		fileShare.setShareUserId(shareUserId);
 		fileShare.setShareTime(shareTime);
+		if (param.getExpireDays() != null && param.getExpireDays() > 0) {
+			fileShare.setOverTime(new Date(shareTime.getTime() + param.getExpireDays() * 86400000L));
+		}
 		fileShare.setShareStatus(NetdiskConstant.SHARE_STATUS_OF_NORMAL);
 		fileShare.setFileId(fileUpload.getId());
 		fileShare.setAccessTimes(0);
 		fileShare.setDownloadTimes(0);
 		fileShare.setSaveTimes(0);
 
-		fileShareMapper.insertSelective(fileShare);
+		boolean inserted = false;
+		for (int i = 0; i < 10 && !inserted; i++) {
+			fileShare.setShareId(RandomCodeUtil.getRandomShareId());
+			try {
+				fileShareMapper.insertSelective(fileShare);
+				inserted = true;
+			} catch (DuplicateKeyException ignored) {
+				fileShare.setId(null);
+			}
+		}
+		if (!inserted) {
+			throw new IllegalStateException("生成唯一分享 ID 失败");
+		}
 
 		Map<String, Object> map = new HashMap<>();
 		map.put("shareFile", fileShare);
@@ -119,11 +214,12 @@ public class ShareFileServiceImpl implements ShareFileService {
 	@Override
 	public Result getShareFile(String shareId) {
 
-		Result result = new Result();
-		if (shareId ==  null || "".equals(shareId)) {
-			return Result.paramIsNull(result);
+		ShareAccess access = loadShare(shareId, null, false);
+		if (access.error != null) {
+			return access.error;
 		}
-		ShareFileShowInfo shareFileInfo = fileShareMapper.getShareFileInfo(shareId);
+		Result result = new Result();
+		ShareFileShowInfo shareFileInfo = fileShareMapper.getShareFileInfo(shareId.trim());
 		if (shareFileInfo == null) {
 			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
@@ -132,14 +228,14 @@ public class ShareFileServiceImpl implements ShareFileService {
 		result.setData(shareFileInfo);
 
 		// 增加访问次数
-		FileShare fileShare = fileShareMapper.findByShareId(shareId);
-		this.addAccessTimes(fileShare.getId());
+		this.addAccessTimes(access.share.getId());
 		return result;
 	}
 
 	@Override
 	public FileShare findByShareId(String shareId) {
-		return fileShareMapper.findByShareId(shareId);
+		ShareAccess access = loadShare(shareId, null, false);
+		return access.error == null ? access.share : null;
 	}
 
 	@Override
@@ -165,23 +261,17 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 	@Override
 	public Integer addAccessTimes(Integer id) {
-		FileShare fileShare = fileShareMapper.selectByPrimaryKey(id);
-		fileShare.setAccessTimes(fileShare.getAccessTimes() + 1);
-		return fileShareMapper.updateByPrimaryKeySelective(fileShare);
+		return fileShareMapper.incrementAccessTimes(id);
 	}
 
 	@Override
 	public Integer addDownloadTimes(Integer id) {
-		FileShare shareFile = fileShareMapper.selectByPrimaryKey(id);
-		shareFile.setDownloadTimes(shareFile.getDownloadTimes() + 1);
-		return fileShareMapper.updateByPrimaryKeySelective(shareFile);
+		return fileShareMapper.incrementDownloadTimes(id);
 	}
 
 	@Override
 	public Integer addSaveTimes(Integer id) {
-		FileShare shareFile = fileShareMapper.selectByPrimaryKey(id);
-		shareFile.setSaveTimes(shareFile.getSaveTimes() + 1);
-		return fileShareMapper.updateByPrimaryKeySelective(shareFile);
+		return fileShareMapper.incrementSaveTimes(id);
 	}
 
 	@Override
@@ -210,28 +300,8 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 */
 	@Override
 	public Result checkPwd(String shareId, String sharePwd) {
-
-		Result result = new Result();
-		if (shareId == null || "".equals(shareId) || sharePwd == null || "".equals(sharePwd)) {
-			return Result.paramIsNull(result);
-		}
-
-		FileShare shareFile = fileShareMapper.findByShareId(shareId);
-		if (shareFile == null) {
-			// 资源不存在
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
-			return result;
-		}
-
-		if (!shareFile.getSharePwd().equals(sharePwd)) {
-			// 密码错误
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
-			return result;
-		}
-
-		return result;
+		ShareAccess access = loadShare(shareId, sharePwd, true);
+		return access.error == null ? new Result() : access.error;
 	}
 
 	/**
@@ -241,56 +311,24 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 */
 	@Override
 	public void download(String shareId, String sharePwd, Integer fileId) {
-
-		Result result = new Result();
-		if (shareId == null || "".equals(shareId) || sharePwd == null || "".equals(sharePwd)) {
-			result = Result.paramIsNull(result);
-			this.printlnWithResponse(response, result);
+		ShareAccess access = loadShare(shareId, sharePwd, true);
+		if (access.error != null) {
+			this.printlnWithResponse(response, access.error);
 			return;
 		}
-
-		FileShare shareFile = fileShareMapper.findByShareId(shareId);
-		if (shareFile == null) {
-			// 资源不存在
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
-			this.printlnWithResponse(response, result);
+		UserFile userFile = resolveSharedFile(access, fileId);
+		if (userFile == null) {
+			this.printlnWithResponse(response, error(NetdiskErrMsgConstant.SHARE_FILE_DOWNLOAD_WRONG));
 			return;
 		}
-
-		if (!shareFile.getSharePwd().equals(sharePwd)) {
-			// 密码错误
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
-			this.printlnWithResponse(response, result);
-			return;
-		}
-		UserFile userFile = null;
-		if (fileId == null) {
-			userFile = userFileMapper.selectByPrimaryKey(shareFile.getFileId());
-		} else {
-			// 检查fileId是否合法
-			List<Integer> childIds = userFileMapper.findChildIds(shareFile.getFileId());
-			if (!childIds.contains(fileId)) {
-				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_DOWNLOAD_WRONG);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_DOWNLOAD_WRONG));
-				this.printlnWithResponse(response, result);
-				return;
-			}
-			userFile = userFileMapper.selectByPrimaryKey(fileId);
-		}
-		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
-		//增加下载次数
-		this.addDownloadTimes(shareFile.getId());
-		String filePath = fileOrigin.getFilePath();
-		try (OutputStream out = response.getOutputStream()) {
-			// 设置响应头，控制浏览器下载该文件
-			response.setHeader("content-disposition", "attachment;filename=" + URLEncoder.encode(userFile.getFileName(), "UTF-8"));
-			// 设置文件大小
-			response.addHeader("Content-Length", fileOrigin.getFileSize().toString());
-			fastDFSClientWrapper.downloadFile(filePath, out);
+		try {
+			fileDownloadUtil.download(userFile, response);
+			this.addDownloadTimes(access.share.getId());
 		} catch (Exception e) {
 			log.error("文件下载失败", e);
+			if (!response.isCommitted()) {
+				this.printlnWithResponse(response, error(NetdiskErrMsgConstant.EXCEPTION));
+			}
 		}
 	}
 
@@ -313,45 +351,18 @@ public class ShareFileServiceImpl implements ShareFileService {
 			return result;
 		}
 
-		if (shareId == null || "".equals(shareId) || sharePwd == null || "".equals(sharePwd)) {
-			return Result.paramIsNull(result);
+		ShareAccess access = loadShare(shareId, sharePwd, true);
+		if (access.error != null) {
+			return access.error;
+		}
+		FileShare fileShare = access.share;
+		UserFile fileForSave = resolveSharedFile(access, fileId);
+		if (fileForSave == null) {
+			return error(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED);
 		}
 
-		FileShare fileShare = fileShareMapper.findByShareId(shareId);
-
-		if (fileShare == null) {
-			// 资源不存在
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
-			return result;
-		}
-
-		if (!fileShare.getSharePwd().equals(sharePwd)) {
-			// 密码错误
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
-			return result;
-		}
-
-		// 检查fileId是否合法
-		if (fileId != null) {
-			List<Integer> childIds = userFileMapper.findChildIds(fileShare.getFileId());
-			if (!childIds.contains(fileId)) {
-				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_FAILED));
-				return result;
-			}
-		}
-
-		// 要保存的文件或者是要保存的最外层文件夹
-		UserFile fileForSave = null;
-		if (fileId != null) {
-			fileForSave = userFileMapper.selectByPrimaryKey(fileId);
-		} else {
-			fileForSave = userFileMapper.selectByPrimaryKey(fileShare.getFileId());
-		}
-
-		User user = (User) SecurityUtils.getSubject().getPrincipal();
+		User principal = (User) SecurityUtils.getSubject().getPrincipal();
+		User user = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
 
 		// 检查用户目录是否存在"我的资源"文件夹
 		UserFile userFileCheck = new UserFile();
@@ -395,7 +406,6 @@ public class ShareFileServiceImpl implements ShareFileService {
 		userFileMapper.getSumsizeDel(map);
 		long sumSize = map.get("sumsize") == null ? 0L : ((Number) map.get("sumsize")).longValue();
 
-		user = userMapper.selectByPrimaryKeyForUpdate(user.getId());
 		long totalMemory = user.getTotalMemory();
 		long usedMemory = user.getUsedMemory();
 		long availableMemory = totalMemory - usedMemory;
@@ -432,42 +442,23 @@ public class ShareFileServiceImpl implements ShareFileService {
 	@Override
 	public Result getSubList(String shareId, String sharePwd, Integer parentId) {
 
+		ShareAccess access = loadShare(shareId, sharePwd, true);
+		if (access.error != null) {
+			return access.error;
+		}
 		Result result = new Result();
-		if (shareId == null || "".equals(shareId) || sharePwd == null || "".equals(sharePwd)) {
-			return Result.paramIsNull(result);
-		}
-
-		FileShare shareFile = fileShareMapper.findByShareId(shareId);
-
-		if (shareFile == null) {
-			// 资源不存在
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
-			return result;
-		}
-
-		if (!shareFile.getSharePwd().equals(sharePwd)) {
-			// 密码错误
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
-			return result;
-		}
-
-		// 检查parentId是否合法
 		if (parentId != null) {
-			List<Integer> childIds = userFileMapper.findChildIds(shareFile.getFileId());
-			if (!childIds.contains(parentId)) {
-				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_LIST_WRONG);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_LIST_WRONG));
-				return result;
+			UserFile parent = resolveSharedFile(access, parentId);
+			if (parent == null || !Integer.valueOf(NetdiskConstant.FILE_IS_DIR).equals(parent.getIsDir())) {
+				return error(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_LIST_WRONG);
 			}
 		}
 
 		UserFile param = new UserFile();
 		if (parentId == null) {
-			param.setId(shareFile.getFileId());
+			param.setId(access.share.getFileId());
 		} else {
-			param.setUserId(shareFile.getShareUserId());
+			param.setUserId(access.share.getShareUserId());
 			param.setParentId(parentId);
 		}
 		List<FileShowInfo> files = userFileMapper.findAllFile(param, null, null);
@@ -489,34 +480,15 @@ public class ShareFileServiceImpl implements ShareFileService {
 	@Override
 	public Result getFileMediaInfo(String shareId, String sharePwd, Integer fileId) {
 
+		ShareAccess access = loadShare(shareId, sharePwd, true);
+		if (access.error != null) {
+			return access.error;
+		}
 		Result result = new Result();
-		if (shareId == null || "".equals(shareId) || sharePwd == null || "".equals(sharePwd)) {
-			return Result.paramIsNull(result);
+		UserFile userFile = resolveSharedFile(access, fileId);
+		if (userFile == null || Integer.valueOf(NetdiskConstant.FILE_IS_DIR).equals(userFile.getIsDir())) {
+			return error(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG);
 		}
-
-		FileShare fileShare = fileShareMapper.findByShareId(shareId);
-		if (fileShare == null) {
-			// 资源不存在
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST));
-			return result;
-		}
-		if (!fileShare.getSharePwd().equals(sharePwd)) {
-			// 密码错误
-			result.setCode(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG);
-			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG));
-			return result;
-		}
-		if (fileShare.getFileId().intValue() != fileId) {
-			// 检查fileId是否合法
-			List<Integer> childIds = userFileMapper.findChildIds(fileShare.getFileId());
-			if (!childIds.contains(fileId)) {
-				result.setCode(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG));
-				return result;
-			}
-		}
-		UserFile userFile = userFileMapper.selectByPrimaryKey(fileId);
 		FileShowMedia fileMediaInfo = fileMediaMapper.getFileMediaInfo(userFile.getKey());
 		result.setData(fileMediaInfo);
 		return result;
@@ -524,6 +496,21 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 	public void printlnWithResponse(HttpServletResponse response, Result result) {
 
+		if (!response.isCommitted()) {
+			response.reset();
+		}
+		if (NetdiskErrMsgConstant.EXCEPTION == result.getCode()) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		} else if (NetdiskErrMsgConstant.PARAM_IS_NULL == result.getCode()) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+		} else if (NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST == result.getCode()
+				|| NetdiskErrMsgConstant.GET_SHARE_FILE_EXPIRED == result.getCode()) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+		} else if (NetdiskErrMsgConstant.SHARE_PWD_ATTEMPTS_EXCEEDED == result.getCode()) {
+			response.setStatus(429);
+		} else {
+			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+		}
 		response.setContentType("application/json;charset=UTF-8");
 		try(PrintWriter writer = response.getWriter()) {
 			Gson gson = new Gson();
@@ -540,9 +527,16 @@ public class ShareFileServiceImpl implements ShareFileService {
 	 * @param userId 保存文件用户id
 	 * @param fileShare 分享文件
 	 */
-	public void saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, FileShare fileShare) {
+	private void saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, FileShare fileShare) {
 
 		UserFile userFile = userFileMapper.selectByPrimaryKey(oldParentId);
+		List<FileShowInfo> sourceChildren = Collections.emptyList();
+		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+			UserFile fileSearch = new UserFile();
+			fileSearch.setParentId(oldParentId);
+			fileSearch.setUserId(fileShare.getShareUserId());
+			sourceChildren = userFileMapper.findAllFile(fileSearch, null, null);
+		}
 		userFile.setId(null);
 		userFile.setKey(FileUtil.makeFileKey());
 		userFile.setCreateTime(new Date());
@@ -552,13 +546,9 @@ public class ShareFileServiceImpl implements ShareFileService {
 		userFileMapper.insertSelective(userFile);
 
 		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
-			// 为文件夹，继续递归
-			UserFile fileSearch = new UserFile();
-			fileSearch.setParentId(oldParentId);
-			fileSearch.setUserId(fileShare.getShareUserId());
-			List<FileShowInfo> files = userFileMapper.findAllFile(fileSearch, null, null);
-			if (files != null && files.size() > 0) {
-				for (FileShowInfo f : files) {
+			// 使用插入副本前的源目录快照，避免同一用户保存祖先目录时递归到新副本。
+			if (sourceChildren != null && !sourceChildren.isEmpty()) {
+				for (FileShowInfo f : sourceChildren) {
 					this.saveToCloudIteration(f.getId(), userFile.getId(), userId, fileShare);
 				}
 			}

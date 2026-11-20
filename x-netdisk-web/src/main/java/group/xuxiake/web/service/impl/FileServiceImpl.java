@@ -40,7 +40,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.SocketTimeoutException;
-import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -72,6 +71,8 @@ public class FileServiceImpl implements FileService {
 	private FileRecycleMapper fileRecycleMapper;
 	@Resource
 	private DocConverterUtil docConverterUtil;
+	@Resource
+	private FileDownloadUtil fileDownloadUtil;
 	@Resource(name = "mediaTaskExecutor")
 	private TaskExecutor mediaTaskExecutor;
 
@@ -812,20 +813,13 @@ public class FileServiceImpl implements FileService {
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			return;
 		}
-		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
-		// 得到文件的真实名字
-		String fileRealName = userFile.getFileName();
-		String filePath = fileOrigin.getFilePath();
-		try (OutputStream out = response.getOutputStream()) {
-			String fileName = URLEncoder.encode(fileRealName, "UTF-8");
-			fileName = fileName.replace("+", "%20");
-			// 设置响应头，控制浏览器下载该文件
-			response.setHeader("content-disposition", "attachment;filename=" + fileName);
-			// 设置文件大小
-			response.addHeader("Content-Length", fileOrigin.getFileSize().toString());
-			fastDFSClientWrapper.downloadFile(filePath, out);
+		try {
+			fileDownloadUtil.download(userFile, response);
 		} catch (Exception e) {
 			log.error("文件下载失败", e);
+			if (!response.isCommitted()) {
+				response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			}
 		}
 	}
 

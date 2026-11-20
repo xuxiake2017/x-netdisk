@@ -41,5 +41,11 @@ public interface FileShareMapper {
      */
     List<ShareFileShowList> findAllByUserId(@Param("userId") Integer userId, @Param("fileName") String fileName);
 
+    int incrementAccessTimes(Integer id);
+
+    int incrementDownloadTimes(Integer id);
+
+    int incrementSaveTimes(Integer id);
+
     int deleteByFileIds(List<Integer> fileIds);
 }

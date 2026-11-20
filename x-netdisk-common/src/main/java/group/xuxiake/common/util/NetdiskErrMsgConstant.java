@@ -73,6 +73,8 @@ public class NetdiskErrMsgConstant {
 
 		errMessage.put(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREID_NOT_EXIST, "您所访问的资源不存在");
 		errMessage.put(NetdiskErrMsgConstant.GET_SHARE_FILE_SHAREPWD_IS_WRONG, "分享密码错误");
+		errMessage.put(NetdiskErrMsgConstant.GET_SHARE_FILE_EXPIRED, "分享已过期");
+		errMessage.put(NetdiskErrMsgConstant.SHARE_PWD_ATTEMPTS_EXCEEDED, "提取码错误次数过多，请稍后再试");
 
 		errMessage.put(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_IS_NOT_AUTHENTICATED, "请先登录");
 		errMessage.put(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_AVAIABLE_MEMORY_NOT_ENOUGH, "您的剩余空间不足，请删除部分文件再试！");
@@ -219,6 +221,10 @@ public class NetdiskErrMsgConstant {
 	public static final int GET_SHARE_FILE_SHAREID_NOT_EXIST = 20131;
 	/*提取分享文件-分享密码错误*/
 	public static final int GET_SHARE_FILE_SHAREPWD_IS_WRONG = 20132;
+	/*提取分享文件-分享已过期*/
+	public static final int GET_SHARE_FILE_EXPIRED = 20133;
+	/*提取分享文件-提取码错误次数过多*/
+	public static final int SHARE_PWD_ATTEMPTS_EXCEEDED = 20134;
 
 	/*保存分享文件到网盘-未登录*/
 	public static final int SHARE_FILE_SAVE_TO_CLOUD_IS_NOT_AUTHENTICATED = 20141;
