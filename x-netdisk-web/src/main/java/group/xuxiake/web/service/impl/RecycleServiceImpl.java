@@ -10,6 +10,7 @@ import group.xuxiake.common.mapper.FileMediaMapper;
 import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.common.mapper.UserMapper;
+import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
 import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
@@ -56,6 +57,8 @@ public class RecycleServiceImpl implements RecycleService {
 	private FileShareMapper fileShareMapper;
 	@Resource
 	private FastDFSClientWrapper fastDFSClientWrapper;
+	@Resource
+	private StorageDeleteTaskMapper storageDeleteTaskMapper;
 
 	/**
 	 * 查询回收站列表
@@ -95,7 +98,8 @@ public class RecycleServiceImpl implements RecycleService {
 			return result;
 		}
 		List<String> storagePaths = RecyclePurgeHelper.purge(recycle.getRecycleId(), recycle.getFileId(),
-				userFileMapper, fileShareMapper, fileMediaMapper, fileOriginMapper, recycleMapper);
+				userFileMapper, fileShareMapper, fileMediaMapper, fileOriginMapper, recycleMapper,
+				storageDeleteTaskMapper);
 
 		// 事务提交后删除定时任务和无引用的 FastDFS 文件。
 		cancelRecycleJobAfterCommit(recycle, storagePaths);
@@ -125,14 +129,30 @@ public class RecycleServiceImpl implements RecycleService {
 		}
 		if (!Integer.valueOf(NetdiskConstant.RECYCLE_STATUS_FILE_DEL).equals(recycleRecord.getRecycleStatus())
 				|| !Integer.valueOf(NetdiskConstant.FILE_STATUS_OF_DEL).equals(userFile.getStatus())
-				|| recycleRecord.getOverTime() == null || recycleRecord.getOverTime().before(new Date())) {
+				|| recycleRecord.getOverTime() == null || !recycleRecord.getOverTime().after(new Date())) {
 			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
 			result.setMsg("回收站记录已处理或已过期");
 			return result;
 		}
 		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
-		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
+		// 原父目录可能已经被彻底删除；此时恢复到“我的资源”。
+		if (!Integer.valueOf(-1).equals(userFile.getParentId())) {
+			UserFile oldParentFile = userFileMapper.selectByPrimaryKey(userFile.getParentId());
+			if (oldParentFile == null
+					|| !user.getId().equals(oldParentFile.getUserId())
+					|| !Integer.valueOf(NetdiskConstant.FILE_STATUS_OF_NORMAL).equals(oldParentFile.getStatus())) {
+				result.setData(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR));
+				userFile.setParentId(findOrCreateResourcesDirectory(user).getId());
+			}
+		}
+
+		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR
+				&& userFileMapper.findFileByRealName(userFile) != null) {
+			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR);
+			return result;
+		}
 
 		// 检查剩余空间
 		Long usedMemory = user.getUsedMemory();
@@ -150,14 +170,13 @@ public class RecycleServiceImpl implements RecycleService {
 				sumSize = ((Number) map.get("sumsize")).longValue();
 			}
 
-			// 检查目标父目录下是否存在同名文件夹
-			UserFile fileSearch = userFileMapper.findFileByRealName(userFile);
-			if (fileSearch != null) {
-				result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_TARGET_DIR_EXIST_SAME_NAME_DIR));
+		} else {
+			FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
+			if (fileOrigin == null || fileOrigin.getFileSize() == null) {
+				result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+				result.setMsg("文件存储信息不存在");
 				return result;
 			}
-		} else {
 			sumSize = fileOrigin.getFileSize();
 		}
 		usedMemory = usedMemory + sumSize;
@@ -166,39 +185,6 @@ public class RecycleServiceImpl implements RecycleService {
 			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH));
 			return result;
-		}
-
-		//检查父目录是否被删除
-		if (userFile.getParentId() != -1) {
-			UserFile oldParentFile = userFileMapper.selectByPrimaryKey(userFile.getParentId());
-			if (oldParentFile.getStatus() != NetdiskConstant.FILE_STATUS_OF_NORMAL) {
-				result.setData(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR);
-				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_MAKE_RESOURCES_DIR));
-
-				//检查用户目录是否存在"我的资源"文件夹
-
-				UserFile userFileChek = new UserFile();
-				userFileChek.setUserId(user.getId());
-				userFileChek.setParentId(-1);
-				userFileChek.setFileName("我的资源");
-				// "我的资源"文件夹
-				UserFile fileResources = userFileMapper.findFileByRealName(userFileChek);
-				if(fileResources == null){
-
-					// 用户目录不存在"我的资源"文件夹
-					fileResources = new UserFile();
-					fileResources.setUserId(user.getId());
-					fileResources.setParentId(-1);
-					fileResources.setFileName("我的资源");
-					fileResources.setKey(FileUtil.makeFileKey());
-					fileResources.setCreateTime(new Date());
-					fileResources.setUpdateTime(new Date());
-					fileResources.setIsDir(NetdiskConstant.FILE_IS_DIR);
-					fileResources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
-					userFileMapper.insertSelective(fileResources);
-				}
-				userFile.setParentId(fileResources.getId());
-			}
 		}
 
 		//更新文件状态
@@ -213,18 +199,36 @@ public class RecycleServiceImpl implements RecycleService {
 		//更新用户所用空间
 		userMapper.updateByPrimaryKeySelective(user);
 
-		FileRecycle recycle = new FileRecycle();
-		recycle.setRecycleId(recycleId);
-		recycle.setRecycleStatus(NetdiskConstant.RECYCLE_STATUS_FILE_HAVE_BEEN_RESTORE);
-		//更新回收站
-		recycleMapper.updateByPrimaryKeySelective(recycle);
+		// 恢复成功后直接移除回收站记录，避免历史状态无限增长。
+		recycleMapper.deleteByPrimaryKey(recycleId);
 
 		// userService.updatePrincipal();
 
 		// 删除定时任务
-		cancelRecycleJobAfterCommit(recycle, null);
+		cancelRecycleJobAfterCommit(recycleRecord, null);
 
 		return result;
+	}
+
+	private UserFile findOrCreateResourcesDirectory(User user) {
+		UserFile query = new UserFile();
+		query.setUserId(user.getId());
+		query.setParentId(-1);
+		query.setFileName("我的资源");
+		UserFile resources = userFileMapper.findFileByRealName(query);
+		if (resources == null) {
+			resources = new UserFile();
+			resources.setUserId(user.getId());
+			resources.setParentId(-1);
+			resources.setFileName("我的资源");
+			resources.setKey(FileUtil.makeFileKey());
+			resources.setCreateTime(new Date());
+			resources.setUpdateTime(new Date());
+			resources.setIsDir(NetdiskConstant.FILE_IS_DIR);
+			resources.setStatus(NetdiskConstant.FILE_STATUS_OF_NORMAL);
+			userFileMapper.insertSelective(resources);
+		}
+		return resources;
 	}
 
 	private void cancelRecycleJobAfterCommit(FileRecycle recycle, List<String> storagePaths) {
@@ -241,8 +245,9 @@ public class RecycleServiceImpl implements RecycleService {
 					for (String storagePath : storagePaths) {
 						try {
 							fastDFSClientWrapper.deleteFile(storagePath);
+							storageDeleteTaskMapper.deleteByPath(storagePath);
 						} catch (RuntimeException e) {
-							log.error("删除 FastDFS 文件失败: {}", storagePath, e);
+							log.error("删除 FastDFS 文件失败，已保留重试任务: {}", storagePath, e);
 						}
 					}
 				}

@@ -5,6 +5,7 @@ import group.xuxiake.common.entity.show.RecycleShowList;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Date;
 
 public interface FileRecycleMapper {
     int deleteByPrimaryKey(Integer recycleId);
@@ -27,4 +28,6 @@ public interface FileRecycleMapper {
      * @return
      */
     List<RecycleShowList> findByUserId(@Param("deleteUserId") Integer deleteUserId, @Param("fileName") String fileName);
+
+    List<Integer> findExpiredActiveIds(@Param("now") Date now, @Param("limit") int limit);
 }

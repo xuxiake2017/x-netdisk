@@ -34,13 +34,19 @@ public class LowKbpsHandler implements Runnable {
     public void run() {
 
         try {
+            if (fileOriginMapper.selectByPrimaryKey(fileOrigin.getId()) == null) {
+                return;
+            }
             Long start = System.currentTimeMillis();
             ConvertVideoUtil.lowKmps(paths);
             Long end = System.currentTimeMillis();
             log.info("降低MP3音质耗时：" + (end - start) / 1000 + "秒");
-            String previewUrl = nginxServer + "/" + fastDFSClientWrapper.uploadFile(new File(paths[1]), "mp3");
+            String previewPath = fastDFSClientWrapper.uploadFile(new File(paths[1]), "mp3");
+            String previewUrl = nginxServer + "/" + previewPath;
             fileOrigin.setPreviewUrl(previewUrl);
-            fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+            if (fileOriginMapper.updateByPrimaryKeySelective(fileOrigin) == 0) {
+                fastDFSClientWrapper.deleteFile(previewPath);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

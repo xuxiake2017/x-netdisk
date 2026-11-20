@@ -21,7 +21,7 @@ public class CustomConfiguration {
     private Long vipFileSizeMax;
     private static String serverHost;
     @Value("${app.config.recycleDelayTime}")
-    private Integer recycleDelayTime;
+    private Long recycleDelayTime;
 
 
     private static Long verifyEmailExpire;

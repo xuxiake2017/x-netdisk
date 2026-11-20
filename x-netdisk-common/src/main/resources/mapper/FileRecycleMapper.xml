@@ -141,9 +141,19 @@
     file_recycle.file_id = user_file.id
     AND file_recycle.delete_user_id = #{deleteUserId}
     AND file_recycle.recycle_status = ${@group.xuxiake.common.util.NetdiskConstant@RECYCLE_STATUS_FILE_DEL}
+    AND file_recycle.over_time &gt; NOW()
     <if test="fileName != null and fileName != ''">
       AND user_file.file_name LIKE CONCAT('%', #{fileName}, '%')
     </if>
     order by delete_time desc
+  </select>
+
+  <select id="findExpiredActiveIds" resultType="int">
+    select recycle_id
+    from x_file_recycle
+    where recycle_status = ${@group.xuxiake.common.util.NetdiskConstant@RECYCLE_STATUS_FILE_DEL}
+      and (over_time is null or over_time &lt;= #{now})
+    order by over_time asc, recycle_id asc
+    limit #{limit}
   </select>
 </mapper>

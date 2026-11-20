@@ -173,6 +173,15 @@
       `key` = #{key} and status=${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
   </select>
 
+  <select id="findOwnedFileByKeyForUpdate" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from x_user_file
+    where `key` = #{key}
+      and user_id = #{userId}
+      and status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+    for update
+  </select>
+
   <!--根据fileKey查找文件（用于文件还原）-->
   <select id="findFileBySaveNameForReback" resultMap="BaseResultMap">
     select
@@ -247,7 +256,9 @@
 
   <!--删除文件（假删除）-->
   <delete id="deleteFile">
-  	update x_user_file set status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_DEL} where `key` = #{key}
+	update x_user_file set status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_DEL}
+	where `key` = #{key}
+	  and status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
   </delete>
 
   <!--查询删除文件的文件大小（包括子文件及子文件夹）-->

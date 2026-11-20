@@ -197,7 +197,7 @@ public class FileServiceImpl implements FileService {
 		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
 		CustomConfiguration customConfiguration = appConfiguration.getCustomConfiguration();
-		FileOrigin fileOrigin = fileOriginMapper.findFileByMd5Hex(param.getMd5Hex());
+		FileOrigin fileOrigin = fileOriginMapper.findFileByMd5HexForUpdate(param.getMd5Hex());
 		if (fileOrigin == null) {
 			result.setCode(NetdiskErrMsgConstant.CHECKMD5_MD5_NOT_EXIST);
 			return result;
@@ -658,13 +658,16 @@ public class FileServiceImpl implements FileService {
 			return result;
 		}
 
-		UserFile userFile = findOwnedFileByKey(fileKey);
+		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		if (userThreadContext == null) {
+			return forbidden();
+		}
+		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
+		UserFile userFile = userFileMapper.findOwnedFileByKeyForUpdate(fileKey, userThreadContext.getId());
 		if (userFile == null) {
 			return forbidden();
 		}
 		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
-		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
-		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 
 		long usedMemory = user.getUsedMemory();
 		/** 	fileStatus
@@ -675,6 +678,9 @@ public class FileServiceImpl implements FileService {
 		if(userFile.getIsDir() == NetdiskConstant.FILE_IS_NOT_DIR){
 
 			//如果是文件
+			if (fileOrigin == null || fileOrigin.getFileSize() == null) {
+				throw new IllegalStateException("文件存储信息不存在");
+			}
 			long fileSize = fileOrigin.getFileSize();
 			usedMemory = usedMemory - fileSize;
 			if (usedMemory < 0) {
@@ -698,7 +704,7 @@ public class FileServiceImpl implements FileService {
 			userFileMapper.deleteDir(userFile.getId());
 		}
 		Integer tag1 = userFileMapper.deleteFile(fileKey);
-		Integer tag2 = userMapper.updateByPrimaryKeySelective(user);
+		userMapper.updateByPrimaryKeySelective(user);
 
 		FileRecycle recycle = new FileRecycle();
 		Date deleteTime = new Date();
@@ -726,9 +732,10 @@ public class FileServiceImpl implements FileService {
 			}
 		});
 
-		if(tag1 > 0 && tag2 > 0 && tag3 > 0){
+		if(tag1 > 0 && tag3 > 0){
 			return result;
 		}else {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			result.setCode(NetdiskErrMsgConstant.DELETE_FILE_FAILED);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.DELETE_FILE_FAILED));
 			return result;

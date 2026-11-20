@@ -37,6 +37,8 @@ public interface UserFileMapper {
      */
     UserFile findFileByKey(String key);
 
+    UserFile findOwnedFileByKeyForUpdate(@Param("key") String key, @Param("userId") Integer userId);
+
     /**
      * 根据文件真实名查找文件（用于检测当前目录下是否有同名文件夹）
      * @param file

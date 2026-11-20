@@ -6,8 +6,8 @@ app:
     vipFileSizeMax: ${VIP_FILE_SIZE_MAX:524288000}
     # 部署前端代码的公网地址（用于分享链接和客户端来源识别）
     server_host: ${PUBLIC_SERVER_HOST:http://127.0.0.1:8181}
-    # 回收站超时时间(测试1小时)
-    recycleDelayTime: ${RECYCLE_DELAY_TIME:3600000}
+    # 回收站保留时间（默认30天，毫秒）
+    recycleDelayTime: ${RECYCLE_DELAY_TIME:2592000000}
     email:
       # 邮件验证超时时间(一天、毫秒)
       verifyEmailExpire: ${EMAIL_VERIFY_EXPIRE:86400000}

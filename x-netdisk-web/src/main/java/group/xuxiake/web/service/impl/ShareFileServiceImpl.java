@@ -51,6 +51,8 @@ public class ShareFileServiceImpl implements ShareFileService {
 	@Resource
 	private FileMediaMapper fileMediaMapper;
 	@Resource
+	private FileOriginMapper fileOriginMapper;
+	@Resource
 	private RedisUtils redisUtils;
 	@Resource
 	private FileDownloadUtil fileDownloadUtil;
@@ -530,12 +532,21 @@ public class ShareFileServiceImpl implements ShareFileService {
 	private void saveToCloudIteration(Integer oldParentId, Integer newParentId, Integer userId, FileShare fileShare) {
 
 		UserFile userFile = userFileMapper.selectByPrimaryKey(oldParentId);
+		if (userFile == null) {
+			throw new IllegalStateException("分享源文件不存在");
+		}
 		List<FileShowInfo> sourceChildren = Collections.emptyList();
 		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
 			UserFile fileSearch = new UserFile();
 			fileSearch.setParentId(oldParentId);
 			fileSearch.setUserId(fileShare.getShareUserId());
 			sourceChildren = userFileMapper.findAllFile(fileSearch, null, null);
+		}
+		if (Integer.valueOf(NetdiskConstant.FILE_IS_NOT_DIR).equals(userFile.getIsDir())) {
+			if (userFile.getOriginId() == null
+					|| fileOriginMapper.selectByPrimaryKeyForUpdate(userFile.getOriginId()) == null) {
+				throw new IllegalStateException("分享源文件存储信息不存在");
+			}
 		}
 		userFile.setId(null);
 		userFile.setKey(FileUtil.makeFileKey());

@@ -3,6 +3,9 @@ server:
   servlet:
     context-path: /quartz
 application:
+  recycle:
+    reconcileInterval: ${RECYCLE_RECONCILE_INTERVAL:60000}
+    storageDeleteRetryInterval: ${STORAGE_DELETE_RETRY_INTERVAL:60000}
   zookeeper:
     zkServer: ${ZOOKEEPER_SERVERS:zookeeper:2181}
     connectTimeout: ${ZOOKEEPER_CONNECT_TIMEOUT:15000}

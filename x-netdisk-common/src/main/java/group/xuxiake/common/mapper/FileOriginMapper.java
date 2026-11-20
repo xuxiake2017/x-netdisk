@@ -16,6 +16,8 @@ public interface FileOriginMapper {
 
     FileOrigin selectByPrimaryKey(Integer id);
 
+    FileOrigin selectByPrimaryKeyForUpdate(Integer id);
+
     int updateByPrimaryKeySelective(FileOrigin record);
 
     int updateByPrimaryKey(FileOrigin record);
@@ -26,6 +28,8 @@ public interface FileOriginMapper {
      * @return
      */
     FileOrigin findFileByMd5Hex(String md5Hex);
+
+    FileOrigin findFileByMd5HexForUpdate(String md5Hex);
 
     /**
      * 根据userFileId查找

@@ -100,6 +100,9 @@ install.cmd
 | `FASTDFS_NGINX_SERVER` | `http://192.168.81.30:8888` | FastDFS 文件访问地址 |
 | `MULTIPART_MAX_FILE_SIZE` | `500MB` | Spring 接收的单文件上限，不应低于业务层 VIP 文件上限 |
 | `MULTIPART_MAX_REQUEST_SIZE` | `1024MB` | 单次上传请求总大小上限 |
+| `RECYCLE_DELAY_TIME` | `2592000000` | 回收站保留时间，默认 30 天，单位毫秒 |
+| `RECYCLE_RECONCILE_INTERVAL` | `60000` | 扫描遗漏的过期回收站记录间隔，单位毫秒 |
+| `STORAGE_DELETE_RETRY_INTERVAL` | `60000` | 重试删除 FastDFS 物理文件的扫描间隔，单位毫秒 |
 | `MEDIA_CORE_POOL_SIZE` | `2` | 音视频转换核心线程数 |
 | `MEDIA_MAX_POOL_SIZE` | `4` | 音视频转换最大线程数 |
 | `MEDIA_QUEUE_CAPACITY` | `20` | 音视频转换等待队列长度 |
@@ -136,7 +139,7 @@ docker compose down
 
 数据卷默认会保留；如需同时删除数据卷，确认数据不再需要后再执行 `docker compose down -v`。
 
-从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql)、[sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql) 和 [sql/upgrade_20261120_share_hardening.sql](sql/upgrade_20261120_share_hardening.sql)。全新部署无需执行升级脚本。添加唯一索引前如存在重复邮箱或重复分享 ID，需要先人工确认并清理重复数据。
+从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql)、[sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql)、[sql/upgrade_20261120_share_hardening.sql](sql/upgrade_20261120_share_hardening.sql) 和 [sql/upgrade_20261120_recycle_hardening.sql](sql/upgrade_20261120_recycle_hardening.sql)。全新部署无需执行升级脚本。添加唯一索引前如存在重复邮箱或重复分享 ID，需要先人工确认并清理重复数据。
 
 ## 架构介绍
 

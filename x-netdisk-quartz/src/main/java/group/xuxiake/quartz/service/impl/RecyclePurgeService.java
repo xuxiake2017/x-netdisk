@@ -7,6 +7,7 @@ import group.xuxiake.common.mapper.FileOriginMapper;
 import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
+import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
 import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.RecyclePurgeHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,8 @@ public class RecyclePurgeService {
     private FileOriginMapper fileOriginMapper;
     @Resource
     private FastFileStorageClient storageClient;
+    @Resource
+    private StorageDeleteTaskMapper storageDeleteTaskMapper;
 
     @Transactional
     public void purge(Integer recycleId) {
@@ -43,15 +46,17 @@ public class RecyclePurgeService {
             return;
         }
         List<String> storagePaths = RecyclePurgeHelper.purge(recycle.getRecycleId(), recycle.getFileId(),
-                userFileMapper, fileShareMapper, fileMediaMapper, fileOriginMapper, recycleMapper);
+                userFileMapper, fileShareMapper, fileMediaMapper, fileOriginMapper, recycleMapper,
+                storageDeleteTaskMapper);
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
                 for (String storagePath : storagePaths) {
                     try {
                         storageClient.deleteFile(storagePath);
+                        storageDeleteTaskMapper.deleteByPath(storagePath);
                     } catch (RuntimeException e) {
-                        log.error("删除 FastDFS 文件失败: {}", storagePath, e);
+                        log.error("删除 FastDFS 文件失败，已保留重试任务: {}", storagePath, e);
                     }
                 }
             }

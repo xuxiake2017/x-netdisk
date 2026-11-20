@@ -25,6 +25,12 @@
     from x_file_origin
     where id = #{id,jdbcType=INTEGER}
   </select>
+  <select id="selectByPrimaryKeyForUpdate" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select <include refid="Base_Column_List" />
+    from x_file_origin
+    where id = #{id,jdbcType=INTEGER}
+    for update
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
     delete from x_file_origin
     where id = #{id,jdbcType=INTEGER}
@@ -182,6 +188,12 @@
     from x_file_origin
     WHERE
     md5_Hex=#{md5Hex}
+  </select>
+  <select id="findFileByMd5HexForUpdate" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" />
+    from x_file_origin
+    where md5_hex = #{md5Hex}
+    for update
   </select>
 
   <!--根据userFileId查找-->

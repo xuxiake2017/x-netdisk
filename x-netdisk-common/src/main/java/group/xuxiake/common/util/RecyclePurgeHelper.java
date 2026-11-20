@@ -8,6 +8,7 @@ import group.xuxiake.common.mapper.FileOriginMapper;
 import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
+import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -28,7 +29,8 @@ public final class RecyclePurgeHelper {
                                      FileShareMapper fileShareMapper,
                                      FileMediaMapper fileMediaMapper,
                                      FileOriginMapper fileOriginMapper,
-                                     FileRecycleMapper fileRecycleMapper) {
+                                     FileRecycleMapper fileRecycleMapper,
+                                     StorageDeleteTaskMapper storageDeleteTaskMapper) {
         List<Integer> fileIds = userFileMapper.findRecycleChildIds(rootFileId);
         if (fileIds == null || fileIds.isEmpty()) {
             fileRecycleMapper.deleteByPrimaryKey(recycleId);
@@ -41,6 +43,11 @@ public final class RecyclePurgeHelper {
             if (file.getOriginId() != null) {
                 originIds.add(file.getOriginId());
             }
+        }
+
+        // 与秒传引用创建使用同一源文件行锁，避免引用检查与新引用插入并发穿透。
+        for (Integer originId : originIds) {
+            fileOriginMapper.selectByPrimaryKeyForUpdate(originId);
         }
 
         fileShareMapper.deleteByFileIds(fileIds);
@@ -63,6 +70,9 @@ public final class RecyclePurgeHelper {
                 fileMediaMapper.deleteByOriginId(originId);
                 fileOriginMapper.deleteByPrimaryKey(originId);
             }
+        }
+        for (String storagePath : storagePaths) {
+            storageDeleteTaskMapper.insertIgnore(storagePath);
         }
         return new ArrayList<>(storagePaths);
     }

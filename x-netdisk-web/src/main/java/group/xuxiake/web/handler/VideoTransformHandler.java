@@ -46,6 +46,9 @@ public class VideoTransformHandler implements Runnable {
     public void run() {
 
         try {
+            if (fileOriginMapper.selectByPrimaryKey(fileOrigin.getId()) == null) {
+                return;
+            }
             fastDFSClientWrapper.downloadFile(fileOrigin.getFilePath(), new File(paths[0]));
             ConvertVideoUtil.readVideoInfo(new File(paths[0]), fileMedia);
 
@@ -55,7 +58,13 @@ public class VideoTransformHandler implements Runnable {
             FileMedia storedMedia = fileMediaMapper.findByOriginId(fileOrigin.getId());
             if (storedMedia != null) {
                 fileMedia.setId(storedMedia.getId());
-                fileMediaMapper.updateByPrimaryKeySelective(fileMedia);
+                if (fileMediaMapper.updateByPrimaryKeySelective(fileMedia) == 0) {
+                    fastDFSClientWrapper.deleteFile(thumbnailPath);
+                    return;
+                }
+            } else {
+                fastDFSClientWrapper.deleteFile(thumbnailPath);
+                return;
             }
 
             Long start = System.currentTimeMillis();
@@ -63,9 +72,12 @@ public class VideoTransformHandler implements Runnable {
             Long end = System.currentTimeMillis();
             log.info("视频转码耗时：" + (end - start) / 1000 + "秒");
 
-            String previewUrl = nginxServer + "/" + fastDFSClientWrapper.uploadFile(new File(paths[2]), "mp4");
+            String previewPath = fastDFSClientWrapper.uploadFile(new File(paths[2]), "mp4");
+            String previewUrl = nginxServer + "/" + previewPath;
             fileOrigin.setPreviewUrl(previewUrl);
-            fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
+            if (fileOriginMapper.updateByPrimaryKeySelective(fileOrigin) == 0) {
+                fastDFSClientWrapper.deleteFile(previewPath);
+            }
         } catch (Exception e) {
             log.error("视频预览处理失败，原文件已保留：{}", fileOrigin.getFilePath(), e);
         } finally {

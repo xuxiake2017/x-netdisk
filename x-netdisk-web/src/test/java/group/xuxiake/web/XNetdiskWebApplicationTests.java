@@ -7,6 +7,8 @@ import group.xuxiake.common.entity.FileOrigin;
 import group.xuxiake.common.entity.FileShare;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.UserFile;
+import group.xuxiake.common.entity.User;
+import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.mapper.FileMediaMapper;
@@ -14,6 +16,8 @@ import group.xuxiake.common.mapper.FileOriginMapper;
 import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.FileShareMapper;
 import group.xuxiake.common.mapper.UserFileMapper;
+import group.xuxiake.common.mapper.UserMapper;
+import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
 import group.xuxiake.common.util.RecyclePurgeHelper;
 import group.xuxiake.common.util.NicknameGenerator;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
@@ -28,10 +32,14 @@ import group.xuxiake.web.util.PasswordEncoder;
 import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.service.impl.UserServiceImpl;
 import group.xuxiake.web.service.impl.ShareFileServiceImpl;
+import group.xuxiake.web.service.impl.RecycleServiceImpl;
 import org.apache.shiro.crypto.hash.SimpleHash;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -60,6 +68,66 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldRestoreToResourcesWhenOriginalParentWasPurged() {
+        FileRecycleMapper recycleMapper = mock(FileRecycleMapper.class);
+        UserFileMapper userFileMapper = mock(UserFileMapper.class);
+        UserMapper userMapper = mock(UserMapper.class);
+        FileOriginMapper fileOriginMapper = mock(FileOriginMapper.class);
+        RecycleServiceImpl service = new RecycleServiceImpl();
+        ReflectionTestUtils.setField(service, "recycleMapper", recycleMapper);
+        ReflectionTestUtils.setField(service, "userFileMapper", userFileMapper);
+        ReflectionTestUtils.setField(service, "userMapper", userMapper);
+        ReflectionTestUtils.setField(service, "fileOriginMapper", fileOriginMapper);
+
+        User principal = new User();
+        principal.setId(10);
+        principal.setUsedMemory(0L);
+        principal.setTotalMemory(1024L);
+        Subject subject = mock(Subject.class);
+        when(subject.getPrincipal()).thenReturn(principal);
+
+        UserFile recycledFile = new UserFile();
+        recycledFile.setId(1);
+        recycledFile.setKey("recycled-key");
+        recycledFile.setUserId(10);
+        recycledFile.setParentId(999);
+        recycledFile.setIsDir(1);
+        recycledFile.setStatus(1);
+        FileRecycle recycle = new FileRecycle();
+        recycle.setRecycleId(20);
+        recycle.setFileId(1);
+        recycle.setDeleteUserId(10);
+        recycle.setRecycleStatus(0);
+        recycle.setOverTime(new Date(System.currentTimeMillis() + 60000));
+        UserFile resources = new UserFile();
+        resources.setId(88);
+        FileOrigin origin = new FileOrigin();
+        origin.setFileSize(10L);
+
+        when(userFileMapper.findFileBySaveNameForReback("recycled-key")).thenReturn(recycledFile);
+        when(recycleMapper.selectByPrimaryKeyForUpdate(20)).thenReturn(recycle);
+        when(userMapper.selectByPrimaryKeyForUpdate(10)).thenReturn(principal);
+        when(userFileMapper.selectByPrimaryKey(999)).thenReturn(null);
+        when(userFileMapper.findFileByRealName(any(UserFile.class))).thenReturn(resources);
+        when(fileOriginMapper.findByUserFileId(1)).thenReturn(origin);
+
+        ThreadContext.bind(subject);
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            Result result = service.reback(20, "recycled-key");
+
+            assertEquals(NetdiskErrMsgConstant.REQUEST_SUCCESS, result.getCode());
+            assertEquals(88, recycledFile.getParentId());
+            assertEquals(10L, principal.getUsedMemory());
+            verify(recycleMapper).deleteByPrimaryKey(20);
+            verify(userFileMapper).updateByKeySelective(recycledFile);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+            ThreadContext.unbindSubject();
+        }
+    }
 
     @Test
     void shouldLockSharePasswordAfterTooManyFailures() {
@@ -295,6 +363,7 @@ class XNetdiskWebApplicationTests {
         FileMediaMapper fileMediaMapper = mock(FileMediaMapper.class);
         FileOriginMapper fileOriginMapper = mock(FileOriginMapper.class);
         FileRecycleMapper fileRecycleMapper = mock(FileRecycleMapper.class);
+        StorageDeleteTaskMapper storageDeleteTaskMapper = mock(StorageDeleteTaskMapper.class);
 
         UserFile exclusiveFile = new UserFile();
         exclusiveFile.setOriginId(10);
@@ -315,7 +384,7 @@ class XNetdiskWebApplicationTests {
         when(fileMediaMapper.findByOriginId(10)).thenReturn(media);
 
         List<String> paths = RecyclePurgeHelper.purge(100, 1, userFileMapper, fileShareMapper,
-                fileMediaMapper, fileOriginMapper, fileRecycleMapper);
+                fileMediaMapper, fileOriginMapper, fileRecycleMapper, storageDeleteTaskMapper);
 
         assertEquals(3, paths.size());
         assertTrue(paths.contains("group1/M00/original.dat"));
@@ -323,6 +392,11 @@ class XNetdiskWebApplicationTests {
         assertTrue(paths.contains("group1/M00/thumb.jpg"));
         verify(fileOriginMapper).deleteByPrimaryKey(10);
         verify(fileOriginMapper, never()).deleteByPrimaryKey(20);
+        verify(fileOriginMapper).selectByPrimaryKeyForUpdate(10);
+        verify(fileOriginMapper).selectByPrimaryKeyForUpdate(20);
+        verify(storageDeleteTaskMapper).insertIgnore("group1/M00/original.dat");
+        verify(storageDeleteTaskMapper).insertIgnore("group1/M00/preview.pdf");
+        verify(storageDeleteTaskMapper).insertIgnore("group1/M00/thumb.jpg");
         verify(userFileMapper).deleteByIds(fileIds);
         verify(fileRecycleMapper).deleteByPrimaryKey(100);
     }
