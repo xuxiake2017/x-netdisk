@@ -19,12 +19,23 @@ public final class EmailSendUtil {
 
     public static void sendVerificationCode(String receiveMailAccount, String code,
                                             long expireMinutes) throws Exception {
+        sendVerificationCode(receiveMailAccount, code, expireMinutes, "X-NetDisk注册验证码", "注册");
+    }
+
+    public static void sendEmailChangeCode(String receiveMailAccount, String code,
+                                           long expireMinutes) throws Exception {
+        sendVerificationCode(receiveMailAccount, code, expireMinutes, "X-NetDisk邮箱修改验证码", "修改邮箱");
+    }
+
+    private static void sendVerificationCode(String receiveMailAccount, String code,
+                                             long expireMinutes, String subject,
+                                             String purpose) throws Exception {
         Session session = createSession();
         MimeMessage message = new MimeMessage(session);
         message.setFrom(new InternetAddress(CustomConfiguration.getEmailAccount(), "X-NetDisk", "UTF-8"));
         message.setRecipient(MimeMessage.RecipientType.TO, new InternetAddress(receiveMailAccount));
-        message.setSubject("X-NetDisk注册验证码", "UTF-8");
-        message.setContent(createVerificationCodeContent(code, expireMinutes), "text/html;charset=UTF-8");
+        message.setSubject(subject, "UTF-8");
+        message.setContent(createVerificationCodeContent(code, expireMinutes, purpose), "text/html;charset=UTF-8");
         message.setSentDate(new Date());
         message.saveChanges();
 
@@ -57,8 +68,8 @@ public final class EmailSendUtil {
         return Session.getInstance(props);
     }
 
-    private static String createVerificationCodeContent(String code, long expireMinutes) {
-        return "<html><body><p>您好：</p><p>您的注册验证码为："
+    private static String createVerificationCodeContent(String code, long expireMinutes, String purpose) {
+        return "<html><body><p>您好：</p><p>您的" + purpose + "验证码为："
                 + "<strong style=\"font-size:24px\">" + code + "</strong></p><p>验证码 "
                 + expireMinutes + " 分钟内有效，请勿转发给他人。</p></body></html>";
     }

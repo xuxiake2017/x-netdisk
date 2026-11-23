@@ -142,7 +142,6 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/user/logout", "anon");
         filterChainDefinitionMap.put("/user/test", "anon");
         filterChainDefinitionMap.put("/user/login", "anon");
-        filterChainDefinitionMap.put("/user/getInfo", "anon");
         filterChainDefinitionMap.put("/user/checkUserName", "anon");
         filterChainDefinitionMap.put("/user/checkPhone", "anon");
         filterChainDefinitionMap.put("/user/checkEmail", "anon");
@@ -151,6 +150,14 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/user/registerApp", "anon");
         filterChainDefinitionMap.put("/verify/**", "anon");
         filterChainDefinitionMap.put("/user/createImg/**", "anon");
+        filterChainDefinitionMap.put("/user/getInfo", "ShiroLoginFilter");
+        filterChainDefinitionMap.put("/user/updatePrincipal", "ShiroLoginFilter");
+        filterChainDefinitionMap.put("/user/detail", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/user/update", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/user/uploadAvatar", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/user/updatePassword", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/user/email/**", "VerifyUserFilter");
+        filterChainDefinitionMap.put("/user/phone/**", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/shareFile", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/findAll", "VerifyUserFilter");
         filterChainDefinitionMap.put("/share/delete/*", "VerifyUserFilter");

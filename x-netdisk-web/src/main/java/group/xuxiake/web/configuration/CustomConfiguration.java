@@ -19,6 +19,8 @@ public class CustomConfiguration {
     private Long fileSizeMax;
     @Value("${app.config.vipFileSizeMax}")
     private Long vipFileSizeMax;
+    @Value("${app.config.avatarSizeMax}")
+    private Long avatarSizeMax;
     private static String serverHost;
     @Value("${app.config.recycleDelayTime}")
     private Long recycleDelayTime;

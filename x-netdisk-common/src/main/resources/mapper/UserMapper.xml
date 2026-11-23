@@ -34,6 +34,15 @@
     where id = #{id,jdbcType=INTEGER}
     for update
   </select>
+  <select id="countByAvatar" resultType="int">
+    select count(*) from x_user where avatar = #{avatar}
+  </select>
+  <select id="findAnyByEmail" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" /> from x_user where email = #{email} limit 1
+  </select>
+  <select id="findAnyByPhone" resultMap="BaseResultMap">
+    select <include refid="Base_Column_List" /> from x_user where phone = #{phone} limit 1
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
     delete from x_user
     where id = #{id,jdbcType=INTEGER}

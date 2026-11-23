@@ -6,6 +6,9 @@ import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
+import group.xuxiake.common.entity.param.UserProfileUpdateParam;
+import group.xuxiake.common.entity.param.ChangeEmailParam;
+import group.xuxiake.common.entity.param.ChangePhoneParam;
 import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.web.aspect.SysLogRecord;
@@ -72,19 +75,13 @@ public class UserController {
 	 */
 	@RequestMapping(value = "/update", method = RequestMethod.POST)
 	@ResponseBody
-	public Result update(@RequestBody User user) {
-		return userService.update(user);
+	public Result update(@RequestBody UserProfileUpdateParam param) {
+		return userService.update(param);
 	}
 
-	/**
-	 * 更新用户状态
-	 * @return
-	 */
 	@RequestMapping(value = "/updatePrincipal", method = RequestMethod.POST)
-	@ResponseBody
 	public Result updatePrincipal() {
-		userService.updatePrincipal();
-		return new Result();
+		return userService.updatePrincipal();
 	}
 
 	/**
@@ -204,6 +201,26 @@ public class UserController {
 	@RequestMapping(value = "/updatePassword", method = RequestMethod.POST)
 	public Result updatePassword(UpdatePasswordParam param) {
 		return userService.updatePassword(param);
+	}
+
+	@RequestMapping(value = "/email/sendCode", method = RequestMethod.POST)
+	public Result sendEmailChangeCode(String email) {
+		return userService.sendEmailChangeCode(email);
+	}
+
+	@RequestMapping(value = "/email/change", method = RequestMethod.POST)
+	public Result changeEmail(@RequestBody ChangeEmailParam param) {
+		return userService.changeEmail(param);
+	}
+
+	@RequestMapping(value = "/phone/sendCode", method = RequestMethod.POST)
+	public Result sendPhoneChangeCode(String phone) {
+		return userService.sendPhoneChangeCode(phone);
+	}
+
+	@RequestMapping(value = "/phone/change", method = RequestMethod.POST)
+	public Result changePhone(@RequestBody ChangePhoneParam param) {
+		return userService.changePhone(param);
 	}
 	
 }

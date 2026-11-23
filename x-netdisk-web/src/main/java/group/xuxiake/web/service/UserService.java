@@ -5,6 +5,9 @@ import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.Result;
 import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
+import group.xuxiake.common.entity.param.UserProfileUpdateParam;
+import group.xuxiake.common.entity.param.ChangeEmailParam;
+import group.xuxiake.common.entity.param.ChangePhoneParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -55,15 +58,12 @@ public interface UserService {
 
 	/**
 	 * 更新用户信息
-	 * @param user
+	 * @param param 允许修改的个人资料
 	 * @return
 	 */
-	Result update(User user);
+	Result update(UserProfileUpdateParam param);
 
-	/**
-	 * 更新shiro中的用户信息
-	 */
-	void updatePrincipal();
+	Result updatePrincipal();
 
 	/**
 	 * 上传头像
@@ -93,4 +93,12 @@ public interface UserService {
 	 * @return 更新结果
 	 */
 	Result updatePassword(UpdatePasswordParam param);
+
+	Result sendEmailChangeCode(String email);
+
+	Result changeEmail(ChangeEmailParam param);
+
+	Result sendPhoneChangeCode(String phone);
+
+	Result changePhone(ChangePhoneParam param);
 }

@@ -10,6 +10,7 @@ import group.xuxiake.common.entity.UserFile;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
+import group.xuxiake.common.entity.param.UserProfileUpdateParam;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.mapper.FileMediaMapper;
 import group.xuxiake.common.mapper.FileOriginMapper;
@@ -68,6 +69,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldValidateProfileFieldsAndPasswordStrength() {
+        UserServiceImpl service = new UserServiceImpl();
+        UserProfileUpdateParam valid = new UserProfileUpdateParam();
+        valid.setNickName("快乐小熊0001");
+        valid.setSex(1);
+        assertTrue(((Boolean) ReflectionTestUtils.invokeMethod(service, "isValidProfile", valid)).booleanValue());
+
+        UserProfileUpdateParam invalid = new UserProfileUpdateParam();
+        invalid.setNickName("   ");
+        assertFalse(((Boolean) ReflectionTestUtils.invokeMethod(service, "isValidProfile", invalid)).booleanValue());
+        assertTrue(((Boolean) ReflectionTestUtils.invokeMethod(service, "isStrongPassword", "netdisk2026")).booleanValue());
+        assertFalse(((Boolean) ReflectionTestUtils.invokeMethod(service, "isStrongPassword", "12345678")).booleanValue());
+    }
 
     @Test
     void shouldRestoreToResourcesWhenOriginalParentWasPurged() {

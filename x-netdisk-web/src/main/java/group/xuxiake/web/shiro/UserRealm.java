@@ -40,6 +40,7 @@ public class UserRealm extends AuthorizingRealm {
 			if (userByOpenid == null) {
 				throw new UnknownAccountException("未注册");
 			}
+			userByOpenid.setPassword(null);
 			return new SimpleAuthenticationInfo(userByOpenid, null, null, realmName);
 		}
 
@@ -59,7 +60,9 @@ public class UserRealm extends AuthorizingRealm {
 
 
 
-		return new SimpleAuthenticationInfo(user, user.getPassword(), realmName);
+		String encodedPassword = user.getPassword();
+		user.setPassword(null);
+		return new SimpleAuthenticationInfo(user, encodedPassword, realmName);
 	}
 
 }

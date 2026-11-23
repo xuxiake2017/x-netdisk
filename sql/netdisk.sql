@@ -317,7 +317,7 @@ CREATE TABLE `x_user`  (
   `password` varchar(500) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '密码',
   `sex` int(1) NULL DEFAULT NULL COMMENT '性别',
   `real_name` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '真实姓名',
-  `reg_time` datetime(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0) COMMENT '注册时间',
+  `reg_time` datetime(0) NULL DEFAULT NULL COMMENT '注册时间',
   `total_memory` bigint(20) NULL DEFAULT NULL COMMENT '网盘总空间',
   `used_memory` bigint(20) NULL DEFAULT NULL COMMENT '网盘已用空间',
   `phone` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '电话',
@@ -327,7 +327,9 @@ CREATE TABLE `x_user`  (
   `signature` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '个性签名',
   `nick_name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '昵称',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `uk_user_email` (`email`) USING BTREE
+  UNIQUE KEY `uk_user_email` (`email`) USING BTREE,
+  UNIQUE KEY `uk_user_username` (`username`) USING BTREE,
+  UNIQUE KEY `uk_user_phone` (`phone`) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Compact;
 
 -- ----------------------------

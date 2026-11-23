@@ -4,6 +4,7 @@ app:
     totalMemory: ${USER_TOTAL_MEMORY:104857600}
     fileSizeMax: ${FILE_SIZE_MAX:52428800}
     vipFileSizeMax: ${VIP_FILE_SIZE_MAX:524288000}
+    avatarSizeMax: ${AVATAR_SIZE_MAX:5242880}
     # 部署前端代码的公网地址（用于分享链接和客户端来源识别）
     server_host: ${PUBLIC_SERVER_HOST:http://127.0.0.1:8181}
     # 回收站保留时间（默认30天，毫秒）

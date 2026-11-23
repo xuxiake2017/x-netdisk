@@ -100,6 +100,7 @@ install.cmd
 | `FASTDFS_NGINX_SERVER` | `http://192.168.81.30:8888` | FastDFS 文件访问地址 |
 | `MULTIPART_MAX_FILE_SIZE` | `500MB` | Spring 接收的单文件上限，不应低于业务层 VIP 文件上限 |
 | `MULTIPART_MAX_REQUEST_SIZE` | `1024MB` | 单次上传请求总大小上限 |
+| `AVATAR_SIZE_MAX` | `5242880` | 头像文件上限，单位字节；同时仅接受 JPG、PNG、GIF，尺寸不超过 4096×4096 |
 | `RECYCLE_DELAY_TIME` | `2592000000` | 回收站保留时间，默认 30 天，单位毫秒 |
 | `RECYCLE_RECONCILE_INTERVAL` | `60000` | 扫描遗漏的过期回收站记录间隔，单位毫秒 |
 | `STORAGE_DELETE_RETRY_INTERVAL` | `60000` | 重试删除 FastDFS 物理文件的扫描间隔，单位毫秒 |
@@ -139,7 +140,9 @@ docker compose down
 
 数据卷默认会保留；如需同时删除数据卷，确认数据不再需要后再执行 `docker compose down -v`。
 
-从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql)、[sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql)、[sql/upgrade_20261120_share_hardening.sql](sql/upgrade_20261120_share_hardening.sql) 和 [sql/upgrade_20261120_recycle_hardening.sql](sql/upgrade_20261120_recycle_hardening.sql)。全新部署无需执行升级脚本。添加唯一索引前如存在重复邮箱或重复分享 ID，需要先人工确认并清理重复数据。
+从旧版本升级已有数据库时，需要依次执行 [sql/upgrade_20261118_drop_user_file_path.sql](sql/upgrade_20261118_drop_user_file_path.sql)、[sql/upgrade_20261118_file_tree_consistency.sql](sql/upgrade_20261118_file_tree_consistency.sql)、[sql/upgrade_20261119_user_email_unique.sql](sql/upgrade_20261119_user_email_unique.sql)、[sql/upgrade_20261120_share_hardening.sql](sql/upgrade_20261120_share_hardening.sql)、[sql/upgrade_20261120_recycle_hardening.sql](sql/upgrade_20261120_recycle_hardening.sql) 和 [sql/upgrade_20261120_user_profile_hardening.sql](sql/upgrade_20261120_user_profile_hardening.sql)。全新部署无需执行升级脚本。添加唯一索引前如存在重复邮箱、用户名、手机号或分享 ID，需要先人工确认并清理重复数据。
+
+个人资料修改只接受 `sex`、`realName`、`signature`、`nickName`。邮箱和手机号分别通过 `/user/email/sendCode` + `/user/email/change`、`/user/phone/sendCode` + `/user/phone/change` 完成验证码换绑。`/user/updatePassword` 必须同时提交 RSA 加密后的 `oldPassword`、`newPassword` 和 `repeatPassword`；新密码要求 8～64 位且同时包含字母和数字。
 
 ## 架构介绍
 

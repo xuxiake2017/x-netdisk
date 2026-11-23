@@ -21,4 +21,8 @@ public interface VerifyService {
      * 发送注册邮箱验证码
      */
     Result sendCodeToEmail(String email, String imgCode);
+
+    Result sendEmailChangeCode(Integer userId, String email);
+
+    Result sendPhoneChangeCode(Integer userId, String phone);
 }

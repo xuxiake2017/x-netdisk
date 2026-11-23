@@ -20,11 +20,17 @@ public interface UserMapper {
 
     User selectByPrimaryKeyForUpdate(Integer id);
 
+    int countByAvatar(String avatar);
+
     int updateByPrimaryKeySelective(User record);
 
     int updateByPrimaryKey(User record);
 
     User findByLoginInfo(User user);
+
+    User findAnyByEmail(String email);
+
+    User findAnyByPhone(String phone);
 
     /**
      * 搜索好友

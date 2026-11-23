@@ -92,6 +92,18 @@ public class NetdiskErrMsgConstant {
 		errMessage.put(NetdiskErrMsgConstant.UN_AVAILABLE_ROUTE_SERVER, "无可用的route server");
 
 		errMessage.put(NetdiskErrMsgConstant.SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG, "获取分享文件媒体信息错误!");
+
+		errMessage.put(NetdiskErrMsgConstant.USER_PROFILE_INVALID, "个人资料格式不正确");
+		errMessage.put(NetdiskErrMsgConstant.USER_PASSWORD_OLD_WRONG, "当前密码错误");
+		errMessage.put(NetdiskErrMsgConstant.USER_PASSWORD_WEAK, "新密码须为8至64位且同时包含字母和数字");
+		errMessage.put(NetdiskErrMsgConstant.USER_EMAIL_EXIST, "邮箱已被其他账号使用");
+		errMessage.put(NetdiskErrMsgConstant.USER_EMAIL_CODE_TIMEOUT, "邮箱验证码已过期，请重新发送");
+		errMessage.put(NetdiskErrMsgConstant.USER_EMAIL_CODE_WRONG, "邮箱验证码错误");
+		errMessage.put(NetdiskErrMsgConstant.USER_PHONE_EXIST, "手机号已被其他账号使用");
+		errMessage.put(NetdiskErrMsgConstant.USER_PHONE_CODE_TIMEOUT, "手机验证码已过期，请重新发送");
+		errMessage.put(NetdiskErrMsgConstant.USER_PHONE_CODE_WRONG, "手机验证码错误");
+		errMessage.put(NetdiskErrMsgConstant.USER_VERIFY_ATTEMPTS_EXCEEDED, "验证码错误次数过多，请重新发送");
+		errMessage.put(NetdiskErrMsgConstant.USER_AVATAR_INVALID, "头像必须是5MB以内、尺寸不超过4096像素的JPG、PNG或GIF图片");
 	}
 	public static String getErrMessage(Integer errCode) {
 
@@ -253,5 +265,18 @@ public class NetdiskErrMsgConstant {
 
 	/*获取分享文件媒体信息-错误*/
 	public static final int SHARE_FILE_GET_FILE_MEDIA_INFO_WRONG = 20191;
+
+	/*个人资料编辑*/
+	public static final int USER_PROFILE_INVALID = 20201;
+	public static final int USER_PASSWORD_OLD_WRONG = 20202;
+	public static final int USER_PASSWORD_WEAK = 20203;
+	public static final int USER_EMAIL_EXIST = 20204;
+	public static final int USER_EMAIL_CODE_TIMEOUT = 20205;
+	public static final int USER_EMAIL_CODE_WRONG = 20206;
+	public static final int USER_PHONE_EXIST = 20207;
+	public static final int USER_PHONE_CODE_TIMEOUT = 20208;
+	public static final int USER_PHONE_CODE_WRONG = 20209;
+	public static final int USER_VERIFY_ATTEMPTS_EXCEEDED = 20210;
+	public static final int USER_AVATAR_INVALID = 20211;
 
 }

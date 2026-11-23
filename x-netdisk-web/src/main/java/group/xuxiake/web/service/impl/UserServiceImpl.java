@@ -5,49 +5,61 @@ import group.xuxiake.common.entity.SysMessage;
 import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.param.UpdatePasswordParam;
 import group.xuxiake.common.entity.param.UserLoginParam;
+import group.xuxiake.common.entity.param.UserProfileUpdateParam;
+import group.xuxiake.common.entity.param.ChangeEmailParam;
+import group.xuxiake.common.entity.param.ChangePhoneParam;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.enums.LogType;
 import group.xuxiake.common.mapper.SysMessageMapper;
 import group.xuxiake.common.mapper.UserMapper;
+import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
 import group.xuxiake.common.util.*;
 import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.configuration.AppConfiguration;
+import group.xuxiake.web.configuration.CustomConfiguration;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.show.UserFriendListShow;
 import group.xuxiake.common.entity.show.UserNetdiskShowInfo;
 import group.xuxiake.web.exception.UserRepeatLoginException;
 import group.xuxiake.common.mapper.UserFriendListMapper;
 import group.xuxiake.web.service.UserService;
+import group.xuxiake.web.service.VerifyService;
 import group.xuxiake.web.shiro.AutoLoginToken;
 import group.xuxiake.web.shiro.LoginType;
 import group.xuxiake.web.util.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.DefaultSubjectContext;
+import org.apache.shiro.session.Session;
+import org.crazycake.shiro.RedisSessionDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.vdurmont.emoji.EmojiParser;
 
 import javax.annotation.Resource;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.PrivateKey;
 import java.util.*;
 
@@ -69,6 +81,12 @@ public class UserServiceImpl implements UserService {
 	private AppConfiguration appConfiguration;
 	@Resource
 	private RedisUtils redisUtils;
+	@Resource
+	private VerifyService verifyService;
+	@Resource
+	private RedisSessionDAO redisSessionDAO;
+	@Resource
+	private StorageDeleteTaskMapper storageDeleteTaskMapper;
 	@Override
 	public User findByName(String userName) {
 		User user = new User();
@@ -111,79 +129,145 @@ public class UserServiceImpl implements UserService {
 	public Result detail() {
 		Result result = new Result();
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		if (userThreadContext == null) {
+			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+			return result;
+		}
 		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
+		if (user == null) {
+			result.setCode(NetdiskErrMsgConstant.GET_INFO_SESSION_TIME_OUT);
+			return result;
+		}
 		user.setPassword(null);
 		user.setNickName(EmojiParser.parseToUnicode(user.getNickName()));
+		user.setSignature(EmojiParser.parseToUnicode(user.getSignature()));
 		result.setData(user);
 		return result;
 	}
 
 	@Transactional
 	@Override
-	public Result update(User user) {
+	public Result update(UserProfileUpdateParam param) {
 		Result result = new Result();
 		User principal = (User) SecurityUtils.getSubject().getPrincipal();
-		if (principal == null || user == null) {
+		if (principal == null) {
 			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
 			return result;
 		}
-		User currentUser = userMapper.selectByPrimaryKey(principal.getId());
+		if (!isValidProfile(param)) {
+			result.setCode(NetdiskErrMsgConstant.USER_PROFILE_INVALID);
+			return result;
+		}
+		User currentUser = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
 		if (currentUser == null) {
 			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
 			return result;
 		}
-		user.setId(currentUser.getId());
-		if (user.getPassword() != null && !"".equals(user.getPassword())) {
-			user.setPassword(PasswordEncoder.encode(user.getPassword(), currentUser.getUsername()));
+		User update = new User();
+		update.setId(currentUser.getId());
+		update.setSex(param.getSex());
+		if (param.getRealName() != null) {
+			update.setRealName(param.getRealName().trim());
 		}
-		user.setUsername(null);
-		user.setUsedMemory(null);
-		user.setTotalMemory(null);
-		user.setUserStatus(null);
-		user.setRegTime(null);
-		userMapper.updateByPrimaryKeySelective(user);
-		// this.updatePrincipal();
+		if (param.getSignature() != null) {
+			update.setSignature(EmojiParser.parseToAliases(param.getSignature().trim()));
+		}
+		if (param.getNickName() != null) {
+			update.setNickName(EmojiParser.parseToAliases(param.getNickName().trim()));
+		}
+		userMapper.updateByPrimaryKeySelective(update);
+		refreshPrincipal(currentUser.getId());
+		result.setData(safeUser(userMapper.selectByPrimaryKey(currentUser.getId())));
 		return result;
 	}
 
-
-	@Override
-	public void updatePrincipal() {
+	private void refreshPrincipal(Integer userId) {
 		Subject subject = SecurityUtils.getSubject();
-		if (subject.isAuthenticated()) {
-			// 登录后再更新
-			User user = (User) subject.getPrincipal();
-			User userNew = userMapper.selectByPrimaryKey(user.getId());
-			PrincipalCollection principalCollection = subject.getPrincipals();
-			String realmName = principalCollection.getRealmNames().iterator().next();
-			PrincipalCollection newPrincipalCollection = new SimplePrincipalCollection(userNew, realmName);
-			//重新加载Principal
-			subject.runAs(newPrincipalCollection);
+		if (subject.isAuthenticated() && subject.getPrincipals() != null) {
+			User userNew = userMapper.selectByPrimaryKey(userId);
+			if (userNew == null) {
+				return;
+			}
+			userNew.setPassword(null);
+			Iterator<String> realmNames = subject.getPrincipals().getRealmNames().iterator();
+			String realmName = realmNames.hasNext() ? realmNames.next() : "userRealm";
+			SimplePrincipalCollection principals = new SimplePrincipalCollection(userNew, realmName);
+			subject.getSession().setAttribute(DefaultSubjectContext.PRINCIPALS_SESSION_KEY, principals);
+			redisUtils.set(session.getId(), userNew, appConfiguration.getGlobalSessionTimeout().longValue());
 		}
 	}
 
 	@Override
-	public Result uploadAvatar(MultipartFile file) {
-
-		Result result = new Result();
-		// 得到上传的文件名称，
-		String fileRealName = file.getOriginalFilename();
-		// 得到上传文件的扩展名
-		String fileExtName = "";
-		if (fileRealName.contains(".")) {
-			fileExtName = fileRealName.substring(fileRealName.lastIndexOf(".") + 1);
+	public Result updatePrincipal() {
+		User principal = currentPrincipal();
+		if (principal == null) {
+			return unauthorized();
 		}
-		try(BufferedInputStream bis = new BufferedInputStream(file.getInputStream());
-			ByteArrayOutputStream baos = new ByteArrayOutputStream(1024)) {
-			byte[] temp = new byte[1024];
-			int len = -1;
-			while((len = bis.read(temp)) != -1) {
-				baos.write(temp, 0, len);
+		refreshPrincipal(principal.getId());
+		return new Result();
+	}
+
+	private User safeUser(User user) {
+		if (user != null) {
+			user.setPassword(null);
+			user.setNickName(EmojiParser.parseToUnicode(user.getNickName()));
+			user.setSignature(EmojiParser.parseToUnicode(user.getSignature()));
+		}
+		return user;
+	}
+
+	@Transactional
+	@Override
+	public Result uploadAvatar(MultipartFile file) {
+		Result result = new Result();
+		User principal = (User) SecurityUtils.getSubject().getPrincipal();
+		if (principal == null) {
+			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+			return result;
+		}
+		String avatarExtension = inspectAvatar(file);
+		if (avatarExtension == null) {
+			result.setCode(NetdiskErrMsgConstant.USER_AVATAR_INVALID);
+			return result;
+		}
+		String uploadedPath = null;
+		try {
+			try (InputStream input = file.getInputStream()) {
+				uploadedPath = fastDFSClientWrapper.uploadFile(input, file.getSize(), avatarExtension);
 			}
-			String filePath = fastDFSClientWrapper.uploadFile(file);
-			result.setData(appConfiguration.getFdfsNginxServer() + "/" + filePath);
-		} catch (IOException e) {
-			log.error(e.getMessage(), e);
+			String avatarUrl = appConfiguration.getFdfsNginxServer() + "/" + uploadedPath;
+			User current = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
+			if (current == null) {
+				throw new IllegalStateException("用户不存在");
+			}
+			String oldAvatar = current.getAvatar();
+			User update = new User();
+			update.setId(current.getId());
+			update.setAvatar(avatarUrl);
+			if (userMapper.updateByPrimaryKeySelective(update) != 1) {
+				throw new IllegalStateException("头像更新失败");
+			}
+			String oldStoragePath = managedStoragePath(oldAvatar);
+			if (oldStoragePath != null && !avatarUrl.equals(oldAvatar)
+					&& userMapper.countByAvatar(oldAvatar) == 0) {
+				storageDeleteTaskMapper.insertIgnore(oldStoragePath);
+				deleteOldAvatarAfterCommit(oldStoragePath);
+			}
+			refreshPrincipal(current.getId());
+			result.setData(avatarUrl);
+			return result;
+		} catch (Exception e) {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			if (uploadedPath != null) {
+				try {
+					fastDFSClientWrapper.deleteFile(uploadedPath);
+				} catch (RuntimeException deleteError) {
+					log.error("清理上传失败的头像异常: {}", uploadedPath, deleteError);
+				}
+			}
+			log.error("头像修改失败", e);
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("头像修改失败");
 		}
 		return result;
 	}
@@ -192,6 +276,10 @@ public class UserServiceImpl implements UserService {
 	public Result getInfo() {
 		Result result = new Result();
 		User userThreadContext = (User) SecurityUtils.getSubject().getPrincipal();
+		if (userThreadContext == null) {
+			result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+			return result;
+		}
 		User user = userMapper.selectByPrimaryKey(userThreadContext.getId());
 		if (user == null) {
 			result.setCode(NetdiskErrMsgConstant.GET_INFO_SESSION_TIME_OUT);
@@ -423,17 +511,22 @@ public class UserServiceImpl implements UserService {
 	public Result updatePassword(UpdatePasswordParam param) {
 		Result result = new Result();
 		try {
-			if (param == null || StringUtils.isAnyEmpty(param.getNewPassword(), param.getRepeatPassword())) {
+			if (param == null || StringUtils.isAnyEmpty(param.getOldPassword(), param.getNewPassword(), param.getRepeatPassword())) {
 				result.setCode(NetdiskErrMsgConstant.PARAM_IS_NULL);
 				return result;
 			}
 
 			PrivateKey privateKey = RSAUtil.getPrivateKey("private.key");
+			String oldPassword = RSAUtil.decryptText(param.getOldPassword(), privateKey);
 			String newPassword = RSAUtil.decryptText(param.getNewPassword(), privateKey);
 			String repeatPassword = RSAUtil.decryptText(param.getRepeatPassword(), privateKey);
 			if (newPassword == null || repeatPassword == null || !newPassword.equals(repeatPassword)) {
 				result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
 				result.setMsg("两次输入密码不一致");
+				return result;
+			}
+			if (!isStrongPassword(newPassword)) {
+				result.setCode(NetdiskErrMsgConstant.USER_PASSWORD_WEAK);
 				return result;
 			}
 
@@ -442,10 +535,21 @@ public class UserServiceImpl implements UserService {
 				result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
 				return result;
 			}
+			User current = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
+			if (current == null || !PasswordEncoder.isPasswordValid(oldPassword, current.getPassword(), current.getUsername())) {
+				result.setCode(NetdiskErrMsgConstant.USER_PASSWORD_OLD_WRONG);
+				return result;
+			}
+			if (PasswordEncoder.isPasswordValid(newPassword, current.getPassword(), current.getUsername())) {
+				result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+				result.setMsg("新密码不能与当前密码相同");
+				return result;
+			}
 			User passwordUpdate = new User();
 			passwordUpdate.setId(principal.getId());
-			passwordUpdate.setPassword(PasswordEncoder.encode(newPassword, principal.getUsername()));
+			passwordUpdate.setPassword(PasswordEncoder.encode(newPassword, current.getUsername()));
 			userMapper.updateByPrimaryKeySelective(passwordUpdate);
+			invalidateOtherSessions(current.getId());
 		} catch (Exception e) {
 			log.error("密码修改失败", e);
 			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
@@ -454,5 +558,205 @@ public class UserServiceImpl implements UserService {
 		}
 		result.setMsg("密码修改成功");
 		return result;
+	}
+
+	@Override
+	public Result sendEmailChangeCode(String email) {
+		User principal = currentPrincipal();
+		return principal == null ? unauthorized() : verifyService.sendEmailChangeCode(principal.getId(), email);
+	}
+
+	@Transactional
+	@Override
+	public Result changeEmail(ChangeEmailParam param) {
+		Result result = new Result();
+		User principal = currentPrincipal();
+		String email = param == null ? null : EmailAddressUtil.normalize(param.getEmail());
+		if (principal == null) return unauthorized();
+		if (!EmailAddressUtil.isValid(email) || StringUtils.isBlank(param.getEmailCode())) return Result.paramIsNull(result);
+		if (!verifyChangeCode("EMAIL_CHANGE", principal.getId(), email, param.getEmailCode(),
+				NetdiskErrMsgConstant.USER_EMAIL_CODE_TIMEOUT, NetdiskErrMsgConstant.USER_EMAIL_CODE_WRONG, result)) return result;
+		User current = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
+		if (current == null) return unauthorized();
+		User existing = userMapper.findAnyByEmail(email);
+		if (existing != null && !current.getId().equals(existing.getId())) {
+			result.setCode(NetdiskErrMsgConstant.USER_EMAIL_EXIST);
+			return result;
+		}
+		User update = new User();
+		update.setId(current.getId());
+		update.setEmail(email);
+		try {
+			userMapper.updateByPrimaryKeySelective(update);
+		} catch (DuplicateKeyException e) {
+			result.setCode(NetdiskErrMsgConstant.USER_EMAIL_EXIST);
+			return result;
+		}
+		refreshPrincipal(current.getId());
+		result.setData(safeUser(userMapper.selectByPrimaryKey(current.getId())));
+		return result;
+	}
+
+	@Override
+	public Result sendPhoneChangeCode(String phone) {
+		User principal = currentPrincipal();
+		return principal == null ? unauthorized() : verifyService.sendPhoneChangeCode(principal.getId(), phone);
+	}
+
+	@Transactional
+	@Override
+	public Result changePhone(ChangePhoneParam param) {
+		Result result = new Result();
+		User principal = currentPrincipal();
+		String phone = param == null ? null : StringUtils.trim(param.getPhone());
+		if (principal == null) return unauthorized();
+		if (phone == null || !phone.matches("^1\\d{10}$") || StringUtils.isBlank(param.getPhoneCode())) return Result.paramIsNull(result);
+		if (!verifyChangeCode("PHONE_CHANGE", principal.getId(), phone, param.getPhoneCode(),
+				NetdiskErrMsgConstant.USER_PHONE_CODE_TIMEOUT, NetdiskErrMsgConstant.USER_PHONE_CODE_WRONG, result)) return result;
+		User current = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
+		if (current == null) return unauthorized();
+		User existing = userMapper.findAnyByPhone(phone);
+		if (existing != null && !current.getId().equals(existing.getId())) {
+			result.setCode(NetdiskErrMsgConstant.USER_PHONE_EXIST);
+			return result;
+		}
+		User update = new User();
+		update.setId(current.getId());
+		update.setPhone(phone);
+		try {
+			userMapper.updateByPrimaryKeySelective(update);
+		} catch (DuplicateKeyException e) {
+			result.setCode(NetdiskErrMsgConstant.USER_PHONE_EXIST);
+			return result;
+		}
+		refreshPrincipal(current.getId());
+		result.setData(safeUser(userMapper.selectByPrimaryKey(current.getId())));
+		return result;
+	}
+
+	private User currentPrincipal() {
+		return (User) SecurityUtils.getSubject().getPrincipal();
+	}
+
+	private Result unauthorized() {
+		Result result = new Result();
+		result.setCode(NetdiskErrMsgConstant.UN_AUTHENTICATED);
+		return result;
+	}
+
+	private boolean verifyChangeCode(String scene, Integer userId, String target, String submitted,
+			int timeoutCode, int wrongCode, Result result) {
+		String prefix = scene + ":" + userId + ":" + target;
+		String codeKey = prefix.replace(scene + ":", scene + "_CODE:");
+		String attemptsKey = prefix.replace(scene + ":", scene + "_ATTEMPTS:");
+		String expected = (String) redisUtils.get(codeKey);
+		if (StringUtils.isBlank(expected)) {
+			result.setCode(timeoutCode);
+			return false;
+		}
+		long attempts = redisUtils.incr(attemptsKey, 1L);
+		if (attempts == 1L) {
+			long ttl = Math.max(1L, scene.startsWith("EMAIL")
+					? appConfiguration.getCustomConfiguration().getEmailCodeExpire() / 1000L
+					: CustomConfiguration.getVerifySmsExpire() / 1000L);
+			redisUtils.expire(attemptsKey, ttl);
+		}
+		int maxAttempts = appConfiguration.getCustomConfiguration().getEmailMaxVerifyAttempts();
+		if (attempts > maxAttempts || !expected.equals(submitted.trim())) {
+			if (attempts >= maxAttempts) {
+				redisUtils.del(codeKey);
+				result.setCode(NetdiskErrMsgConstant.USER_VERIFY_ATTEMPTS_EXCEEDED);
+			} else {
+				result.setCode(wrongCode);
+			}
+			return false;
+		}
+		if (!redisUtils.compareAndDelete(codeKey, submitted.trim())) {
+			result.setCode(timeoutCode);
+			return false;
+		}
+		redisUtils.del(attemptsKey);
+		return true;
+	}
+
+	private boolean isValidProfile(UserProfileUpdateParam param) {
+		if (param == null || (param.getSex() == null && param.getRealName() == null
+				&& param.getSignature() == null && param.getNickName() == null)) return false;
+		if (param.getSex() != null && param.getSex() != 0 && param.getSex() != 1 && param.getSex() != 2) return false;
+		return validText(param.getNickName(), 32, false) && validText(param.getRealName(), 50, true)
+				&& validText(param.getSignature(), 200, true);
+	}
+
+	private boolean validText(String value, int maxCodePoints, boolean allowBlank) {
+		if (value == null) return true;
+		String text = value.trim();
+		if (!allowBlank && text.isEmpty()) return false;
+		if (text.codePointCount(0, text.length()) > maxCodePoints) return false;
+		for (int i = 0; i < text.length();) {
+			int codePoint = text.codePointAt(i);
+			if (Character.isISOControl(codePoint)) return false;
+			i += Character.charCount(codePoint);
+		}
+		return true;
+	}
+
+	private String inspectAvatar(MultipartFile file) {
+		if (file == null || file.isEmpty() || file.getSize() > appConfiguration.getCustomConfiguration().getAvatarSizeMax()) return null;
+		ImageReader reader = null;
+		try (ImageInputStream input = ImageIO.createImageInputStream(file.getInputStream())) {
+			if (input == null) return null;
+			Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+			if (!readers.hasNext()) return null;
+			reader = readers.next();
+			String format = reader.getFormatName().toLowerCase(Locale.ROOT);
+			if (!("jpeg".equals(format) || "jpg".equals(format) || "png".equals(format) || "gif".equals(format))) return null;
+			reader.setInput(input, true, true);
+			int width = reader.getWidth(0);
+			int height = reader.getHeight(0);
+			if (width < 1 || height < 1 || width > 4096 || height > 4096) return null;
+			return "jpeg".equals(format) ? "jpg" : format;
+		} catch (IOException | RuntimeException e) {
+			return null;
+		} finally {
+			if (reader != null) reader.dispose();
+		}
+	}
+
+	private String managedStoragePath(String avatar) {
+		if (StringUtils.isBlank(avatar)) return null;
+		String prefix = StringUtils.removeEnd(appConfiguration.getFdfsNginxServer(), "/") + "/";
+		if (!avatar.startsWith(prefix)) return null;
+		String path = avatar.substring(prefix.length());
+		return path.indexOf('/') > 0 ? path : null;
+	}
+
+	private void deleteOldAvatarAfterCommit(final String storagePath) {
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				try {
+					fastDFSClientWrapper.deleteFile(storagePath);
+					storageDeleteTaskMapper.deleteByPath(storagePath);
+				} catch (RuntimeException e) {
+					log.warn("旧头像删除失败，已保留重试任务: {}", storagePath, e);
+				}
+			}
+		});
+	}
+
+	private boolean isStrongPassword(String password) {
+		return password != null && password.length() >= 8 && password.length() <= 64
+				&& password.matches(".*[A-Za-z].*") && password.matches(".*\\d.*");
+	}
+
+	private void invalidateOtherSessions(Integer userId) {
+		Session currentSession = SecurityUtils.getSubject().getSession(false);
+		for (Session active : redisSessionDAO.getActiveSessions()) {
+			if (currentSession != null && currentSession.getId().equals(active.getId())) continue;
+			Object value = active.getAttribute(DefaultSubjectContext.PRINCIPALS_SESSION_KEY);
+			if (!(value instanceof SimplePrincipalCollection)) continue;
+			Object primary = ((SimplePrincipalCollection) value).getPrimaryPrincipal();
+			if (primary instanceof User && userId.equals(((User) primary).getId())) redisSessionDAO.delete(active);
+		}
 	}
 }

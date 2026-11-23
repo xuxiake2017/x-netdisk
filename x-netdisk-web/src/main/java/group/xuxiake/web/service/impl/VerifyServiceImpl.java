@@ -115,18 +115,20 @@ public class VerifyServiceImpl implements VerifyService {
      */
     @Override
     public Result sendCodeToPhone(String phone) {
+		return sendPhoneCode(phone, "SMS_RATE:" + phone, "SMS_CODE:" + session.getId());
+	}
 
-        Result result = new Result();
+	private Result sendPhoneCode(String phone, String rateLimitKey, String codeKey) {
+		Result result = new Result();
 		if (StringUtils.isBlank(phone) || !phone.matches("^1\\d{10}$")) {
 			return Result.paramIsNull(result);
 		}
-		String rateLimitKey = "SMS_RATE:" + phone;
-		if (!redisUtils.setIfAbsent(rateLimitKey, Boolean.TRUE,
-				appConfiguration.getCustomConfiguration().getSmsSendInterval())) {
+		CustomConfiguration custom = appConfiguration.getCustomConfiguration();
+		if (!redisUtils.setIfAbsent(rateLimitKey, Boolean.TRUE, custom.getSmsSendInterval())) {
 			result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_BUSINESS_LIMIT_CONTROL);
 			return result;
 		}
-        String smsCode = null;
+		String smsCode = null;
         try {
             SmsSendUtil.SmsSendResult smsSendResult = SmsSendUtil.regNetDisk(phone);
             SendSmsVerifyCodeResponse response = smsSendResult.getResponse();
@@ -137,14 +139,20 @@ public class VerifyServiceImpl implements VerifyService {
             smsLog.setSendTime(new Date());
             smsLog.setCode(smsCode);
             smsLog.setMsgContent(smsConfiguration.getTemplateContent(CustomConfiguration.getTemplateCode()));
+            boolean sendSuccess = false;
             if (response != null) {
                 SendSmsVerifyCodeResponseBody body = response.getBody();
-                SendSmsVerifyCodeResponseBody.Model model = body.getModel();
-                smsLog.setBizId(model.getBizId());
-                smsLog.setErrCode(body.getCode());
-                smsLog.setErrMsg(body.getMessage());
-                if (body.getSuccess()) {
+                SendSmsVerifyCodeResponseBody.Model model = body == null ? null : body.getModel();
+                if (model != null) {
+                    smsLog.setBizId(model.getBizId());
+                }
+                if (body != null) {
+                    smsLog.setErrCode(body.getCode());
+                    smsLog.setErrMsg(body.getMessage());
+                }
+                if (body != null && Boolean.TRUE.equals(body.getSuccess())) {
                     smsLog.setSuccess(SmsLogSuccess.SUCCESS.getValue());
+                    sendSuccess = true;
                 } else {
                     smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
                 }
@@ -152,16 +160,44 @@ public class VerifyServiceImpl implements VerifyService {
                 smsLog.setSuccess(SmsLogSuccess.FAILED.getValue());
             }
             smsLog.setClientType(ClientType.UNSET.getValue());
-            redisUtils.set("SMS_CODE:" + session.getId(), smsCode, appConfiguration.getCustomConfiguration().getVerifySmsExpire().longValue());
             smsLogService.addLog(smsLog);
+            if (!sendSuccess || StringUtils.isBlank(smsCode)) {
+                throw new IllegalStateException("短信服务未返回成功状态");
+            }
+            if (!redisUtils.set(codeKey, smsCode, custom.getVerifySmsExpire().longValue())) {
+                throw new IllegalStateException("短信验证码写入 Redis 失败");
+            }
             return result;
         } catch (Exception e) {
+            redisUtils.del(codeKey, rateLimitKey);
             log.error("短信验证码发送失败", e);
         }
         result.setCode(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED);
         result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SEND_SMS_CODE_FAILED));
         return result;
     }
+
+	@Override
+	public Result sendPhoneChangeCode(Integer userId, String phone) {
+		Result result = new Result();
+		if (userId == null || StringUtils.isBlank(phone) || !phone.matches("^1\\d{10}$")) {
+			return Result.paramIsNull(result);
+		}
+		User current = userMapper.selectByPrimaryKey(userId);
+		User existing = userMapper.findAnyByPhone(phone);
+		if (current == null || (existing != null && !userId.equals(existing.getId()))) {
+			result.setCode(NetdiskErrMsgConstant.USER_PHONE_EXIST);
+			return result;
+		}
+		if (phone.equals(current.getPhone())) {
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("新手机号不能与当前手机号相同");
+			return result;
+		}
+		redisUtils.del("PHONE_CHANGE_ATTEMPTS:" + userId + ":" + phone);
+		return sendPhoneCode(phone, "PHONE_CHANGE_RATE:" + userId + ":" + phone,
+				"PHONE_CHANGE_CODE:" + userId + ":" + phone);
+	}
 
     @Override
     public Result sendCodeToEmail(String email, String imgCode) {
@@ -218,4 +254,48 @@ public class VerifyServiceImpl implements VerifyService {
             return result;
         }
     }
+
+	@Override
+	public Result sendEmailChangeCode(Integer userId, String email) {
+		Result result = new Result();
+		String normalizedEmail = EmailAddressUtil.normalize(email);
+		if (userId == null || !EmailAddressUtil.isValid(normalizedEmail)) {
+			return Result.paramIsNull(result);
+		}
+		User current = userMapper.selectByPrimaryKey(userId);
+		User existing = userMapper.findAnyByEmail(normalizedEmail);
+		if (current == null || (existing != null && !userId.equals(existing.getId()))) {
+			result.setCode(NetdiskErrMsgConstant.USER_EMAIL_EXIST);
+			return result;
+		}
+		if (normalizedEmail.equals(current.getEmail())) {
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("新邮箱不能与当前邮箱相同");
+			return result;
+		}
+
+		CustomConfiguration custom = appConfiguration.getCustomConfiguration();
+		String rateKey = "EMAIL_CHANGE_RATE:" + userId + ":" + normalizedEmail;
+		if (!redisUtils.setIfAbsent(rateKey, Boolean.TRUE, custom.getEmailSendInterval())) {
+			result.setCode(NetdiskErrMsgConstant.SEND_EMAIL_CODE_BUSINESS_LIMIT_CONTROL);
+			return result;
+		}
+		String codeKey = "EMAIL_CHANGE_CODE:" + userId + ":" + normalizedEmail;
+		String attemptsKey = "EMAIL_CHANGE_ATTEMPTS:" + userId + ":" + normalizedEmail;
+		String code = String.format("%06d", SECURE_RANDOM.nextInt(1000000));
+		try {
+			redisUtils.del(attemptsKey);
+			if (!redisUtils.set(codeKey, code, custom.getEmailCodeExpire())) {
+				throw new IllegalStateException("邮箱验证码写入 Redis 失败");
+			}
+			EmailSendUtil.sendEmailChangeCode(normalizedEmail, code,
+					Math.max(1L, custom.getEmailCodeExpire() / 60000L));
+			return result;
+		} catch (Exception e) {
+			redisUtils.del(codeKey, attemptsKey, rateKey);
+			log.error("修改邮箱验证码发送失败: {}", normalizedEmail, e);
+			result.setCode(NetdiskErrMsgConstant.SEND_EMAIL_CODE_FAILED);
+			return result;
+		}
+	}
 }
