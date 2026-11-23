@@ -675,6 +675,9 @@ public class FileServiceImpl implements FileService {
 		 1 主动删除
 		 2 因删除文件夹被动删除*/
 
+		// 先标记当前节点为主动删除，deleteDir 只会把子节点置为被动删除
+		Integer tag1 = userFileMapper.deleteFile(fileKey);
+
 		if(userFile.getIsDir() == NetdiskConstant.FILE_IS_NOT_DIR){
 
 			//如果是文件
@@ -703,7 +706,6 @@ public class FileServiceImpl implements FileService {
 			}
 			userFileMapper.deleteDir(userFile.getId());
 		}
-		Integer tag1 = userFileMapper.deleteFile(fileKey);
 		userMapper.updateByPrimaryKeySelective(user);
 
 		FileRecycle recycle = new FileRecycle();
