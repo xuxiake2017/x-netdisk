@@ -139,10 +139,14 @@ public class UserServiceImpl implements UserService {
 			return result;
 		}
 		user.setPassword(null);
-		user.setNickName(EmojiParser.parseToUnicode(user.getNickName()));
-		user.setSignature(EmojiParser.parseToUnicode(user.getSignature()));
+		user.setNickName(decodeEmoji(user.getNickName()));
+		user.setSignature(decodeEmoji(user.getSignature()));
 		result.setData(user);
 		return result;
+	}
+
+	private String decodeEmoji(String text) {
+		return text == null ? null : EmojiParser.parseToUnicode(text);
 	}
 
 	@Transactional
@@ -210,8 +214,8 @@ public class UserServiceImpl implements UserService {
 	private User safeUser(User user) {
 		if (user != null) {
 			user.setPassword(null);
-			user.setNickName(EmojiParser.parseToUnicode(user.getNickName()));
-			user.setSignature(EmojiParser.parseToUnicode(user.getSignature()));
+			user.setNickName(decodeEmoji(user.getNickName()));
+			user.setSignature(decodeEmoji(user.getSignature()));
 		}
 		return user;
 	}
@@ -295,7 +299,7 @@ public class UserServiceImpl implements UserService {
 		UserNetdiskShowInfo userInfo = new UserNetdiskShowInfo();
 		userInfo.setId(user.getId());
 		userInfo.setAvatar(user.getAvatar());
-		userInfo.setName(EmojiParser.parseToUnicode(user.getNickName()));
+		userInfo.setName(decodeEmoji(user.getNickName()));
 		userInfo.setTotalMemory(totalMemory);
 		userInfo.setUsedMemory(usedMemory);
 		userInfo.setAvailableMemory(availableMemory);
