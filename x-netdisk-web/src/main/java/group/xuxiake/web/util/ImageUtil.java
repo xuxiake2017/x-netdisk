@@ -5,6 +5,7 @@ import com.drew.imaging.ImageProcessingException;
 import com.drew.imaging.png.PngChunkType;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.bmp.BmpHeaderDirectory;
 import com.drew.metadata.exif.ExifDirectoryBase;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.file.FileSystemDirectory;
@@ -59,6 +60,11 @@ public class ImageUtil {
 			if (directory instanceof GifHeaderDirectory) {
 				imgWidth = directory.getInteger(GifHeaderDirectory.TAG_IMAGE_WIDTH);
 				imgHeight = directory.getInteger(GifHeaderDirectory.TAG_IMAGE_HEIGHT);
+			}
+			// bmp
+			if (directory instanceof BmpHeaderDirectory) {
+				imgWidth = directory.getInteger(BmpHeaderDirectory.TAG_IMAGE_WIDTH);
+				imgHeight = directory.getInteger(BmpHeaderDirectory.TAG_IMAGE_HEIGHT);
 			}
 		}
 		if (dateTime != null) {

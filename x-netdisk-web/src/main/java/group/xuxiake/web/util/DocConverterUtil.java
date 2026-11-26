@@ -43,11 +43,23 @@ public class DocConverterUtil {
                 case "DOC":
                     documentFormat = DefaultDocumentFormatRegistry.DOC;
                     break;
+                case "ODT":
+                    documentFormat = DefaultDocumentFormatRegistry.ODT;
+                    break;
+                case "RTF":
+                    documentFormat = DefaultDocumentFormatRegistry.RTF;
+                    break;
                 case "XLS":
                     documentFormat = DefaultDocumentFormatRegistry.XLS;
                     break;
                 case "XLSX":
                     documentFormat = DefaultDocumentFormatRegistry.XLSX;
+                    break;
+                case "ODS":
+                    documentFormat = DefaultDocumentFormatRegistry.ODS;
+                    break;
+                case "CSV":
+                    documentFormat = DefaultDocumentFormatRegistry.CSV;
                     break;
                 case "PPT":
                     documentFormat = DefaultDocumentFormatRegistry.PPT;
@@ -55,9 +67,16 @@ public class DocConverterUtil {
                 case "PPTX":
                     documentFormat = DefaultDocumentFormatRegistry.PPTX;
                     break;
+                case "ODP":
+                    documentFormat = DefaultDocumentFormatRegistry.ODP;
+                    break;
                 case "TXT":
                     documentFormat = DefaultDocumentFormatRegistry.TXT;
             }
+			if (documentFormat == null) {
+				log.warn("unsupported document format: {}", extName);
+				return null;
+			}
             converter.convert(inputStream)
                     .as(documentFormat)
                     .to(byteArrayOutputStream)

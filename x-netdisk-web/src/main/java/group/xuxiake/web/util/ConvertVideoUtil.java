@@ -193,7 +193,7 @@ public class ConvertVideoUtil {
 		command.add("-ac");
 		command.add("2");
 		command.add("-ab");
-		command.add("128");
+		command.add("128k");
 		command.add("-f");
 		command.add("mp3");
 		command.add(paths[1]);

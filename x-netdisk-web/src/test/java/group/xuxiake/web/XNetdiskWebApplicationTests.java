@@ -21,7 +21,9 @@ import group.xuxiake.common.mapper.UserFileMapper;
 import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
 import group.xuxiake.common.util.RecyclePurgeHelper;
+import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.NicknameGenerator;
+import group.xuxiake.common.util.NetdiskConstant;
 import group.xuxiake.common.util.NetdiskErrMsgConstant;
 import group.xuxiake.common.util.RedisUtils;
 import group.xuxiake.web.configuration.AppConfiguration;
@@ -75,6 +77,25 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldClassifyAdditionalPreviewFormats() {
+        assertFileType(NetdiskConstant.FILE_TYPE_OF_WORD, "odt", "rtf");
+        assertFileType(NetdiskConstant.FILE_TYPE_OF_EXCEL, "ods", "csv");
+        assertFileType(NetdiskConstant.FILE_TYPE_OF_POWERPOINT, "odp");
+        assertFileType(NetdiskConstant.FILE_TYPE_OF_PIC, "gif", "bmp");
+        assertFileType(NetdiskConstant.FILE_TYPE_OF_MUSIC,
+                "flac", "ape", "wav", "aac", "m4a", "ogg", "opus");
+        assertFileType(NetdiskConstant.FILE_TYPE_OF_VIDEO,
+                "mov", "webm", "wmv", "mpg", "mpeg", "m4v", "3gp");
+        assertEquals(NetdiskConstant.FILE_TYPE_OF_VIDEO, FileUtil.getFileType("MOV"));
+    }
+
+    private void assertFileType(int expectedType, String... extensions) {
+        for (String extension : extensions) {
+            assertEquals(expectedType, FileUtil.getFileType(extension), extension);
+        }
+    }
 
     @Test
     void shouldReportInvalidDirectoryNameSeparatelyFromEmptyName() {

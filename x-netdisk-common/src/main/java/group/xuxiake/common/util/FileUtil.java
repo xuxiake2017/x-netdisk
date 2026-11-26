@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -27,62 +28,71 @@ public class FileUtil {
 	 * @return
 	 */
 	public static Integer getFileType(String fileExtName) {
-		switch (fileExtName) {
+		if (fileExtName == null) {
+			return NetdiskConstant.FILE_TYPE_OF_OTHER;
+		}
+		switch (fileExtName.toLowerCase(Locale.ROOT)) {
 		// 文档
 		case "txt":
-			return 1;
+			return NetdiskConstant.FILE_TYPE_OF_TXT;
 		case "doc":
-			return 11;
 		case "docx":
-			return 11;
+		case "odt":
+		case "rtf":
+			return NetdiskConstant.FILE_TYPE_OF_WORD;
 		case "xls":
-			return 12;
 		case "xlsx":
-			return 12;
+		case "ods":
+		case "csv":
+			return NetdiskConstant.FILE_TYPE_OF_EXCEL;
 		case "ppt":
-			return 13;
 		case "pptx":
-			return 13;
+		case "odp":
+			return NetdiskConstant.FILE_TYPE_OF_POWERPOINT;
 		case "pdf":
-			return 14;
+			return NetdiskConstant.FILE_TYPE_OF_PDF;
 		// 图片
 		case "png":
-			return 2;
 		case "jpg":
-			return 2;
 		case "jpeg":
-			return 2;
+		case "gif":
+		case "bmp":
+			return NetdiskConstant.FILE_TYPE_OF_PIC;
 		// 音频
 		case "mp3":
-			return 3;
 		case "ape":
-			return 3;
 		case "flac":
-			return 3;
+		case "wav":
+		case "aac":
+		case "m4a":
+		case "ogg":
+		case "opus":
+			return NetdiskConstant.FILE_TYPE_OF_MUSIC;
 		// 视频
 		case "mp4":
-			return 4;
 		case "mkv":
-			return 4;
 		case "avi":
-			return 4;
 		case "flv":
-			return 4;
+		case "mov":
+		case "webm":
+		case "wmv":
+		case "mpg":
+		case "mpeg":
+		case "m4v":
+		case "3gp":
+			return NetdiskConstant.FILE_TYPE_OF_VIDEO;
 		// 压缩包
 		case "zip":
-			return 5;
 		case "rar":
-			return 5;
 		case "7z":
-			return 5;
 		case "jar":
-			return 5;
+			return NetdiskConstant.FILE_TYPE_OF_ZIP;
 		//安卓安装包
 		case "apk":
-			return 6;
+			return NetdiskConstant.FILE_TYPE_OF_APK;
 		// 其他
 		default:
-			return 9;
+			return NetdiskConstant.FILE_TYPE_OF_OTHER;
 		}
 	}
 

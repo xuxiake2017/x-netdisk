@@ -389,7 +389,7 @@ public class FileServiceImpl implements FileService {
 			// 得到上传文件的扩展名
 			String fileExtName = "";
 			if (fileRealName.contains(".")) {
-				fileExtName = fileRealName.substring(fileRealName.lastIndexOf(".") + 1);
+				fileExtName = fileRealName.substring(fileRealName.lastIndexOf(".") + 1).toLowerCase(Locale.ROOT);
 			}
 			//文件大小
 			long fileSize = file.getSize();
@@ -410,7 +410,7 @@ public class FileServiceImpl implements FileService {
 				return result;
 			}
 			//根据文件后缀判断文件类型
-			Integer fileType = FileUtil.getFileType(fileExtName.toLowerCase());
+			Integer fileType = FileUtil.getFileType(fileExtName);
 			if (parentId == null) {
 				parentId = -1;
 			}
@@ -598,59 +598,60 @@ public class FileServiceImpl implements FileService {
 			scheduleMediaTask(new VideoTransformHandler(fileOriginMapper, fileMediaMapper,
 					fastDFSClientWrapper, paths, fileOrigin, fdfsNginxServer, fileMedia), paths);
 		}
-		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_MUSIC &&  "mp3".equals(fileOrigin.getFileExtName())) {
-			// lowKmps，降低mp3码率
+		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_MUSIC) {
+			// 所有已识别音频统一转为 MP3，便于浏览器播放。
 
 			String cachePathBefore = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
-			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName(fileOrigin.getFileExtName()));
+			String cachePathAfter = FileUtil.makeCachePath(cacheParentPath, FileUtil.makeFileTempName("mp3"));
 
 			fastDFSClientWrapper.downloadFile(filePath, new File(cachePathBefore));
 			String[] paths = {cachePathBefore,cachePathAfter};
 
-			ByteArrayOutputStream byteArrayOutputStream = null;
-			ByteArrayInputStream byteArrayInputStream = null;
-			String musicPoster = "";
-			try {
-				MP3Info mp3Info = MP3Utils.getMP3Info(paths[0]);
-				if (mp3Info.getArtist() != null) {
-					fileMedia.setMusicArtist(mp3Info.getArtist());
-				} else {
-					fileMedia.setMusicArtist("未知歌手");
-				}
-				if (mp3Info.getAlbumImage() != null) {
-					if (mp3Info.getAlbumImage().length > 1024 * 100) { // 封面大于100KB要进行缩略
-						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
-						byteArrayOutputStream = new ByteArrayOutputStream();
-						Thumbnails.of(byteArrayInputStream).size(1000, 1000).outputQuality(0.5D).toOutputStream(byteArrayOutputStream);
-						byte[] bytes = byteArrayOutputStream.toByteArray();
-						byteArrayInputStream = new ByteArrayInputStream(bytes);
-						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, bytes.length, "jpg");
-						cleanupStorageOnRollback(musicPoster);
-					} else {
-						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
-						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, mp3Info.getAlbumImage().length, "jpg");
-						cleanupStorageOnRollback(musicPoster);
-					}
-					if (!StringUtils.isEmpty(musicPoster)) {
-						musicPoster = fdfsNginxServer + "/" + musicPoster;
-						fileMedia.setMusicPoster(musicPoster);
-					}
-				}
-			} catch (Exception e) {
-				log.error(e.getMessage(), e);
-			} finally {
+			fileMedia.setMusicArtist("未知歌手");
+			if ("mp3".equals(fileOrigin.getFileExtName())) {
+				ByteArrayOutputStream byteArrayOutputStream = null;
+				ByteArrayInputStream byteArrayInputStream = null;
+				String musicPoster = "";
 				try {
-					if (byteArrayOutputStream != null) {
-						byteArrayOutputStream.close();
+					MP3Info mp3Info = MP3Utils.getMP3Info(paths[0]);
+					if (mp3Info.getArtist() != null) {
+						fileMedia.setMusicArtist(mp3Info.getArtist());
 					}
-					if (byteArrayInputStream != null) {
-						byteArrayInputStream.close();
+					if (mp3Info.getAlbumImage() != null) {
+						if (mp3Info.getAlbumImage().length > 1024 * 100) { // 封面大于100KB要进行缩略
+							byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
+							byteArrayOutputStream = new ByteArrayOutputStream();
+							Thumbnails.of(byteArrayInputStream).size(1000, 1000).outputQuality(0.5D).toOutputStream(byteArrayOutputStream);
+							byte[] bytes = byteArrayOutputStream.toByteArray();
+							byteArrayInputStream = new ByteArrayInputStream(bytes);
+							musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, bytes.length, "jpg");
+							cleanupStorageOnRollback(musicPoster);
+						} else {
+							byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
+							musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, mp3Info.getAlbumImage().length, "jpg");
+							cleanupStorageOnRollback(musicPoster);
+						}
+						if (!StringUtils.isEmpty(musicPoster)) {
+							musicPoster = fdfsNginxServer + "/" + musicPoster;
+							fileMedia.setMusicPoster(musicPoster);
+						}
 					}
 				} catch (Exception e) {
-					log.error(e.getMessage(), e);
+					log.warn("读取 MP3 元数据失败: {}", fileOrigin.getFilePath(), e);
+				} finally {
+					try {
+						if (byteArrayOutputStream != null) {
+							byteArrayOutputStream.close();
+						}
+						if (byteArrayInputStream != null) {
+							byteArrayInputStream.close();
+						}
+					} catch (Exception e) {
+						log.error(e.getMessage(), e);
+					}
 				}
 			}
-			//System.out.println("[音频开始降低码率]");
+			// 异步生成统一的 MP3 预览文件。
 			scheduleMediaTask(new LowKbpsHandler(fileOriginMapper, fastDFSClientWrapper, paths,
 					fileOrigin, fdfsNginxServer), paths);
 		}
