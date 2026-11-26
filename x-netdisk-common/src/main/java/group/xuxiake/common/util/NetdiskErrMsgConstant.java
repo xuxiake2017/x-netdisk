@@ -28,6 +28,8 @@ public class NetdiskErrMsgConstant {
 		errMessage.put(NetdiskErrMsgConstant.UPLOAD_AVAIABLE_MEMORY_NOT_ENOUGH, "剩余空间不足，请删除部分文件再试");
 		errMessage.put(NetdiskErrMsgConstant.UPLOAD_TIMEOUT, "上传超时");
 		errMessage.put(NetdiskErrMsgConstant.UPLOAD_FAILED, "上传失败");
+		errMessage.put(NetdiskErrMsgConstant.UPLOAD_MD5_INVALID, "文件MD5格式错误");
+		errMessage.put(NetdiskErrMsgConstant.UPLOAD_MD5_MISMATCH, "文件内容与MD5不一致，请重新上传");
 		
 		errMessage.put(NetdiskErrMsgConstant.CHECKMD5_OUT_OF_MEMORY_LIMIT, "单个文件超出最大值");
 		errMessage.put(NetdiskErrMsgConstant.CHECKMD5_AVAIABLE_MEMORY_NOT_ENOUGH, "剩余空间不足");
@@ -152,6 +154,10 @@ public class NetdiskErrMsgConstant {
 	public static final int UPLOAD_TIMEOUT = 20023;
 	/*文件上传-上传失败*/
 	public static final int UPLOAD_FAILED = 20024;
+	/*文件上传-MD5格式错误*/
+	public static final int UPLOAD_MD5_INVALID = 20025;
+	/*文件上传-客户端MD5与文件内容不一致*/
+	public static final int UPLOAD_MD5_MISMATCH = 20026;
 	
 	/*检查MD5-单个文件超出最大值！*/
 	public static final int CHECKMD5_OUT_OF_MEMORY_LIMIT = 20031;

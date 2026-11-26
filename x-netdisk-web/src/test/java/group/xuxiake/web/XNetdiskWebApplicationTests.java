@@ -1,6 +1,7 @@
 package group.xuxiake.web;
 
 import com.github.tobato.fastdfs.domain.proto.storage.DownloadCallback;
+import com.github.tobato.fastdfs.domain.fdfs.StorePath;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import group.xuxiake.common.entity.FileMedia;
 import group.xuxiake.common.entity.FileOrigin;
@@ -41,12 +42,14 @@ import org.apache.shiro.util.ThreadContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.servlet.http.HttpServletRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.lang.reflect.Method;
@@ -71,6 +74,35 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldCalculateMd5WhileUploadingToStorage() throws Exception {
+        byte[] content = "netdisk-content".getBytes(StandardCharsets.UTF_8);
+        FastFileStorageClient storageClient = mock(FastFileStorageClient.class);
+        when(storageClient.uploadFile(any(InputStream.class), eq((long) content.length), eq("txt"), eq(null)))
+                .thenAnswer(invocation -> {
+                    InputStream inputStream = invocation.getArgument(0);
+                    byte[] uploaded = new byte[content.length];
+                    int offset = 0;
+                    while (offset < uploaded.length) {
+                        int count = inputStream.read(uploaded, offset, uploaded.length - offset);
+                        if (count < 0) {
+                            break;
+                        }
+                        offset += count;
+                    }
+                    assertTrue(Arrays.equals(content, uploaded));
+                    return new StorePath("group1", "M00/test.txt");
+                });
+        FastDFSClientWrapper wrapper = new FastDFSClientWrapper();
+        ReflectionTestUtils.setField(wrapper, "storageClient", storageClient);
+        MockMultipartFile file = new MockMultipartFile("file", "test.txt", "text/plain", content);
+
+        FastDFSClientWrapper.UploadResult uploadResult = wrapper.uploadFileWithMd5(file);
+
+        assertEquals("group1/M00/test.txt", uploadResult.getFilePath());
+        assertEquals("3adf6a71fee2da218e8ef1fffb16acb4", uploadResult.getMd5Hex());
+    }
 
     @Test
     void shouldQueueStorageDeleteWhenRollbackCleanupFails() {

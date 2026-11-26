@@ -376,6 +376,12 @@ public class FileServiceImpl implements FileService {
 				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.UPLOAD_FILE_IS_NULL));
 				return result;
 			}
+			String clientMd5 = StringUtils.trimToNull(md5Hex);
+			if (clientMd5 != null && !clientMd5.matches("(?i)^[0-9a-f]{32}$")) {
+				result.setCode(NetdiskErrMsgConstant.UPLOAD_MD5_INVALID);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.UPLOAD_MD5_INVALID));
+				return result;
+			}
 			if (StringUtils.isEmpty(fileRealName)) {
 				// 得到上传的文件名称，
 				fileRealName = file.getOriginalFilename();
@@ -411,8 +417,18 @@ public class FileServiceImpl implements FileService {
 			if (!isOwnedDirectory(parentId)) {
 				return forbidden();
 			}
-			String filePath = fastDFSClientWrapper.uploadFile(file);
+			FastDFSClientWrapper.UploadResult uploadResult = fastDFSClientWrapper.uploadFileWithMd5(file);
+			String filePath = uploadResult.getFilePath();
 			cleanupStorageOnRollback(filePath);
+			String calculatedMd5 = uploadResult.getMd5Hex();
+			if (clientMd5 != null && !clientMd5.equalsIgnoreCase(calculatedMd5)) {
+				log.warn("上传文件 MD5 校验失败: userId={}, fileName={}, clientMd5={}, calculatedMd5={}",
+						user.getId(), fileRealName, clientMd5, calculatedMd5);
+				result.setCode(NetdiskErrMsgConstant.UPLOAD_MD5_MISMATCH);
+				result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.UPLOAD_MD5_MISMATCH));
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+				return result;
+			}
 			String fileKey = FileUtil.makeFileKey();
 
 			FileOrigin fileOrigin = new FileOrigin();
@@ -422,7 +438,7 @@ public class FileServiceImpl implements FileService {
 			fileOrigin.setFileSize(fileSize);
 			fileOrigin.setFileType(fileType);
 			fileOrigin.setUserId(user.getId());
-			fileOrigin.setMd5Hex(md5Hex);
+			fileOrigin.setMd5Hex(calculatedMd5);
 			fileOrigin.setFileStatus(NetdiskConstant.DATA_NORMAL_STATUS);
 			fileOrigin.setCreateTime(new Date());
 			fileOrigin.setUpdateTime(new Date());
