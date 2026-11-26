@@ -104,6 +104,7 @@ install.cmd
 | `RECYCLE_DELAY_TIME` | `2592000000` | 回收站保留时间，默认 30 天，单位毫秒 |
 | `RECYCLE_RECONCILE_INTERVAL` | `60000` | 扫描遗漏的过期回收站记录间隔，单位毫秒 |
 | `STORAGE_DELETE_RETRY_INTERVAL` | `60000` | 重试删除 FastDFS 物理文件的扫描间隔，单位毫秒 |
+| `CAPACITY_RECONCILE_INTERVAL` | `300000` | 用户逻辑容量对账间隔，单位毫秒；发现差异后按正常文件明细校准 |
 | `MEDIA_CORE_POOL_SIZE` | `2` | 音视频转换核心线程数 |
 | `MEDIA_MAX_POOL_SIZE` | `4` | 音视频转换最大线程数 |
 | `MEDIA_QUEUE_CAPACITY` | `20` | 音视频转换等待队列长度 |

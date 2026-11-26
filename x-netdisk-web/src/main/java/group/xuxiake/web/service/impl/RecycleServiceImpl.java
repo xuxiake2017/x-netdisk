@@ -135,6 +135,11 @@ public class RecycleServiceImpl implements RecycleService {
 			return result;
 		}
 		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
+		if (userFileMapper.countNormalFilesWithoutOrigin(user.getId()) > 0) {
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("当前账号存在文件存储信息异常，暂时无法恢复文件");
+			return result;
+		}
 
 		// 原父目录可能已经被彻底删除；此时恢复到“我的资源”。
 		if (!Integer.valueOf(-1).equals(userFile.getParentId())) {
@@ -155,7 +160,10 @@ public class RecycleServiceImpl implements RecycleService {
 		}
 
 		// 检查剩余空间
-		Long usedMemory = user.getUsedMemory();
+		Long usedMemory = userFileMapper.sumNormalFileSizeByUserId(user.getId());
+		if (usedMemory == null) {
+			usedMemory = 0L;
+		}
 		Long totalMemory = user.getTotalMemory();
 		Long availableMemory = totalMemory - usedMemory;
 		Long sumSize = null;
@@ -179,8 +187,6 @@ public class RecycleServiceImpl implements RecycleService {
 			}
 			sumSize = fileOrigin.getFileSize();
 		}
-		usedMemory = usedMemory + sumSize;
-		user.setUsedMemory(usedMemory);
 		if (sumSize > availableMemory) {
 			result.setCode(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.FILE_RESTORE_AVAILABLEMEMORY_NOT_ENOUGH));
@@ -196,7 +202,9 @@ public class RecycleServiceImpl implements RecycleService {
 			userFileMapper.rebackDir(userFile.getId());
 		}
 
-		//更新用户所用空间
+		// 以恢复后的正常文件明细为准更新容量，顺便修正历史偏差。
+		Long actualUsedMemory = userFileMapper.sumNormalFileSizeByUserId(user.getId());
+		user.setUsedMemory(actualUsedMemory == null ? 0L : actualUsedMemory);
 		userMapper.updateByPrimaryKeySelective(user);
 
 		// 恢复成功后直接移除回收站记录，避免历史状态无限增长。

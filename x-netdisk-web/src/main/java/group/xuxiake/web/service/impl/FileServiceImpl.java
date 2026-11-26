@@ -73,6 +73,8 @@ public class FileServiceImpl implements FileService {
 	private DocConverterUtil docConverterUtil;
 	@Resource
 	private FileDownloadUtil fileDownloadUtil;
+	@Resource
+	private StorageRollbackCleanupService storageRollbackCleanupService;
 	@Resource(name = "mediaTaskExecutor")
 	private TaskExecutor mediaTaskExecutor;
 
@@ -161,6 +163,33 @@ public class FileServiceImpl implements FileService {
 		}
 	}
 
+	private long currentUsedMemory(Integer userId) {
+		Long usedMemory = userFileMapper.sumNormalFileSizeByUserId(userId);
+		return usedMemory == null ? 0L : usedMemory;
+	}
+
+	private long verifiedCurrentUsedMemory(Integer userId) {
+		int brokenFiles = userFileMapper.countNormalFilesWithoutOrigin(userId);
+		if (brokenFiles > 0) {
+			throw new IllegalStateException("存在缺失存储信息的正常文件，无法核算用户容量: " + brokenFiles);
+		}
+		return currentUsedMemory(userId);
+	}
+
+	private void cleanupStorageOnRollback(final String storagePath) {
+		if (StringUtils.isBlank(storagePath) || !TransactionSynchronizationManager.isSynchronizationActive()) {
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCompletion(int status) {
+				if (status != TransactionSynchronization.STATUS_COMMITTED) {
+					storageRollbackCleanupService.deleteOrQueue(storagePath);
+				}
+			}
+		});
+	}
+
 	/**
 	 * 检查文件MD5值是否在数据库存在
 	 * @param md5Hex
@@ -228,7 +257,7 @@ public class FileServiceImpl implements FileService {
 
 			// 查询剩余空间
 			long totalMemory = user.getTotalMemory();
-			long usedMemory = user.getUsedMemory();
+			long usedMemory = verifiedCurrentUsedMemory(user.getId());
 			long availableMemory = totalMemory - usedMemory;
 			if (availableMemory < fileSize) {
 				result.setCode(NetdiskErrMsgConstant.CHECKMD5_AVAIABLE_MEMORY_NOT_ENOUGH);
@@ -367,7 +396,7 @@ public class FileServiceImpl implements FileService {
 			}
 			// 查询剩余空间
 			long totalMemory = user.getTotalMemory();
-			long usedMemory = user.getUsedMemory();
+			long usedMemory = verifiedCurrentUsedMemory(user.getId());
 			long availableMemory = totalMemory - usedMemory;
 			if (availableMemory < fileSize) {
 				result.setCode(NetdiskErrMsgConstant.UPLOAD_AVAIABLE_MEMORY_NOT_ENOUGH);
@@ -383,6 +412,7 @@ public class FileServiceImpl implements FileService {
 				return forbidden();
 			}
 			String filePath = fastDFSClientWrapper.uploadFile(file);
+			cleanupStorageOnRollback(filePath);
 			String fileKey = FileUtil.makeFileKey();
 
 			FileOrigin fileOrigin = new FileOrigin();
@@ -469,6 +499,7 @@ public class FileServiceImpl implements FileService {
 			if (bytes != null) {
 				try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
 				String previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, "pdf");
+				cleanupStorageOnRollback(previewUrl);
 				previewUrl = fdfsNginxServer + "/" + previewUrl;
 				fileOrigin.setPreviewUrl(previewUrl);
 				fileOriginMapper.updateByPrimaryKeySelective(fileOrigin);
@@ -516,6 +547,7 @@ public class FileServiceImpl implements FileService {
 					});
 					inputStream = new ByteArrayInputStream(bytes);
 					previewUrl = fastDFSClientWrapper.uploadFile(inputStream, bytes.length, fileOrigin.getFileExtName());
+					cleanupStorageOnRollback(previewUrl);
 				} else {
 					previewUrl = filePath;
 				}
@@ -577,9 +609,11 @@ public class FileServiceImpl implements FileService {
 						byte[] bytes = byteArrayOutputStream.toByteArray();
 						byteArrayInputStream = new ByteArrayInputStream(bytes);
 						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, bytes.length, "jpg");
+						cleanupStorageOnRollback(musicPoster);
 					} else {
 						byteArrayInputStream = new ByteArrayInputStream(mp3Info.getAlbumImage());
 						musicPoster = fastDFSClientWrapper.uploadFile(byteArrayInputStream, mp3Info.getAlbumImage().length, "jpg");
+						cleanupStorageOnRollback(musicPoster);
 					}
 					if (!StringUtils.isEmpty(musicPoster)) {
 						musicPoster = fdfsNginxServer + "/" + musicPoster;
@@ -664,12 +698,9 @@ public class FileServiceImpl implements FileService {
 		}
 		User user = userMapper.selectByPrimaryKeyForUpdate(userThreadContext.getId());
 		UserFile userFile = userFileMapper.findOwnedFileByKeyForUpdate(fileKey, userThreadContext.getId());
-		if (userFile == null) {
+		if (user == null || userFile == null) {
 			return forbidden();
 		}
-		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
-
-		long usedMemory = user.getUsedMemory();
 		/** 	fileStatus
 		 0 正常
 		 1 主动删除
@@ -677,36 +708,29 @@ public class FileServiceImpl implements FileService {
 
 		// 先标记当前节点为主动删除，deleteDir 只会把子节点置为被动删除
 		Integer tag1 = userFileMapper.deleteFile(fileKey);
+		if (tag1 == null || tag1 != 1) {
+			log.warn("删除文件未更新根节点: userId={}, fileId={}, fileKey={}, affectedRows={}",
+					user.getId(), userFile.getId(), fileKey, tag1);
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			result.setCode(NetdiskErrMsgConstant.DELETE_FILE_FAILED);
+			return result;
+		}
 
-		if(userFile.getIsDir() == NetdiskConstant.FILE_IS_NOT_DIR){
-
-			//如果是文件
-			if (fileOrigin == null || fileOrigin.getFileSize() == null) {
-				throw new IllegalStateException("文件存储信息不存在");
-			}
-			long fileSize = fileOrigin.getFileSize();
-			usedMemory = usedMemory - fileSize;
-			if (usedMemory < 0) {
-				throw new RuntimeException("未知异常，请重试");
-			}
-			user.setUsedMemory(usedMemory);
-		}else if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
-			//如果是文件夹，还要删除文件夹里面的子文件及子文件夹
-			Map<String, Object> map = new HashMap<>();
-			map.put("id", userFile.getId());
-			map.put("sumsize", null);
-			userFileMapper.getSumsizeDel(map);
-			if(map.get("sumsize") != null) {
-				long sumSize = ((Number) map.get("sumsize")).longValue();
-				usedMemory = usedMemory - sumSize;
-				if (usedMemory < 0) {
-					throw new RuntimeException("未知异常，请重试");
-				}
-				user.setUsedMemory(usedMemory);
-			}
+		if (userFile.getIsDir() == NetdiskConstant.FILE_IS_DIR) {
+			// 根节点已经是主动删除，只将仍为正常状态的子节点置为被动删除。
 			userFileMapper.deleteDir(userFile.getId());
 		}
-		userMapper.updateByPrimaryKeySelective(user);
+		// 以剩余正常文件为准重新计算容量，历史 used_memory 有偏差时也不阻塞删除。
+		int brokenFiles = userFileMapper.countNormalFilesWithoutOrigin(user.getId());
+		if (brokenFiles == 0) {
+			user.setUsedMemory(currentUsedMemory(user.getId()));
+		} else {
+			log.error("删除后未自动校准容量，仍存在缺失存储信息的正常文件: userId={}, count={}",
+					user.getId(), brokenFiles);
+		}
+		if (userMapper.updateByPrimaryKeySelective(user) != 1) {
+			throw new IllegalStateException("删除文件后更新用户容量失败");
+		}
 
 		FileRecycle recycle = new FileRecycle();
 		Date deleteTime = new Date();
@@ -734,9 +758,11 @@ public class FileServiceImpl implements FileService {
 			}
 		});
 
-		if(tag1 > 0 && tag3 > 0){
+		if(tag3 != null && tag3 > 0){
 			return result;
 		}else {
+			log.warn("删除文件创建回收站记录失败: userId={}, fileId={}, fileKey={}, affectedRows={}",
+					user.getId(), userFile.getId(), fileKey, tag3);
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 			result.setCode(NetdiskErrMsgConstant.DELETE_FILE_FAILED);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.DELETE_FILE_FAILED));

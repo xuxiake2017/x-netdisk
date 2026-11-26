@@ -43,6 +43,22 @@
   <select id="findAnyByPhone" resultMap="BaseResultMap">
     select <include refid="Base_Column_List" /> from x_user where phone = #{phone} limit 1
   </select>
+  <select id="findCapacityMismatchUserIds" resultType="int">
+    select u.id
+    from x_user u
+    left join (
+      select user_file.user_id, coalesce(sum(file_origin.file_size), 0) actual_used_memory
+      from x_user_file user_file
+      inner join x_file_origin file_origin on file_origin.id = user_file.origin_id
+      where user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+        and user_file.is_dir = ${@group.xuxiake.common.util.NetdiskConstant@FILE_IS_NOT_DIR}
+      group by user_file.user_id
+    ) capacity on capacity.user_id = u.id
+    where u.used_memory is null
+       or u.used_memory &lt;&gt; coalesce(capacity.actual_used_memory, 0)
+    order by u.id
+    limit #{limit}
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
     delete from x_user
     where id = #{id,jdbcType=INTEGER}

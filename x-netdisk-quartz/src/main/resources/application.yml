@@ -3,6 +3,8 @@ server:
   servlet:
     context-path: /quartz
 application:
+  capacity:
+    reconcileInterval: ${CAPACITY_RECONCILE_INTERVAL:300000}
   recycle:
     reconcileInterval: ${RECYCLE_RECONCILE_INTERVAL:60000}
     storageDeleteRetryInterval: ${STORAGE_DELETE_RETRY_INTERVAL:60000}

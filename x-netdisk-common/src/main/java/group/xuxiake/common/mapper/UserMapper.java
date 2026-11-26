@@ -32,6 +32,8 @@ public interface UserMapper {
 
     User findAnyByPhone(String phone);
 
+    List<Integer> findCapacityMismatchUserIds(@Param("limit") int limit);
+
     /**
      * 搜索好友
      * @param key 关键词

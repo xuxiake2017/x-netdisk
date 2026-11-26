@@ -34,6 +34,7 @@ import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.service.impl.UserServiceImpl;
 import group.xuxiake.web.service.impl.ShareFileServiceImpl;
 import group.xuxiake.web.service.impl.RecycleServiceImpl;
+import group.xuxiake.web.service.impl.StorageRollbackCleanupService;
 import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.util.ThreadContext;
@@ -64,11 +65,27 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldQueueStorageDeleteWhenRollbackCleanupFails() {
+        FastDFSClientWrapper fastDFSClientWrapper = mock(FastDFSClientWrapper.class);
+        StorageDeleteTaskMapper storageDeleteTaskMapper = mock(StorageDeleteTaskMapper.class);
+        StorageRollbackCleanupService service = new StorageRollbackCleanupService();
+        ReflectionTestUtils.setField(service, "fastDFSClientWrapper", fastDFSClientWrapper);
+        ReflectionTestUtils.setField(service, "storageDeleteTaskMapper", storageDeleteTaskMapper);
+        doThrow(new RuntimeException("storage unavailable"))
+                .when(fastDFSClientWrapper).deleteFile("group1/M00/orphan.dat");
+
+        service.deleteOrQueue("group1/M00/orphan.dat");
+
+        verify(storageDeleteTaskMapper).insertIgnore("group1/M00/orphan.dat");
+    }
 
     @Test
     void shouldValidateProfileFieldsAndPasswordStrength() {
@@ -125,6 +142,7 @@ class XNetdiskWebApplicationTests {
         when(userFileMapper.findFileBySaveNameForReback("recycled-key")).thenReturn(recycledFile);
         when(recycleMapper.selectByPrimaryKeyForUpdate(20)).thenReturn(recycle);
         when(userMapper.selectByPrimaryKeyForUpdate(10)).thenReturn(principal);
+        when(userFileMapper.sumNormalFileSizeByUserId(10)).thenReturn(0L, 10L);
         when(userFileMapper.selectByPrimaryKey(999)).thenReturn(null);
         when(userFileMapper.findFileByRealName(any(UserFile.class))).thenReturn(resources);
         when(fileOriginMapper.findByUserFileId(1)).thenReturn(origin);

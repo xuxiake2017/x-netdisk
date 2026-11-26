@@ -380,6 +380,25 @@
     select count(*) from x_user_file where origin_id = #{originId}
   </select>
 
+  <select id="sumNormalFileSizeByUserId" resultType="long">
+    select coalesce(sum(file_origin.file_size), 0)
+    from x_user_file user_file
+    inner join x_file_origin file_origin on file_origin.id = user_file.origin_id
+    where user_file.user_id = #{userId}
+      and user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      and user_file.is_dir = ${@group.xuxiake.common.util.NetdiskConstant@FILE_IS_NOT_DIR}
+  </select>
+
+  <select id="countNormalFilesWithoutOrigin" resultType="int">
+    select count(*)
+    from x_user_file user_file
+    left join x_file_origin file_origin on file_origin.id = user_file.origin_id
+    where user_file.user_id = #{userId}
+      and user_file.status = ${@group.xuxiake.common.util.NetdiskConstant@FILE_STATUS_OF_NORMAL}
+      and user_file.is_dir = ${@group.xuxiake.common.util.NetdiskConstant@FILE_IS_NOT_DIR}
+      and (user_file.origin_id is null or file_origin.id is null or file_origin.file_size is null)
+  </select>
+
   <!--查询文件路径（id）-->
   <select id="findIdPath" resultType="string">
     select fn_tree_path(#{fileId}, '/')

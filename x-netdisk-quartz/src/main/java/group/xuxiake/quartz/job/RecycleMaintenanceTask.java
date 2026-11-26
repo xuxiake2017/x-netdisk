@@ -4,7 +4,9 @@ import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import group.xuxiake.common.entity.StorageDeleteTask;
 import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
+import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.quartz.service.impl.RecyclePurgeService;
+import group.xuxiake.quartz.service.impl.UserCapacityReconcileService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -31,6 +33,22 @@ public class RecycleMaintenanceTask {
     private StorageDeleteTaskMapper storageDeleteTaskMapper;
     @Resource
     private FastFileStorageClient storageClient;
+    @Resource
+    private UserMapper userMapper;
+    @Resource
+    private UserCapacityReconcileService userCapacityReconcileService;
+
+    @Scheduled(fixedDelayString = "${application.capacity.reconcileInterval:300000}")
+    public void reconcileUserCapacities() {
+        List<Integer> userIds = userMapper.findCapacityMismatchUserIds(BATCH_SIZE);
+        for (Integer userId : userIds) {
+            try {
+                userCapacityReconcileService.reconcile(userId);
+            } catch (RuntimeException e) {
+                log.error("用户容量对账失败: {}", userId, e);
+            }
+        }
+    }
 
     @Scheduled(fixedDelayString = "${application.recycle.reconcileInterval:60000}")
     public void purgeExpiredRecycleRecords() {

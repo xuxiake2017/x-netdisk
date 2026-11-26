@@ -2,10 +2,14 @@ package group.xuxiake.quartz;
 
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 import group.xuxiake.common.entity.StorageDeleteTask;
+import group.xuxiake.common.entity.User;
 import group.xuxiake.common.mapper.FileRecycleMapper;
 import group.xuxiake.common.mapper.StorageDeleteTaskMapper;
+import group.xuxiake.common.mapper.UserFileMapper;
+import group.xuxiake.common.mapper.UserMapper;
 import group.xuxiake.quartz.job.RecycleMaintenanceTask;
 import group.xuxiake.quartz.service.impl.RecyclePurgeService;
+import group.xuxiake.quartz.service.impl.UserCapacityReconcileService;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -14,6 +18,7 @@ import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -21,6 +26,26 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskQuartzApplicationTests {
+
+    @Test
+    void shouldReconcileUserCapacityFromNormalFiles() {
+        UserMapper userMapper = mock(UserMapper.class);
+        UserFileMapper userFileMapper = mock(UserFileMapper.class);
+        UserCapacityReconcileService service = new UserCapacityReconcileService();
+        ReflectionTestUtils.setField(service, "userMapper", userMapper);
+        ReflectionTestUtils.setField(service, "userFileMapper", userFileMapper);
+        User user = new User();
+        user.setId(10);
+        user.setUsedMemory(100L);
+        when(userMapper.selectByPrimaryKeyForUpdate(10)).thenReturn(user);
+        when(userFileMapper.countNormalFilesWithoutOrigin(10)).thenReturn(0);
+        when(userFileMapper.sumNormalFileSizeByUserId(10)).thenReturn(250L);
+
+        service.reconcile(10);
+
+        verify(userMapper).updateByPrimaryKeySelective(argThat(update ->
+                Integer.valueOf(10).equals(update.getId()) && Long.valueOf(250L).equals(update.getUsedMemory())));
+    }
 
     @Test
     void shouldCompensateExpiredRecycleRecords() {

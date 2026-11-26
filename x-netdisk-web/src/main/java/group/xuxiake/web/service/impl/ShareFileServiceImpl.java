@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -365,6 +366,11 @@ public class ShareFileServiceImpl implements ShareFileService {
 
 		User principal = (User) SecurityUtils.getSubject().getPrincipal();
 		User user = userMapper.selectByPrimaryKeyForUpdate(principal.getId());
+		if (userFileMapper.countNormalFilesWithoutOrigin(user.getId()) > 0) {
+			result.setCode(NetdiskErrMsgConstant.REQUEST_ERROR);
+			result.setMsg("当前账号存在文件存储信息异常，暂时无法转存");
+			return result;
+		}
 
 		// 检查用户目录是否存在"我的资源"文件夹
 		UserFile userFileCheck = new UserFile();
@@ -409,7 +415,10 @@ public class ShareFileServiceImpl implements ShareFileService {
 		long sumSize = map.get("sumsize") == null ? 0L : ((Number) map.get("sumsize")).longValue();
 
 		long totalMemory = user.getTotalMemory();
-		long usedMemory = user.getUsedMemory();
+		Long currentUsedMemory = userFileMapper.sumNormalFileSizeByUserId(user.getId());
+		long usedMemory = currentUsedMemory == null ? 0L : currentUsedMemory;
+		user.setUsedMemory(usedMemory);
+		userMapper.updateByPrimaryKeySelective(user);
 		long availableMemory = totalMemory - usedMemory;
 		if (availableMemory < sumSize) {
 
@@ -418,12 +427,19 @@ public class ShareFileServiceImpl implements ShareFileService {
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_AVAIABLE_MEMORY_NOT_ENOUGH));
 			return result;
 		}
-		usedMemory = usedMemory + sumSize;
-		user.setUsedMemory(usedMemory);
-		userMapper.updateByPrimaryKeySelective(user);
-
 		// 递归保存文件夹内的文件到网盘
 		this.saveToCloudIteration(fileForSave.getId(), fileResources.getId(), user.getId(), fileShare);
+
+		// 源目录可能在统计后发生变化，以实际复制结果校准容量并再次校验配额。
+		Long copiedUsedMemory = userFileMapper.sumNormalFileSizeByUserId(user.getId());
+		long actualUsedMemory = copiedUsedMemory == null ? 0L : copiedUsedMemory;
+		if (actualUsedMemory > totalMemory) {
+			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+			result.setCode(NetdiskErrMsgConstant.SHARE_FILE_SAVE_TO_CLOUD_AVAIABLE_MEMORY_NOT_ENOUGH);
+			return result;
+		}
+		user.setUsedMemory(actualUsedMemory);
+		userMapper.updateByPrimaryKeySelective(user);
 
 		result.setMsg("文件已成功保存到\"我的资源\"文件夹！");
 

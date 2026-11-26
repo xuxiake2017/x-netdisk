@@ -123,6 +123,13 @@ public interface UserFileMapper {
     int countByOriginId(Integer originId);
 
     /**
+     * 统计用户当前正常文件的逻辑容量，不包含文件夹和回收站文件。
+     */
+    Long sumNormalFileSizeByUserId(Integer userId);
+
+    int countNormalFilesWithoutOrigin(Integer userId);
+
+    /**
      * 查询文件路径（id）
      * @param fileId
      * @return
