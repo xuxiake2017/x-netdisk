@@ -40,6 +40,7 @@ public class NetdiskErrMsgConstant {
 		errMessage.put(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL, "文件夹名为空");
 		errMessage.put(NetdiskErrMsgConstant.MKDIR_NAME_EXIST, "该目录下已存在同名文件夹");
 		errMessage.put(NetdiskErrMsgConstant.MKDIR_FAILED, "新建失败");
+		errMessage.put(NetdiskErrMsgConstant.MKDIR_NAME_INVALID, "文件夹名称不合法，不能包含路径分隔符或控制字符");
 		
 		errMessage.put(NetdiskErrMsgConstant.MOVEFILE_FAILED, "移动失败");
 		errMessage.put(NetdiskErrMsgConstant.MOVEFILE_TARGET_DIR_EXIST_SAME_NAME_DIR, "移动失败，目标目录存在同名文件夹");
@@ -176,6 +177,8 @@ public class NetdiskErrMsgConstant {
 	public static final int MKDIR_NAME_EXIST = 20042;
 	/*新建文件夹-新建失败*/
 	public static final int MKDIR_FAILED = 20043;
+	/*新建文件夹-名称不合法*/
+	public static final int MKDIR_NAME_INVALID = 20044;
 	
 	/*移动文件-移动失败*/
 	public static final int MOVEFILE_FAILED = 20051;

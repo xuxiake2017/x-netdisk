@@ -33,6 +33,7 @@ import group.xuxiake.web.util.FileDownloadUtil;
 import group.xuxiake.web.util.PasswordEncoder;
 import group.xuxiake.web.aspect.SysLogRecord;
 import group.xuxiake.web.service.impl.UserServiceImpl;
+import group.xuxiake.web.service.impl.FileServiceImpl;
 import group.xuxiake.web.service.impl.ShareFileServiceImpl;
 import group.xuxiake.web.service.impl.RecycleServiceImpl;
 import group.xuxiake.web.service.impl.StorageRollbackCleanupService;
@@ -74,6 +75,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    void shouldReportInvalidDirectoryNameSeparatelyFromEmptyName() {
+        FileServiceImpl service = new FileServiceImpl();
+        Subject subject = mock(Subject.class);
+        ThreadContext.bind(subject);
+        try {
+            UserFile invalid = new UserFile();
+            invalid.setFileName("111/");
+            invalid.setParentId(-1);
+            Result invalidResult = service.mkDir(invalid);
+            assertEquals(NetdiskErrMsgConstant.MKDIR_NAME_INVALID, invalidResult.getCode());
+
+            UserFile empty = new UserFile();
+            empty.setFileName("  ");
+            empty.setParentId(-1);
+            Result emptyResult = service.mkDir(empty);
+            assertEquals(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL, emptyResult.getCode());
+        } finally {
+            ThreadContext.unbindSubject();
+        }
+    }
 
     @Test
     void shouldCalculateMd5WhileUploadingToStorage() throws Exception {

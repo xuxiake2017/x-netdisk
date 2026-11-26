@@ -669,13 +669,18 @@ public class FileServiceImpl implements FileService {
 		Result result = new Result();
 		User user = (User) SecurityUtils.getSubject().getPrincipal();
 
-		if(param == null || isInvalidFileName(param.getFileName()) || !isOwnedDirectory(param.getParentId())){
-			if (param != null && !isInvalidFileName(param.getFileName())) {
-				return forbidden();
-			}
+		if (param == null || StringUtils.isBlank(param.getFileName())) {
 			result.setCode(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL);
 			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.MKDIR_NAME_IS_NULL));
 			return result;
+		}
+		if (isInvalidFileName(param.getFileName())) {
+			result.setCode(NetdiskErrMsgConstant.MKDIR_NAME_INVALID);
+			result.setMsg(NetdiskErrMsgConstant.getErrMessage(NetdiskErrMsgConstant.MKDIR_NAME_INVALID));
+			return result;
+		}
+		if (!isOwnedDirectory(param.getParentId())) {
+			return forbidden();
 		}
 		param.setUserId(user.getId());
 		param.setId(null);
