@@ -5,6 +5,7 @@ import group.xuxiake.common.entity.MP3Info;
 import group.xuxiake.common.entity.*;
 import group.xuxiake.common.entity.param.FileUploadParamByMD5;
 import group.xuxiake.common.entity.show.FileShowMedia;
+import group.xuxiake.common.entity.show.TextPreviewInfo;
 import group.xuxiake.common.mapper.*;
 import group.xuxiake.common.util.FileUtil;
 import group.xuxiake.common.util.MP3Utils;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
@@ -41,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Slf4j
@@ -498,18 +501,12 @@ public class FileServiceImpl implements FileService {
 		FileMedia fileMedia = new FileMedia();
 		fileMedia.setOriginId(fileOrigin.getId());
 
-		if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_WORD
+		if ((fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_WORD
 				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_EXCEL
-				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_POWERPOINT
-				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
+				|| fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_POWERPOINT)
+				&& !"csv".equals(fileOrigin.getFileExtName())) {
 
 			byte[] bytes = fastDFSClientWrapper.downloadFile(filePath, inputStream -> {
-				if (fileOrigin.getFileType() == NetdiskConstant.FILE_TYPE_OF_TXT) {
-					byte[] converted = FileUtil.textEncodingConvert(IOUtils.toByteArray(inputStream));
-					try (ByteArrayInputStream convertedInput = new ByteArrayInputStream(converted)) {
-						return docConverterUtil.docToPDF(convertedInput, fileOrigin.getFileExtName());
-					}
-				}
 				return docConverterUtil.docToPDF(inputStream, fileOrigin.getFileExtName());
 			});
 			if (bytes != null) {
@@ -966,5 +963,56 @@ public class FileServiceImpl implements FileService {
 		FileShowMedia fileShowMedia = fileMediaMapper.getFileMediaInfo(fileKey);
 		result.setData(fileShowMedia);
 		return result;
+	}
+
+	@Override
+	public Result previewText(String fileKey) {
+		Result result = new Result();
+		if (StringUtils.isBlank(fileKey)) {
+			return Result.paramIsNull(result);
+		}
+		UserFile userFile = findOwnedFileByKey(fileKey);
+		if (userFile == null) {
+			return forbidden();
+		}
+		FileOrigin fileOrigin = fileOriginMapper.findByUserFileId(userFile.getId());
+		if (fileOrigin == null || StringUtils.isBlank(fileOrigin.getFilePath())) {
+			result.setCode(NetdiskErrMsgConstant.TEXT_PREVIEW_FAILED);
+			return result;
+		}
+		String extension = StringUtils.lowerCase(fileOrigin.getFileExtName(), Locale.ROOT);
+		if (!"txt".equals(extension) && !"csv".equals(extension)) {
+			result.setCode(NetdiskErrMsgConstant.TEXT_PREVIEW_FORMAT_UNSUPPORTED);
+			return result;
+		}
+		Long fileSize = fileOrigin.getFileSize();
+		Long sizeLimit = appConfiguration.getCustomConfiguration().getTextPreviewSizeMax();
+		if (fileSize == null || fileSize < 0 || sizeLimit == null || sizeLimit <= 0 || fileSize > sizeLimit) {
+			result.setCode(NetdiskErrMsgConstant.TEXT_PREVIEW_TOO_LARGE);
+			return result;
+		}
+		try {
+			byte[] bytes = fastDFSClientWrapper.downloadFile(fileOrigin.getFilePath(), inputStream ->
+					IOUtils.toByteArray(new BoundedInputStream(inputStream, sizeLimit + 1)));
+			if (bytes.length > sizeLimit) {
+				result.setCode(NetdiskErrMsgConstant.TEXT_PREVIEW_TOO_LARGE);
+				return result;
+			}
+			String encoding = FileUtil.getTextEncoding(bytes);
+			byte[] utf8Bytes = FileUtil.textEncodingConvert(bytes);
+			TextPreviewInfo preview = new TextPreviewInfo();
+			preview.setFileKey(fileKey);
+			preview.setFileName(userFile.getFileName());
+			preview.setFileExtName(extension);
+			preview.setFileSize(fileSize);
+			preview.setEncoding(encoding);
+			preview.setContent(new String(utf8Bytes, StandardCharsets.UTF_8));
+			result.setData(preview);
+			return result;
+		} catch (Exception e) {
+			log.error("文本预览加载失败: userId={}, fileKey={}", getCurrentUserId(), fileKey, e);
+			result.setCode(NetdiskErrMsgConstant.TEXT_PREVIEW_FAILED);
+			return result;
+		}
 	}
 }

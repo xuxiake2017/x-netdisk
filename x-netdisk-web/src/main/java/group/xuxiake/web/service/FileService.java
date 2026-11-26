@@ -106,4 +106,10 @@ public interface FileService {
 	 * @return
 	 */
 	Result getFileMediaInfo(String fileKey);
+
+	/**
+	 * 获取 TXT、CSV 文件的 UTF-8 文本预览。
+	 * @param fileKey 文件标识
+	 */
+	Result previewText(String fileKey);
 }

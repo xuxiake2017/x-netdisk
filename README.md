@@ -101,6 +101,7 @@ install.cmd
 | `MULTIPART_MAX_FILE_SIZE` | `500MB` | Spring 接收的单文件上限，不应低于业务层 VIP 文件上限 |
 | `MULTIPART_MAX_REQUEST_SIZE` | `1024MB` | 单次上传请求总大小上限 |
 | `AVATAR_SIZE_MAX` | `5242880` | 头像文件上限，单位字节；同时仅接受 JPG、PNG、GIF，尺寸不超过 4096×4096 |
+| `TEXT_PREVIEW_SIZE_MAX` | `2097152` | TXT、CSV 在线预览大小上限，默认 2MB，单位字节 |
 | `RECYCLE_DELAY_TIME` | `2592000000` | 回收站保留时间，默认 30 天，单位毫秒 |
 | `RECYCLE_RECONCILE_INTERVAL` | `60000` | 扫描遗漏的过期回收站记录间隔，单位毫秒 |
 | `STORAGE_DELETE_RETRY_INTERVAL` | `60000` | 重试删除 FastDFS 物理文件的扫描间隔，单位毫秒 |

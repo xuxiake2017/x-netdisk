@@ -123,4 +123,13 @@ public class FileController {
 		return fileService.getFileMediaInfo(fileKey);
 	}
 
+	/**
+	 * 获取 TXT、CSV 文件的文本预览内容。
+	 */
+	@RequestMapping(value = "/textPreview", method = RequestMethod.GET)
+	@ResponseBody
+	public Result previewText(String fileKey) {
+		return fileService.previewText(fileKey);
+	}
+
 }

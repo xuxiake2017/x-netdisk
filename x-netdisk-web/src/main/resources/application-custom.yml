@@ -5,6 +5,8 @@ app:
     fileSizeMax: ${FILE_SIZE_MAX:52428800}
     vipFileSizeMax: ${VIP_FILE_SIZE_MAX:524288000}
     avatarSizeMax: ${AVATAR_SIZE_MAX:5242880}
+    # TXT/CSV 在线预览最大文件大小，默认 2MB
+    textPreviewSizeMax: ${TEXT_PREVIEW_SIZE_MAX:2097152}
     # 部署前端代码的公网地址（用于分享链接和客户端来源识别）
     server_host: ${PUBLIC_SERVER_HOST:http://127.0.0.1:8181}
     # 回收站保留时间（默认30天，毫秒）

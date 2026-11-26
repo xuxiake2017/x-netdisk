@@ -41,6 +41,9 @@ public class NetdiskErrMsgConstant {
 		errMessage.put(NetdiskErrMsgConstant.MKDIR_NAME_EXIST, "该目录下已存在同名文件夹");
 		errMessage.put(NetdiskErrMsgConstant.MKDIR_FAILED, "新建失败");
 		errMessage.put(NetdiskErrMsgConstant.MKDIR_NAME_INVALID, "文件夹名称不合法，不能包含路径分隔符或控制字符");
+		errMessage.put(NetdiskErrMsgConstant.TEXT_PREVIEW_FORMAT_UNSUPPORTED, "该文件格式不支持文本预览");
+		errMessage.put(NetdiskErrMsgConstant.TEXT_PREVIEW_TOO_LARGE, "文件过大，请下载后查看");
+		errMessage.put(NetdiskErrMsgConstant.TEXT_PREVIEW_FAILED, "文本预览加载失败");
 		
 		errMessage.put(NetdiskErrMsgConstant.MOVEFILE_FAILED, "移动失败");
 		errMessage.put(NetdiskErrMsgConstant.MOVEFILE_TARGET_DIR_EXIST_SAME_NAME_DIR, "移动失败，目标目录存在同名文件夹");
@@ -179,6 +182,13 @@ public class NetdiskErrMsgConstant {
 	public static final int MKDIR_FAILED = 20043;
 	/*新建文件夹-名称不合法*/
 	public static final int MKDIR_NAME_INVALID = 20044;
+
+	/*文本预览-格式不支持*/
+	public static final int TEXT_PREVIEW_FORMAT_UNSUPPORTED = 20221;
+	/*文本预览-文件过大*/
+	public static final int TEXT_PREVIEW_TOO_LARGE = 20222;
+	/*文本预览-加载失败*/
+	public static final int TEXT_PREVIEW_FAILED = 20223;
 	
 	/*移动文件-移动失败*/
 	public static final int MOVEFILE_FAILED = 20051;

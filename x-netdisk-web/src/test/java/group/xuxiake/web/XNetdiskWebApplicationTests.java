@@ -12,6 +12,7 @@ import group.xuxiake.common.entity.User;
 import group.xuxiake.common.entity.FileRecycle;
 import group.xuxiake.common.entity.param.UserAppRegisteParam;
 import group.xuxiake.common.entity.param.UserProfileUpdateParam;
+import group.xuxiake.common.entity.show.TextPreviewInfo;
 import group.xuxiake.common.enums.ClientType;
 import group.xuxiake.common.mapper.FileMediaMapper;
 import group.xuxiake.common.mapper.FileOriginMapper;
@@ -77,6 +78,61 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class XNetdiskWebApplicationTests {
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldReturnUtf8TextPreviewWithoutBom() throws Exception {
+        FileServiceImpl service = new FileServiceImpl();
+        UserFileMapper userFileMapper = mock(UserFileMapper.class);
+        FileOriginMapper fileOriginMapper = mock(FileOriginMapper.class);
+        FastDFSClientWrapper fastDFSClientWrapper = mock(FastDFSClientWrapper.class);
+        CustomConfiguration customConfiguration = new CustomConfiguration();
+        customConfiguration.setTextPreviewSizeMax(2L * 1024 * 1024);
+        AppConfiguration appConfiguration = new AppConfiguration();
+        appConfiguration.setCustomConfiguration(customConfiguration);
+        ReflectionTestUtils.setField(service, "userFileMapper", userFileMapper);
+        ReflectionTestUtils.setField(service, "fileOriginMapper", fileOriginMapper);
+        ReflectionTestUtils.setField(service, "fastDFSClientWrapper", fastDFSClientWrapper);
+        ReflectionTestUtils.setField(service, "appConfiguration", appConfiguration);
+
+        User principal = new User();
+        principal.setId(10);
+        Subject subject = mock(Subject.class);
+        when(subject.getPrincipal()).thenReturn(principal);
+        UserFile userFile = new UserFile();
+        userFile.setId(20);
+        userFile.setUserId(10);
+        userFile.setFileName("说明.txt");
+        FileOrigin origin = new FileOrigin();
+        origin.setFilePath("group1/M00/readme.txt");
+        origin.setFileExtName("txt");
+        byte[] content = "文本预览".getBytes(StandardCharsets.UTF_8);
+        byte[] stored = new byte[content.length + 3];
+        stored[0] = (byte) 0xEF;
+        stored[1] = (byte) 0xBB;
+        stored[2] = (byte) 0xBF;
+        System.arraycopy(content, 0, stored, 3, content.length);
+        origin.setFileSize((long) stored.length);
+        when(userFileMapper.findFileByKey("text-key")).thenReturn(userFile);
+        when(fileOriginMapper.findByUserFileId(20)).thenReturn(origin);
+        when(fastDFSClientWrapper.downloadFile(eq(origin.getFilePath()), any(DownloadCallback.class)))
+                .thenAnswer(invocation -> {
+                    DownloadCallback<byte[]> callback = invocation.getArgument(1);
+                    return callback.recv(new ByteArrayInputStream(stored));
+                });
+
+        ThreadContext.bind(subject);
+        try {
+            Result result = service.previewText("text-key");
+
+            assertEquals(NetdiskErrMsgConstant.REQUEST_SUCCESS, result.getCode());
+            TextPreviewInfo preview = (TextPreviewInfo) result.getData();
+            assertEquals("UTF-8_BOM", preview.getEncoding());
+            assertEquals("文本预览", preview.getContent());
+        } finally {
+            ThreadContext.unbindSubject();
+        }
+    }
 
     @Test
     void shouldClassifyAdditionalPreviewFormats() {
